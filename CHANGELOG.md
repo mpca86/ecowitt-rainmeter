@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.11.0-beta.3 — 2026-10-07
+
+- Fixed GitHub prerelease enumeration on Windows PowerShell 5.1.
+- Added explicit TLS 1.2 and GitHub API version headers in the updater.
+- Beta update checks now correctly detect published prereleases.
+- This is a one-time manual bridge release for beta.1 / beta.2 users affected by the checker bug.
+
+
 ## v1.11.0-beta.2 — 2026-10-07
 
 - Second public Cloud API beta.
