@@ -8,7 +8,7 @@ Rainmeter skin for displaying weather data from Ecowitt gateways and sensors.
 
 ## Status
 
-Current Cloud API beta: **v1.11.0-beta.1**.
+Current Cloud API beta: **v1.11.0-beta.2**.
 
 The project currently has two data-source directions:
 
