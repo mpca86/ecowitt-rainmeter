@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.11.0-beta.2 — 2026-10-07
+
+- Second public Cloud API beta.
+- Bumped all Rainmeter metadata to v1.11.0-beta.2.
+- Published specifically to validate the beta.1 → beta.2 in-skin update flow.
+- Keeps local credentials, user aliases, history and diagnostics outside distributable files.
+
+
 ## v1.11.0-beta.1 — 2026-10-07
 
 - First public beta of the Ecowitt Cloud API branch.
