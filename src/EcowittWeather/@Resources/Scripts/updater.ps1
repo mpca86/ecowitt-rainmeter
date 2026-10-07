@@ -13,6 +13,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
+$SkinPath = [System.IO.Path]::GetFullPath($SkinPath)
 $Headers = @{
     "User-Agent" = "Ecowitt-Rainmeter-Updater"
     "Accept" = "application/vnd.github+json"
