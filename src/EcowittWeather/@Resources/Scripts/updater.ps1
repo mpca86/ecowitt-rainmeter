@@ -30,6 +30,7 @@ $Headers = @{
 }
 
 $StatePath = Join-Path $SkinPath "@Resources\Update\UpdateState.inc"
+$ChangelogPath = Join-Path $SkinPath "@Resources\Update\Changelog.txt"
 $UpdateDir = Split-Path -Parent $StatePath
 $BackupRoot = Join-Path $env:LOCALAPPDATA "EcowittRainmeter\Backups"
 
@@ -80,6 +81,37 @@ function Write-State {
     ) -join [Environment]::NewLine
 
     [System.IO.File]::WriteAllText($StatePath, $content, [System.Text.Encoding]::Unicode)
+}
+
+function Write-Changelog {
+    param(
+        [string]$Text,
+        [string]$Version = ""
+    )
+
+    Ensure-Directory $UpdateDir
+
+    if ([string]::IsNullOrWhiteSpace($Text)) {
+        $Text = "Pre túto verziu nie je k dispozícii changelog."
+    }
+
+    # Convert the Markdown subset used in GitHub release notes to plain text.
+    $plain = [string]$Text
+    $plain = $plain -replace "(?m)^\s*#{1,6}\s*", ""
+    $plain = $plain -replace "\*\*([^*]+)\*\*", '$1'
+    $plain = $plain -replace "__([^_]+)__", '$1'
+    $plain = $plain -replace "`([^`]+)`", '$1'
+    $plain = $plain -replace "\[([^\]]+)\]\([^\)]+\)", '$1'
+    $plain = $plain -replace "(?m)^\s*[-*]\s+", "• "
+    $plain = $plain -replace "(\r?\n){3,}", "`r`n`r`n"
+    $plain = $plain.Trim()
+
+    if (-not [string]::IsNullOrWhiteSpace($Version)) {
+        $plain = "Changelog $Version`r`n`r`n" + $plain
+    }
+
+    $utf8Bom = New-Object System.Text.UTF8Encoding($true)
+    [System.IO.File]::WriteAllText($ChangelogPath, $plain, $utf8Bom)
 }
 
 function Get-Releases {
@@ -235,7 +267,8 @@ function Preserve-UserFiles([string]$TempPreserve) {
         "@Resources\Includes\UserVariables.inc",
         "Meteo\meteo_history.csv",
         "@Resources\Diagnostics\ecowitt_cloud_debug.txt",
-        "@Resources\Update\UpdateState.inc"
+        "@Resources\Update\UpdateState.inc",
+        "@Resources\Update\Changelog.txt"
     )
 
     foreach ($relative in $paths) {
@@ -304,6 +337,7 @@ try {
                 $result = "CURRENT|dev-$short"
             }
 
+            Write-Changelog -Version "dev-$short" -Text "Vývojový kanál cloud-api.`r`n`r`nTento kanál obsahuje najnovšie zmeny z vetvy cloud-api a nemusí byť stabilný."
             Write-State -Status $status -RemoteVersion "dev-$short" -Available $available -InstalledCommit $installed
             Write-Output $result
             exit 0
@@ -311,12 +345,14 @@ try {
 
         $release = Get-SelectedRelease
         if (-not $release) {
+            Write-Changelog -Text "Pre zvolený kanál zatiaľ nie je vydaná verzia."
             Write-State -Status "Pre kanál $Channel zatiaľ nie je vydaná verzia." -Available 0
             Write-Output "CURRENT|--"
             exit 0
         }
 
         $tag = [string]$release.tag_name
+        Write-Changelog -Version $tag -Text ([string]$release.body)
         $installedTag = Read-StateValue "InstalledReleaseTag"
         $normalizedCurrent = $CurrentVersion.TrimStart("v")
         $normalizedTag = $tag.TrimStart("v")
