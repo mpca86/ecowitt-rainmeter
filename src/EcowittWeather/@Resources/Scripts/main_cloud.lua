@@ -253,9 +253,11 @@ local function writeDiagnostics(p)
     -- less frequently. Do not rewrite the diagnostics file for identical data.
     if signature == lastDebugSignature then return end
 
-    local f = io.open(diagnostics_path(), 'w')
+    local f = io.open(diagnostics_path(), 'wb')
     if not f then return end
 
+    -- UTF-8 BOM makes Rainmeter WebParser decode local debug text correctly.
+    f:write(string.char(239, 187, 191))
     f:write('Ecowitt Cloud diagnostics\n')
     f:write('=========================\n')
     f:write('Generated: ' .. os.date('%Y-%m-%d %H:%M:%S') .. '\n')
@@ -303,8 +305,9 @@ function Update()
         setVar('V_CloudStatus', 'JSON parse error')
 
         if skinNum('DebugParser', 0) == 1 then
-            local f = io.open(diagnostics_path(), 'w')
+            local f = io.open(diagnostics_path(), 'wb')
             if f then
+                f:write(string.char(239, 187, 191))
                 f:write('Ecowitt Cloud diagnostics\n')
                 f:write('=========================\n')
                 f:write('Generated: ' .. os.date('%Y-%m-%d %H:%M:%S') .. '\n')
