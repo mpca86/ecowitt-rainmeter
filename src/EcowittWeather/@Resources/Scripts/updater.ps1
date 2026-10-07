@@ -15,6 +15,12 @@ $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 $SkinPath = [System.IO.Path]::GetFullPath($SkinPath)
 
+# RunCommand expects UTF-8. Windows PowerShell 5.1 otherwise may emit text
+# in the active OEM / legacy code page when stdout is redirected.
+$Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+[Console]::OutputEncoding = $Utf8NoBom
+$OutputEncoding = $Utf8NoBom
+
 # Windows PowerShell 5.1 can otherwise negotiate an older TLS version on some systems.
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $Headers = @{
