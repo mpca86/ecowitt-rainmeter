@@ -9,6 +9,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
+$OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 function Read-IniVariables([string]$Path) {
     $result = @{}
@@ -68,7 +70,10 @@ try {
     $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get -TimeoutSec 20
 
     $code = [string]$response.code
-    $msg = [string]($response.msg ?? $response.message)
+    $msg = [string]$response.msg
+    if ([string]::IsNullOrWhiteSpace($msg)) {
+        $msg = [string]$response.message
+    }
 
     if ([string]::IsNullOrWhiteSpace($code)) { $code = "?" }
     if ([string]::IsNullOrWhiteSpace($msg)) { $msg = "bez správy" }
