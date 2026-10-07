@@ -1,22 +1,22 @@
 # Ecowitt Weather v1.11.0-beta.4
 
-Fourth public beta of the Ecowitt **Cloud API** Rainmeter skin.
+Štvrtá verejná beta verzia Rainmeter skinu **Ecowitt Weather – Cloud API**.
 
-## Purpose of this release
+## Účel vydania
 
-This release is the first one intended to validate the complete **in-skin beta update flow** from beta.3.
+Táto verzia bola prvým vydaním určeným na overenie kompletného procesu aktualizácie priamo zo skinu z beta.3.
 
-Expected path:
+Očakávaný postup:
 
-`METEO CLOUD ●` → **Aktualizácie** → **AKTUALIZOVAŤ** → backup → download → SHA256 verification → install → Rainmeter refresh.
+`METEO CLOUD ●` → **Aktualizácie** → **AKTUALIZOVAŤ** → záloha → stiahnutie → overenie SHA256 → inštalácia → obnovenie Rainmetera.
 
-## Changes
+## Zmeny
 
-- Bumped the package and all Rainmeter metadata to `v1.11.0-beta.4`.
-- Forced UTF-8 stdout from Windows PowerShell 5.1 so Rainmeter `RunCommand` receives clean updater output.
-- Keeps the fixed GitHub prerelease discovery introduced in beta.3.
-- Preserves `CloudSecrets.inc`, `UserVariables.inc`, history, diagnostics and update state during self-update.
+- Aktualizované číslo balíka a všetky Rainmeter metadata na `v1.11.0-beta.4`.
+- Vynútený UTF-8 výstup z Windows PowerShell 5.1, aby Rainmeter RunCommand dostával správne dekódovaný text.
+- Zachovaná oprava vyhľadávania GitHub prerelease verzií z beta.3.
+- Pri aktualizácii sa zachovávajú `CloudSecrets.inc`, `UserVariables.inc`, história, diagnostika a stav aktualizácií.
 
 ## Test
 
-On a beta.3 installation with the update channel set to **Beta**, open the Meteo skin or the Update panel. It should detect `v1.11.0-beta.4`, show the update indicator beside **METEO CLOUD**, and allow the update without manually installing a new `.rmskin`.
+Na inštalácii beta.3 s kanálom **Beta** má skin rozpoznať `v1.11.0-beta.4`, zobraziť indikátor pri **METEO CLOUD** a umožniť aktualizáciu bez ručnej inštalácie nového `.rmskin` balíka.
