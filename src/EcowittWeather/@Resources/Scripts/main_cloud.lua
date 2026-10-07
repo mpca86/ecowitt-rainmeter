@@ -8,6 +8,7 @@ local history = nil
 local lastRuntime = nil
 local lastRuntimeChange = 0
 local restartUntil = 0
+local lastDebugSignature = nil
 
 local function script_root()
     local root = SKIN:GetVariable('ROOTCONFIGPATH')
@@ -241,13 +242,44 @@ end
 
 local function writeDiagnostics(p)
     if skinNum('DebugParser', 0) ~= 1 then return end
+
+    local signature = table.concat({
+        tostring(p.raw and p.raw.code or ''),
+        tostring(p.raw and p.raw.time or ''),
+        tostring(p:latest_time() or '')
+    }, '|')
+
+    -- The Lua measure runs every second, but cloud data normally changes much
+    -- less frequently. Do not rewrite the diagnostics file for identical data.
+    if signature == lastDebugSignature then return end
+
     local f = io.open(diagnostics_path(), 'w')
     if not f then return end
-    local lines = p:discover_lines(skinNum('MaxChannels', 8))
+
+    f:write('Ecowitt Cloud diagnostics\n')
+    f:write('=========================\n')
+    f:write('Generated: ' .. os.date('%Y-%m-%d %H:%M:%S') .. '\n')
+    f:write('Source: /api/v3/device/real_time\n')
+    f:write('Safe output: credentials are not written to this file\n')
+    f:write('\n')
+    f:write('[configured sensor aliases]\n')
+
+    local maxChannels = skinNum('MaxChannels', 8)
+    for i = 1, maxChannels do
+        local alias = SKIN:GetVariable('Channel' .. i .. 'Label') or ''
+        if alias == '' then alias = '(default CH' .. i .. ')' end
+        f:write('  CH' .. i .. '=' .. alias .. '\n')
+    end
+    f:write('  Gateway=' .. tostring(SKIN:GetVariable('GatewayLabel') or 'Gateway') .. '\n')
+    f:write('\n')
+
+    local lines = p:discover_lines(maxChannels)
     for _, line in ipairs(lines) do
         f:write(line .. '\n')
     end
+
     f:close()
+    lastDebugSignature = signature
 end
 
 function Initialize()
@@ -268,6 +300,20 @@ function Update()
     local ok, decoded = pcall(json.decode, raw)
     if not ok or type(decoded) ~= 'table' then
         setVar('V_TitleColor', skinVar('ColorAlert', '255,100,100,255'))
+        setVar('V_CloudStatus', 'JSON parse error')
+
+        if skinNum('DebugParser', 0) == 1 then
+            local f = io.open(diagnostics_path(), 'w')
+            if f then
+                f:write('Ecowitt Cloud diagnostics\n')
+                f:write('=========================\n')
+                f:write('Generated: ' .. os.date('%Y-%m-%d %H:%M:%S') .. '\n')
+                f:write('ERROR: JSON response could not be decoded\n')
+                f:write('Details: ' .. tostring(decoded) .. '\n')
+                f:write('Raw API body intentionally omitted.\n')
+                f:close()
+            end
+        end
         return
     end
 
