@@ -1,0 +1,16 @@
+[Variables]
+; User-specific values. Copy/rename to UserVariables.inc if needed.
+; UserVariables.inc is ignored by Git and preserved by the self-updater.
+
+Channel1Label=
+Channel2Label=
+Channel3Label=
+Channel4Label=
+Channel5Label=
+Channel6Label=
+Channel7Label=
+Channel8Label=
+GatewayLabel=Gateway
+
+; stable | beta | development
+UpdateChannel=stable
