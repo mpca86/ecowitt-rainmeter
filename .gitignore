@@ -1,6 +1,7 @@
 # Rainmeter runtime / user state
 meteo_history.csv
 ecowitt_debug.txt
+ecowitt_cloud_debug.txt
 *.log
 
 # Local user configuration / secrets
