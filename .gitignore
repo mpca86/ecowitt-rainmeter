@@ -6,6 +6,7 @@ ecowitt_debug.txt
 # Local user configuration / secrets
 UserVariables.inc
 Secrets.inc
+CloudSecrets.inc
 .env
 .env.*
 
