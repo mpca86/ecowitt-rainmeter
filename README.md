@@ -8,7 +8,7 @@ Rainmeter skin for displaying weather data from Ecowitt gateways and sensors.
 
 ## Status
 
-Current Cloud API development baseline: **v1.10.2-cloud-alpha**.
+Current Cloud API beta: **v1.11.0-beta.1**.
 
 The project currently has two data-source directions:
 
@@ -38,7 +38,19 @@ samples/
 packaging/
 ```
 
-The Rainmeter package is being prepared for distribution as an `.rmskin` installer.
+The Cloud API beta is distributed as a Rainmeter `.rmskin` installer and as a manual ZIP package.
+
+## Installation — Cloud API beta
+
+Download the latest beta `.rmskin` from GitHub Releases, open it with Rainmeter and click **Install**. The package opens the Settings skin after installation.
+
+Required Ecowitt values:
+
+- Application Key
+- API Key
+- station MAC address
+
+Credentials remain local in `CloudSecrets.inc` and are not part of release packages.
 
 ## Current Local API features
 
