@@ -1,0 +1,43 @@
+name: Build EcowittWeather release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build ZIP and SHA256
+        shell: pwsh
+        run: |
+          ./packaging/build-release.ps1 -Version "$env:GITHUB_REF_NAME"
+
+      - name: Create GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "$env:GITHUB_REF_NAME"
+          $files = Get-ChildItem -Path dist -File | Where-Object { $_.Name -match "\.zip(\.sha256)?$" }
+
+          $arguments = @("release", "create", $tag)
+          foreach ($file in $files) {
+              $arguments += $file.FullName
+          }
+
+          $arguments += @("--title", $tag, "--generate-notes")
+
+          if ($tag -match "(?i)-(alpha|beta|rc)") {
+              $arguments += "--prerelease"
+          }
+
+          & gh @arguments
