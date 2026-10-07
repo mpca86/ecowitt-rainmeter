@@ -71,3 +71,43 @@ The adapter currently maps these Ecowitt Web API sections:
 - `temp_and_humidity_ch1` … `temp_and_humidity_ch8`
 
 The actual payload from the first live test will be used to validate field names, units and timestamps before this branch is considered beta.
+
+
+## User configuration split
+
+Distribution defaults remain in `Variables.inc`.
+
+Per-user values are written to ignored local files:
+
+- `UserVariables.inc` — channel labels, gateway label, refresh preference, update channel.
+- `CloudSecrets.inc` — Application Key, API Key and station MAC.
+
+`bootstrap.lua` creates both files on first use when they do not exist. The self-updater preserves them.
+
+## In-skin updater
+
+Open `Update/Update.ini` from Settings.
+
+The updater supports:
+
+- Stable releases.
+- Beta / prerelease builds.
+- Development snapshots from `cloud-api`.
+
+The install flow performs:
+
+1. update lookup,
+2. download,
+3. optional SHA256 verification when supplied by the release,
+4. local backup,
+5. overlay installation,
+6. restoration of user files,
+7. Rainmeter refresh.
+
+Development checkouts managed by Git are intentionally protected from in-skin installation. Use the Git updater script for those checkouts.
+
+## Release workflow
+
+`.github/workflows/release.yml` publishes release assets automatically when a `v*` tag is pushed.
+
+Build logic lives in `packaging/build-release.ps1`.
