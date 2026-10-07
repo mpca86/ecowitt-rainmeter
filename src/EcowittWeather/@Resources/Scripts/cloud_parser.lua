@@ -155,12 +155,19 @@ function parser:get_channel(channel, field)
 
     if t == nil and h == nil then return nil end
 
+    local battery = '--'
+    local batterySection = self.data.battery
+    if type(batterySection) == 'table' then
+        local b, _, _ = item_value(batterySection['temp_humidity_sensor_ch' .. tostring(channel)])
+        if b ~= nil then battery = b end
+    end
+
     local item = {
         channel = tostring(channel),
         name = 'CH' .. tostring(channel),
         temp = t,
         humidity = h,
-        battery = '--'
+        battery = battery
     }
 
     if field == nil then return item end
