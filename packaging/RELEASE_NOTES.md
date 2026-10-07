@@ -1,21 +1,22 @@
-# Ecowitt Weather v1.11.0-beta.3
+# Ecowitt Weather v1.11.0-beta.4
 
-Third public beta of the Ecowitt **Cloud API** Rainmeter skin.
+Fourth public beta of the Ecowitt **Cloud API** Rainmeter skin.
 
-## Fixed
+## Purpose of this release
 
-- Fixed GitHub prerelease discovery on **Windows PowerShell 5.1**.
-- Added explicit TLS 1.2 and GitHub API version headers for older Windows PowerShell environments.
-- Update checks now correctly enumerate GitHub Releases instead of returning `CURRENT|--` when beta releases exist.
+This release is the first one intended to validate the complete **in-skin beta update flow** from beta.3.
 
-## Why beta.3 exists
+Expected path:
 
-Beta.1 and beta.2 can query GitHub but may fail to enumerate prereleases correctly on Windows PowerShell 5.1. Because that bug lives inside the updater itself, one manual bridge install to beta.3 is required for affected systems.
+`METEO CLOUD ●` → **Aktualizácie** → **AKTUALIZOVAŤ** → backup → download → SHA256 verification → install → Rainmeter refresh.
 
-After beta.3 is installed, the next beta release will be used to validate the complete in-skin update flow.
+## Changes
 
-## Installation
+- Bumped the package and all Rainmeter metadata to `v1.11.0-beta.4`.
+- Forced UTF-8 stdout from Windows PowerShell 5.1 so Rainmeter `RunCommand` receives clean updater output.
+- Keeps the fixed GitHub prerelease discovery introduced in beta.3.
+- Preserves `CloudSecrets.inc`, `UserVariables.inc`, history, diagnostics and update state during self-update.
 
-Download and install `EcowittWeather-v1.11.0-beta.3.rmskin` manually once if you are on beta.1 or beta.2 and update detection shows no beta release.
+## Test
 
-Your local `CloudSecrets.inc`, `UserVariables.inc`, history and diagnostics remain outside distributable files.
+On a beta.3 installation with the update channel set to **Beta**, open the Meteo skin or the Update panel. It should detect `v1.11.0-beta.4`, show the update indicator beside **METEO CLOUD**, and allow the update without manually installing a new `.rmskin`.
