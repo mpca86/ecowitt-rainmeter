@@ -1,0 +1,21 @@
+# Rainmeter runtime / user state
+meteo_history.csv
+ecowitt_debug.txt
+*.log
+
+# Local user configuration / secrets
+UserVariables.inc
+Secrets.inc
+.env
+.env.*
+
+# Build artifacts
+*.rmskin
+dist/
+build/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
