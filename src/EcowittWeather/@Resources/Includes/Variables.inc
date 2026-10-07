@@ -1,25 +1,24 @@
 [Variables]
-; --- IP ADRESA ZARIADENIA ---
-; Gateway address can be an IPv4 address or hostname.
-; Examples: 192.168.2.95 | 10.20.30.40 | gw3000.home.lan
-EcowittHost=
-EcowittPort=80
+; --- ECOWITT CLOUD API ---
+EcowittApiBase=https://api.ecowitt.net/api/v3/device/real_time
 EcowittWebUrl=https://www.ecowitt.net
+CloudRefreshSeconds=60
+CloudStaleSeconds=900
 DebugParser=0
 MaxChannels=8
 
 ; --- NÁZVY KANÁLOV ---
 ; Ak je hodnota prázdna, použije sa názov z Ecowitt API.
 ; Pri názvoch s diakritikou je bezpečnejšie zadať alias sem.
-Channel1Label=Kancelária M&M
-Channel2Label=Predajňa
-Channel3Label=Dielňa
+Channel1Label=
+Channel2Label=
+Channel3Label=
 Channel4Label=
 Channel5Label=
 Channel6Label=
 Channel7Label=
 Channel8Label=
-GatewayLabel=Kancelária
+GatewayLabel=Gateway
 
 ; --- ŠTÝL TÉMY ILLUSTRO ---
 fontName=Trebuchet MS
@@ -78,13 +77,12 @@ TrendPressureThreshold=0.5
 ; história sa uloží každých 60 s a drží sa 4 hodiny
 HistorySampleSeconds=60
 HistoryKeepHours=4
-; po koľkých sekundách bez rastu runtime považovať dáta za stale
-StaleDataSeconds=60
 
 ; --- DYNAMICKÉ PREMENNÉ ---
-V_TitleText=Meteo Stanica
+V_TitleText=Meteo Cloud
 V_TitleColor=255,255,255,205
 V_Runtime=--
+V_CloudStatus=--
 
 V_OutTemp=--
 V_OutHumi=--
