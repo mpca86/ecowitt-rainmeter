@@ -1,4 +1,4 @@
-# Ecowitt Rainmeter self-updater
+﻿# Ecowitt Rainmeter self-updater
 param(
     [ValidateSet("Check","Install")]
     [string]$Action = "Check",
@@ -98,10 +98,10 @@ function Write-Changelog {
     # Convert the Markdown subset used in GitHub release notes to plain text.
     $plain = [string]$Text
     $plain = $plain -replace "(?m)^\s*#{1,6}\s*", ""
-    $plain = $plain -replace "\*\*([^*]+)\*\*", '$1'
-    $plain = $plain -replace "__([^_]+)__", '$1'
-    $plain = $plain -replace "`([^`]+)`", '$1'
-    $plain = $plain -replace "\[([^\]]+)\]\([^\)]+\)", '$1'
+    $plain = $plain -replace '\*\*([^*]+)\*\*', '$1'
+    $plain = $plain -replace '__([^_]+)__', '$1'
+    $plain = $plain.Replace('`', '')
+    $plain = $plain -replace '\[([^\]]+)\]\([^\)]+\)', '$1'
     $plain = $plain -replace "(?m)^\s*[-*]\s+", "• "
     $plain = $plain -replace "(\r?\n){3,}", "`r`n`r`n"
     $plain = $plain.Trim()
