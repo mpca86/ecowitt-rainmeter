@@ -8,7 +8,7 @@ Rainmeter skin for displaying weather data from Ecowitt gateways and sensors.
 
 ## Status
 
-Current development baseline: **v1.10.0-alpha**.
+Current Cloud API development baseline: **v1.10.2-cloud-alpha**.
 
 The project currently has two data-source directions:
 
@@ -60,3 +60,36 @@ The Rainmeter package is being prepared for distribution as an `.rmskin` install
 ## License
 
 Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported. See [LICENSE.md](LICENSE.md).
+
+
+## Self-updater
+
+The Cloud API branch includes a Rainmeter-native update UI under `Update/Update.ini`.
+
+Update channels:
+
+- `stable` — latest non-prerelease GitHub Release.
+- `beta` — latest prerelease GitHub Release.
+- `development` — latest `cloud-api` branch archive.
+
+The updater preserves local user state:
+
+- `@Resources/Includes/CloudSecrets.inc`
+- `@Resources/Includes/UserVariables.inc`
+- `Meteo/meteo_history.csv`
+- `@Resources/Diagnostics/ecowitt_cloud_debug.txt`
+
+Before installing an update it creates a ZIP backup in:
+
+`%LOCALAPPDATA%\EcowittRainmeter\Backups`
+
+Git-managed development checkouts are detected and are not overwritten by the public self-updater.
+
+### Releases
+
+Pushing a version tag such as `v1.11.0` or `v1.11.0-beta.1` triggers the GitHub Actions release workflow. It builds:
+
+- `EcowittWeather-v<version>.zip`
+- matching `.sha256`
+
+Tags containing `alpha`, `beta`, or `rc` are published as GitHub prereleases.
