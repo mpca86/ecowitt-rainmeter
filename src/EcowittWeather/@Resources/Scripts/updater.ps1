@@ -14,9 +14,13 @@ param(
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 $SkinPath = [System.IO.Path]::GetFullPath($SkinPath)
+
+# Windows PowerShell 5.1 can otherwise negotiate an older TLS version on some systems.
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $Headers = @{
     "User-Agent" = "Ecowitt-Rainmeter-Updater"
     "Accept" = "application/vnd.github+json"
+    "X-GitHub-Api-Version" = "2022-11-28"
 }
 
 $StatePath = Join-Path $SkinPath "@Resources\Update\UpdateState.inc"
@@ -74,17 +78,48 @@ function Write-State {
 
 function Get-Releases {
     $uri = "https://api.github.com/repos/$Repository/releases?per_page=30"
-    return @(Invoke-RestMethod -Uri $uri -Headers $Headers -Method Get)
+
+    # Important for Windows PowerShell 5.1:
+    # Invoke-RestMethod may emit a top-level JSON array as one non-enumerated
+    # pipeline object. Parse the JSON explicitly and flatten it ourselves.
+    $response = Invoke-WebRequest -Uri $uri -Headers $Headers -Method Get -UseBasicParsing
+    $parsed = ConvertFrom-Json -InputObject $response.Content
+
+    $items = @()
+    if ($null -eq $parsed) {
+        return $items
+    }
+
+    if ($parsed -is [System.Array]) {
+        foreach ($item in $parsed) {
+            $items += $item
+        }
+    }
+    else {
+        $items += $parsed
+    }
+
+    return $items
 }
 
 function Get-SelectedRelease {
-    $releases = Get-Releases | Where-Object { -not $_.draft }
-    if ($Channel -eq "stable") {
-        return $releases | Where-Object { -not $_.prerelease } | Select-Object -First 1
+    $releases = @(Get-Releases)
+
+    foreach ($release in $releases) {
+        if ($null -eq $release) { continue }
+        if ([bool]$release.draft) { continue }
+
+        $isPrerelease = [bool]$release.prerelease
+
+        if ($Channel -eq "stable" -and -not $isPrerelease) {
+            return $release
+        }
+
+        if ($Channel -eq "beta" -and $isPrerelease) {
+            return $release
+        }
     }
-    if ($Channel -eq "beta") {
-        return $releases | Where-Object { $_.prerelease } | Select-Object -First 1
-    }
+
     return $null
 }
 
