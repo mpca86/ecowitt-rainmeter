@@ -93,6 +93,34 @@ function Get-DevelopmentInfo {
     return Invoke-RestMethod -Uri $uri -Headers $Headers -Method Get
 }
 
+function Get-LocalGitHead {
+    $git = Get-Command git -ErrorAction SilentlyContinue
+    if (-not $git) { return "" }
+
+    $candidates = @($SkinPath)
+    try {
+        $item = Get-Item -LiteralPath $SkinPath -ErrorAction Stop
+        if ($item.Target) {
+            foreach ($target in @($item.Target)) {
+                if ($target) { $candidates += [string]$target }
+            }
+        }
+    }
+    catch {}
+
+    foreach ($candidate in $candidates | Select-Object -Unique) {
+        try {
+            $head = & git -C $candidate rev-parse HEAD 2>$null
+            if ($LASTEXITCODE -eq 0 -and $head) {
+                return ([string]$head).Trim()
+            }
+        }
+        catch {}
+    }
+
+    return ""
+}
+
 function Test-GitCheckout {
     $git = Get-Command git -ErrorAction SilentlyContinue
     if (-not $git) { return $false }
@@ -219,17 +247,31 @@ try {
             $info = Get-DevelopmentInfo
             $sha = [string]$info.commit.sha
             $short = $sha.Substring(0,7)
-            $installed = Read-StateValue "InstalledCommit"
+
+            $installed = Get-LocalGitHead
+            if ([string]::IsNullOrWhiteSpace($installed)) {
+                $installed = Read-StateValue "InstalledCommit"
+            }
+
             $available = [int]($sha -ne $installed)
-            if ($available) { $status = "Dostupný development build $short" }
-            else { $status = "Development build je aktuálny ($short)" }
-            Write-State -Status $status -RemoteVersion "dev-$short" -Available $available
+            if ($available) {
+                $status = "Dostupný development build $short"
+                $result = "UPDATE|dev-$short"
+            }
+            else {
+                $status = "Development build je aktuálny ($short)"
+                $result = "CURRENT|dev-$short"
+            }
+
+            Write-State -Status $status -RemoteVersion "dev-$short" -Available $available -InstalledCommit $installed
+            Write-Output $result
             exit 0
         }
 
         $release = Get-SelectedRelease
         if (-not $release) {
             Write-State -Status "Pre kanál $Channel zatiaľ nie je vydaná verzia." -Available 0
+            Write-Output "CURRENT|--"
             exit 0
         }
 
@@ -239,10 +281,17 @@ try {
         $normalizedTag = $tag.TrimStart("v")
         $available = [int](($tag -ne $installedTag) -and ($normalizedCurrent -ne $normalizedTag))
 
-        if ($available) { $status = "Dostupná verzia $tag" }
-        else { $status = "Používaš aktuálnu verziu $tag" }
+        if ($available) {
+            $status = "Dostupná verzia $tag"
+            $result = "UPDATE|$tag"
+        }
+        else {
+            $status = "Používaš aktuálnu verziu $tag"
+            $result = "CURRENT|$tag"
+        }
 
         Write-State -Status $status -RemoteVersion $tag -Available $available
+        Write-Output $result
         exit 0
     }
 
@@ -309,5 +358,6 @@ try {
 catch {
     $message = $_.Exception.Message
     Write-State -Status "Aktualizácia zlyhala: $message" -Available 0 -LastError $message
+    Write-Output ("ERROR|" + $message)
     exit 1
 }
