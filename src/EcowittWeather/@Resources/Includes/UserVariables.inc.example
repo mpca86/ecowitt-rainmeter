@@ -14,4 +14,4 @@ GatewayLabel=Gateway
 CloudRefreshSeconds=60
 
 ; stable | beta | development
-UpdateChannel=stable
+UpdateChannel=beta
