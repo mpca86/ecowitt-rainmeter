@@ -1,22 +1,20 @@
-# Ecowitt Weather v1.11.0-beta.4
+# Ecowitt Weather v1.11.0-beta.5
 
-Štvrtá verejná beta verzia Rainmeter skinu **Ecowitt Weather – Cloud API**.
+Piata verejná beta verzia Rainmeter skinu **Ecowitt Weather – Cloud API**.
 
-## Účel vydania
+## Čo je nové
 
-Táto verzia bola prvým vydaním určeným na overenie kompletného procesu aktualizácie priamo zo skinu z beta.3.
+- Do panela **Aktualizácie** pribudla sekcia **ČO JE NOVÉ** s poznámkami k najnovšej verzii.
+- Changelog sa po kontrole aktualizácií načíta priamo z GitHub Release a zobrazí sa v Rainmeteri.
+- Pribudlo tlačidlo **OTVORIŤ CELÝ CHANGELOG**, ktoré otvorí kompletný lokálny výpis v Notepade.
+- Opravené zobrazovanie času poslednej kontroly aktualizácií.
+- Changelog a poznámky k vydaniam sú odteraz písané po slovensky.
+- Runtime súbor `Changelog.txt` sa nezahŕňa do Git repozitára ani distribučných balíkov.
 
-Očakávaný postup:
+## Aktualizácia
 
-`METEO CLOUD ●` → **Aktualizácie** → **AKTUALIZOVAŤ** → záloha → stiahnutie → overenie SHA256 → inštalácia → obnovenie Rainmetera.
+Používatelia verzie `v1.11.0-beta.4` môžu aktualizovať priamo cez:
 
-## Zmeny
+`METEO CLOUD ●` → **Aktualizácie** → **AKTUALIZOVAŤ**
 
-- Aktualizované číslo balíka a všetky Rainmeter metadata na `v1.11.0-beta.4`.
-- Vynútený UTF-8 výstup z Windows PowerShell 5.1, aby Rainmeter RunCommand dostával správne dekódovaný text.
-- Zachovaná oprava vyhľadávania GitHub prerelease verzií z beta.3.
-- Pri aktualizácii sa zachovávajú `CloudSecrets.inc`, `UserVariables.inc`, história, diagnostika a stav aktualizácií.
-
-## Test
-
-Na inštalácii beta.3 s kanálom **Beta** má skin rozpoznať `v1.11.0-beta.4`, zobraziť indikátor pri **METEO CLOUD** a umožniť aktualizáciu bez ručnej inštalácie nového `.rmskin` balíka.
+Pri aktualizácii sa naďalej zachovávajú používateľské API údaje, aliasy senzorov, história a diagnostika.

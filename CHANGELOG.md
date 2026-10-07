@@ -1,5 +1,14 @@
 # Prehľad zmien
 
+## v1.11.0-beta.5 — 2026-10-07
+
+- Do panela Aktualizácie pridaná sekcia ČO JE NOVÉ.
+- Poznámky k vydaniu sa načítavajú z GitHub Release a zobrazujú priamo v Rainmeteri.
+- Pridané tlačidlo OTVORIŤ CELÝ CHANGELOG.
+- Opravené zobrazovanie času poslednej kontroly aktualizácií.
+- Changelog a release notes sú odteraz písané po slovensky.
+- Runtime súbor Changelog.txt je vylúčený z Git repozitára a distribučných balíkov.
+
 ## v1.11.0-beta.4 — 2026-10-07
 
 - Štvrtá verejná beta verzia vetvy Cloud API.

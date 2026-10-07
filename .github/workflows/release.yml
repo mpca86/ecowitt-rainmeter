@@ -22,24 +22,14 @@ jobs:
         id: version
         shell: bash
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import os
-
-          text = Path("src/EcowittWeather/@Resources/Includes/Variables.inc").read_text(encoding="utf-16")
-          version = ""
-          for line in text.splitlines():
-              if line.startswith("SkinVersion="):
-                  version = line.split("=", 1)[1].strip()
-                  break
-
-          if not version:
-              raise SystemExit("SkinVersion not found")
-
-          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
-              f.write(f"version={version}\n")
-              f.write(f"tag=v{version}\n")
-          PY
+          VERSION="$(tr -d '\r\n' < packaging/RELEASE_VERSION)"
+          VERSION="${VERSION#v}"
+          if [ -z "$VERSION" ]; then
+            echo "Release version not found"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Stage package
         shell: bash
@@ -54,6 +44,26 @@ jobs:
             --exclude 'UpdateState.inc' \
             --exclude 'Changelog.txt'
           cp packaging/RMSKIN.ini build/rmskin/RMSKIN.ini
+
+      - name: Stamp release metadata
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os, re
+          root = Path("build/rmskin/Skins/EcowittWeather")
+          version = os.environ["VERSION"]
+          for path in root.rglob("*.ini"):
+              text = path.read_text(encoding="utf-16")
+              text = re.sub(r"(?m)^Version=.*$", f"Version={version}", text, count=1)
+              path.write_text(text, encoding="utf-16")
+          variables = root / "@Resources" / "Includes" / "Variables.inc"
+          text = variables.read_text(encoding="utf-16")
+          text = re.sub(r"(?m)^SkinVersion=.*$", f"SkinVersion={version}", text, count=1)
+          variables.write_text(text, encoding="utf-16")
+          PY
 
       - name: Build manual ZIP
         shell: bash
@@ -103,7 +113,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.version.outputs.tag }}
-          VERSION: ${{ steps.version.outputs.version }}
         run: |
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" dist/* --clobber
