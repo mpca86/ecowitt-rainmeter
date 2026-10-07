@@ -1,43 +1,104 @@
-name: Build EcowittWeather release
+name: Publish Ecowitt Weather release
 
 on:
   push:
-    tags:
-      - "v*"
+    branches:
+      - "cloud-api"
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
   release:
-    runs-on: windows-latest
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'release:')
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build ZIP and SHA256
-        shell: pwsh
+      - name: Read version
+        id: version
+        shell: bash
         run: |
-          ./packaging/build-release.ps1 -Version "$env:GITHUB_REF_NAME"
+          VERSION="$(grep -a '^SkinVersion=' src/EcowittWeather/@Resources/Includes/Variables.inc | head -n1 | tr -d '\r\000' | cut -d= -f2-)"
+          if [ -z "$VERSION" ]; then
+            echo "SkinVersion not found"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Create GitHub Release
-        shell: pwsh
+      - name: Stage package
+        shell: bash
+        run: |
+          rm -rf build dist
+          mkdir -p build/rmskin/Skins/EcowittWeather dist
+          rsync -a src/EcowittWeather/ build/rmskin/Skins/EcowittWeather/ \
+            --exclude 'CloudSecrets.inc' \
+            --exclude 'UserVariables.inc' \
+            --exclude 'meteo_history.csv' \
+            --exclude 'ecowitt_cloud_debug.txt' \
+            --exclude 'UpdateState.inc'
+          cp packaging/RMSKIN.ini build/rmskin/RMSKIN.ini
+
+      - name: Build manual ZIP
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          cd build/rmskin/Skins
+          zip -9 -r "$GITHUB_WORKSPACE/dist/EcowittWeather-v$VERSION.zip" EcowittWeather
+          cd "$GITHUB_WORKSPACE"
+          sha256sum "dist/EcowittWeather-v$VERSION.zip" > "dist/EcowittWeather-v$VERSION.zip.sha256"
+
+      - name: Build RMSKIN
+        id: rmskin
+        uses: 2bndy5/rmskin-action@v2.0.4
+        with:
+          path: build/rmskin
+          dir-out: dist
+          version: ${{ steps.version.outputs.version }}
+          title: Ecowitt Weather
+          author: Martin Šturcel (mpca86)
+
+      - name: Normalize RMSKIN filename and checksum
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          GENERATED: ${{ steps.rmskin.outputs.arc-name }}
+        run: |
+          if [ -f "$GENERATED" ]; then
+            SRC="$GENERATED"
+          else
+            SRC="dist/$GENERATED"
+          fi
+          mv "$SRC" "dist/EcowittWeather-v$VERSION.rmskin"
+          sha256sum "dist/EcowittWeather-v$VERSION.rmskin" > "dist/EcowittWeather-v$VERSION.rmskin.sha256"
+
+      - name: Validate release contents
+        shell: bash
+        run: |
+          if find build/rmskin -type f \( -name 'CloudSecrets.inc' -o -name 'UserVariables.inc' -o -name 'meteo_history.csv' -o -name 'ecowitt_cloud_debug.txt' -o -name 'UpdateState.inc' \) | grep -q .; then
+            echo "Private/runtime file found in staged release"
+            exit 1
+          fi
+          ls -lah dist
+
+      - name: Publish GitHub prerelease
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          $tag = "$env:GITHUB_REF_NAME"
-          $files = Get-ChildItem -Path dist -File | Where-Object { $_.Name -match "\.zip(\.sha256)?$" }
-
-          $arguments = @("release", "create", $tag)
-          foreach ($file in $files) {
-              $arguments += $file.FullName
-          }
-
-          $arguments += @("--title", $tag, "--generate-notes")
-
-          if ($tag -match "(?i)-(alpha|beta|rc)") {
-              $arguments += "--prerelease"
-          }
-
-          & gh @arguments
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --clobber
+          else
+            gh release create "$TAG" dist/* \
+              --target "$GITHUB_SHA" \
+              --title "Ecowitt Weather $TAG" \
+              --notes-file packaging/RELEASE_NOTES.md \
+              --prerelease
+          fi
