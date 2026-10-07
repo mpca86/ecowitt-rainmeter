@@ -22,13 +22,24 @@ jobs:
         id: version
         shell: bash
         run: |
-          VERSION="$(grep -a '^SkinVersion=' src/EcowittWeather/@Resources/Includes/Variables.inc | head -n1 | tr -d '\r\000' | cut -d= -f2-)"
-          if [ -z "$VERSION" ]; then
-            echo "SkinVersion not found"
-            exit 1
-          fi
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+
+          text = Path("src/EcowittWeather/@Resources/Includes/Variables.inc").read_text(encoding="utf-16")
+          version = ""
+          for line in text.splitlines():
+              if line.startswith("SkinVersion="):
+                  version = line.split("=", 1)[1].strip()
+                  break
+
+          if not version:
+              raise SystemExit("SkinVersion not found")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+              f.write(f"version={version}\n")
+              f.write(f"tag=v{version}\n")
+          PY
 
       - name: Stage package
         shell: bash
