@@ -1,13 +1,30 @@
 # Packaging
 
-Files and notes for building the public Rainmeter `.rmskin` installer belong here.
+Public release assets are built from `src/EcowittWeather`.
 
-Target installer flow:
+## RMSKIN
 
-1. install package
-2. open Settings
-3. enter gateway address / configuration
-4. test connection
-5. load Meteo skin
+`packaging/RMSKIN.ini` is the Rainmeter Skin Installer manifest. The package:
 
-Build artifacts (`*.rmskin`) are ignored by Git and should be attached to GitHub Releases.
+- installs the root skin as `EcowittWeather`;
+- opens `Settings/Settings.ini` after installation;
+- uses `MergeSkins=1` so later `.rmskin` upgrades can preserve local user files that are not present in the package.
+
+The release workflow uses `2bndy5/rmskin-action` to generate a validating `.rmskin` package with Rainmeter's required custom footer.
+
+## Release assets
+
+Each release contains:
+
+- `EcowittWeather-v<version>.rmskin`
+- `EcowittWeather-v<version>.rmskin.sha256`
+- `EcowittWeather-v<version>.zip`
+- `EcowittWeather-v<version>.zip.sha256`
+
+Runtime and secret files are excluded.
+
+## Publishing
+
+The workflow runs on `cloud-api` only when the head commit message starts with `release:`.
+
+Example: `release: v1.11.0-beta.1`
