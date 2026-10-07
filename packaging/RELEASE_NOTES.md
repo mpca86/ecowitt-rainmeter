@@ -1,35 +1,24 @@
-# Ecowitt Weather v1.11.0-beta.1
+# Ecowitt Weather v1.11.0-beta.2
 
-First public beta of the Ecowitt **Cloud API** Rainmeter skin.
+Second public beta of the Ecowitt **Cloud API** Rainmeter skin.
 
-## Highlights
+## What changed since beta.1
 
-- Ecowitt Web API v3 real-time data source.
-- Outdoor temperature / humidity, wind, solar radiation, UV and rainfall.
-- Indoor gateway temperature / humidity and pressure.
-- Dynamic CH1–CH8 temperature / humidity channels.
-- User-defined sensor aliases.
-- 15-minute temperature trends and 3-hour pressure tendency.
-- Persistent local history.
-- Settings, Sensors, Diagnostics and Update panels.
-- Safe local storage for Application Key, API Key and station MAC.
-- Stable / Beta / Development update channels.
-- Automatic update check with a notification beside **METEO CLOUD**.
-- First `.rmskin` installer package.
+- Version bump to `v1.11.0-beta.2` for a real end-to-end in-skin update test.
+- Keeps the same Cloud API data model and user configuration split introduced in beta.1.
+- Preserves `CloudSecrets.inc`, `UserVariables.inc`, history and diagnostics during self-update.
+- Beta channel remains the default for beta installations.
+
+## Test goal
+
+This release is intentionally small so beta.1 installations can verify the complete updater flow:
+
+`METEO CLOUD ●` → **Aktualizácie** → **AKTUALIZOVAŤ** → backup → download → SHA256 → install → Rainmeter refresh.
 
 ## Installation
 
-Download `EcowittWeather-v1.11.0-beta.1.rmskin`, open it with Rainmeter and install the package. The installer opens **Settings** after installation.
+New users can install `EcowittWeather-v1.11.0-beta.2.rmskin` directly with Rainmeter.
 
-Enter:
-- Application Key
-- API Key
-- station MAC address
+Existing beta.1 users should switch to the **Beta** update channel and use the in-skin updater.
 
-Confirm every field with **Enter**, then run **TEST CLOUD API**.
-
-## Notes
-
-This is a beta release. Cloud API channel names are mapped locally through the Sensors panel because Ecowitt real-time data exposes CH1–CH8 but does not reliably expose the user's custom sensor aliases.
-
-API credentials are stored only in the local `CloudSecrets.inc` file and are excluded from release packages and Git.
+API credentials remain local in `CloudSecrets.inc` and are excluded from release packages.
