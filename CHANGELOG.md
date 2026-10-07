@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.11.0-beta.4 — 2026-10-07
+
+- Fourth public Cloud API beta.
+- First release intended to validate the complete beta.3 → beta.4 in-skin update flow.
+- Forced UTF-8 stdout for Windows PowerShell 5.1 updater integration.
+- Keeps the PowerShell 5.1 GitHub prerelease discovery fix from beta.3.
+
+
 ## v1.11.0-beta.3 — 2026-10-07
 
 - Fixed GitHub prerelease enumeration on Windows PowerShell 5.1.
