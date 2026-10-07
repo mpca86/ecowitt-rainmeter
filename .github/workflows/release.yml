@@ -51,7 +51,8 @@ jobs:
             --exclude 'UserVariables.inc' \
             --exclude 'meteo_history.csv' \
             --exclude 'ecowitt_cloud_debug.txt' \
-            --exclude 'UpdateState.inc'
+            --exclude 'UpdateState.inc' \
+            --exclude 'Changelog.txt'
           cp packaging/RMSKIN.ini build/rmskin/RMSKIN.ini
 
       - name: Build manual ZIP
@@ -91,7 +92,7 @@ jobs:
       - name: Validate release contents
         shell: bash
         run: |
-          if find build/rmskin -type f \( -name 'CloudSecrets.inc' -o -name 'UserVariables.inc' -o -name 'meteo_history.csv' -o -name 'ecowitt_cloud_debug.txt' -o -name 'UpdateState.inc' \) | grep -q .; then
+          if find build/rmskin -type f \( -name 'CloudSecrets.inc' -o -name 'UserVariables.inc' -o -name 'meteo_history.csv' -o -name 'ecowitt_cloud_debug.txt' -o -name 'UpdateState.inc' -o -name 'Changelog.txt' \) | grep -q .; then
             echo "Private/runtime file found in staged release"
             exit 1
           fi
