@@ -23,7 +23,8 @@ $excludedNames = @(
     "UserVariables.inc",
     "meteo_history.csv",
     "ecowitt_cloud_debug.txt",
-    "UpdateState.inc"
+    "UpdateState.inc",
+    "Changelog.txt"
 )
 
 Get-ChildItem -LiteralPath $Source -File -Recurse | ForEach-Object {
