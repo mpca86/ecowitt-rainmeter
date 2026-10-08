@@ -40,6 +40,10 @@ jobs:
           dotnet run --project src/Desktop/EcowittWeather.SmokeTests -c Release --no-build
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      - name: Verify desktop UI theme and mouse gestures
+        shell: pwsh
+        run: ./src/Desktop/Testing/Assert-ThemeContract.ps1
+
       - name: Package portable Windows x64 build
         shell: pwsh
         env:
