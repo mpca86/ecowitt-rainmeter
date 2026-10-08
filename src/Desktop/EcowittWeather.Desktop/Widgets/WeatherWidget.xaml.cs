@@ -1,5 +1,7 @@
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Controls;
+using EcowittWeather.Core.Models;
 
 namespace EcowittWeather.Desktop.Widgets;
 
@@ -7,6 +9,8 @@ public partial class WeatherWidget : Window
 {
     public event EventHandler? SettingsRequested;
     public event EventHandler? RemoveRequested;
+    public event Action<string>? StationSwitchRequested;
+    private readonly ContextMenu _profileMenu = new();
 
     public WeatherWidget()
     {
@@ -20,6 +24,29 @@ public partial class WeatherWidget : Window
             try { DragMove(); }
             catch (InvalidOperationException) { /* Windows may end the drag early. */ }
         }
+    }
+
+    public void SetProfiles(IEnumerable<StationProfile> profiles, string selectedId)
+    {
+        _profileMenu.Items.Clear();
+        foreach (var profile in profiles)
+        {
+            var id = profile.Id;
+            var item = new MenuItem
+            {
+                Header = profile.Name,
+                IsCheckable = true,
+                IsChecked = profile.Id == selectedId
+            };
+            item.Click += (_, _) => StationSwitchRequested?.Invoke(id);
+            _profileMenu.Items.Add(item);
+        }
+    }
+
+    private void ChooseStation(object sender, RoutedEventArgs e)
+    {
+        _profileMenu.PlacementTarget = sender as UIElement;
+        _profileMenu.IsOpen = true;
     }
 
     private void OpenSettings(object sender, RoutedEventArgs e) =>
