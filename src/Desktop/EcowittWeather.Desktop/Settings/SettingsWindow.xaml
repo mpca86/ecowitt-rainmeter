@@ -48,29 +48,14 @@
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <ComboBox Name="ProfileCombo" MinHeight="35" VerticalAlignment="Center"
-                              Background="#FFF1F5FA" Foreground="#FF162B3C"
-                              BorderBrush="#FF89A5BF"
+                    <ComboBox Name="ProfileCombo" MinHeight="35"
+                              VerticalAlignment="Center"
+                              Style="{StaticResource DarkStationCombo}"
+                              ItemContainerStyle="{StaticResource DarkStationComboItem}"
                               SelectionChanged="ProfileSelectionChanged">
-                        <ComboBox.ItemContainerStyle>
-                            <Style TargetType="ComboBoxItem">
-                                <Setter Property="Foreground" Value="#FF162B3C"/>
-                                <Setter Property="Background" Value="#FFF1F5FA"/>
-                                <Style.Triggers>
-                                    <Trigger Property="IsHighlighted" Value="True">
-                                        <Setter Property="Background" Value="#FFD8E8F6"/>
-                                        <Setter Property="Foreground" Value="#FF162B3C"/>
-                                    </Trigger>
-                                    <Trigger Property="IsSelected" Value="True">
-                                        <Setter Property="Background" Value="#FFC4E0F2"/>
-                                        <Setter Property="Foreground" Value="#FF162B3C"/>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ComboBox.ItemContainerStyle>
                         <ComboBox.ItemTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding Name}" Foreground="#FF192B3C"
+                                <TextBlock Text="{Binding Name}" Foreground="White"
                                            FontSize="13" Margin="5,3"/>
                             </DataTemplate>
                         </ComboBox.ItemTemplate>
@@ -102,29 +87,13 @@
                                 HorizontalAlignment="Left" Margin="0,0,0,9"
                                 Click="LoadDevicesClick"/>
                         <ComboBox Name="StationCombo" MinHeight="37"
-                                  Background="#FFF1F5FA" Foreground="#FF13263A"
-                                  BorderBrush="#FF89A5BF" FontSize="12"
+                                  Style="{StaticResource DarkStationCombo}"
+                                  ItemContainerStyle="{StaticResource DarkStationComboItem}"
                                   IsEnabled="False" Margin="0,0,0,8"
                                   SelectionChanged="DeviceSelectionChanged">
-                            <ComboBox.ItemContainerStyle>
-                                <Style TargetType="ComboBoxItem">
-                                    <Setter Property="Foreground" Value="#FF162B3C"/>
-                                    <Setter Property="Background" Value="#FFF1F5FA"/>
-                                    <Style.Triggers>
-                                        <Trigger Property="IsHighlighted" Value="True">
-                                            <Setter Property="Background" Value="#FFD8E8F6"/>
-                                            <Setter Property="Foreground" Value="#FF162B3C"/>
-                                        </Trigger>
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter Property="Background" Value="#FFC4E0F2"/>
-                                            <Setter Property="Foreground" Value="#FF162B3C"/>
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </ComboBox.ItemContainerStyle>
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding Display}" Foreground="#FF162B3C"
+                                    <TextBlock Text="{Binding Display}" Foreground="White"
                                                FontSize="12" Margin="5,3"/>
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
@@ -159,8 +128,10 @@
                 <TextBlock TextWrapping="Wrap" Foreground="#FFB9CADA"
                            FontSize="11"
                            Text="Cloud API pre všetky stanice z jedného účtu. Dopyty na rovnakú stanicu sa zdieľajú medzi widgetmi."/>
-                <Button Content="O programe" HorizontalAlignment="Left"
-                        Margin="0,18,0,4" Click="AboutClick"/>
+                <StackPanel Orientation="Horizontal" Margin="0,18,0,4">
+                    <Button Content="Aktualizácie" Click="UpdatesClick"/>
+                    <Button Content="O programe" Click="AboutClick"/>
+                </StackPanel>
             </StackPanel>
         </ScrollViewer>
     </DockPanel>
