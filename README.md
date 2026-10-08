@@ -8,7 +8,7 @@ Rainmeter skin for displaying weather data from Ecowitt gateways and sensors.
 
 ## Status
 
-Current development baseline: **v1.10.0-alpha**.
+Current Cloud API beta: **v1.11.0-beta.6**.
 
 The project currently has two data-source directions:
 
@@ -38,7 +38,19 @@ samples/
 packaging/
 ```
 
-The Rainmeter package is being prepared for distribution as an `.rmskin` installer.
+The Cloud API beta is distributed as a Rainmeter `.rmskin` installer and as a manual ZIP package.
+
+## Installation — Cloud API beta
+
+Download the latest beta `.rmskin` from GitHub Releases, open it with Rainmeter and click **Install**. The package opens the Settings skin after installation.
+
+Required Ecowitt values:
+
+- Application Key
+- API Key
+- station MAC address
+
+Credentials remain local in `CloudSecrets.inc` and are not part of release packages.
 
 ## Current Local API features
 
@@ -57,6 +69,67 @@ The Rainmeter package is being prepared for distribution as an `.rmskin` install
 - persistent CSV history
 - Settings and Diagnostics skins
 
+## Desktop Edition (preview)
+
+A standalone .NET 8 / WPF Windows app is under development at
+[`src/Desktop/`](src/Desktop/README.md). It currently supports Ecowitt
+Cloud API, a tray icon, multiple weather windows sharing a single poller,
+and DPAPI-protected credentials. Local API, hybrid fallback and multiple
+stations are planned next.
+
+Windows build and parser smoke tests run through
+[Desktop CI](.github/workflows/desktop-build.yml). Desktop previews are
+built separately from Rainmeter Releases.
+
 ## License
 
 Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported. See [LICENSE.md](LICENSE.md).
+
+
+## Self-updater
+
+The Cloud API branch includes a Rainmeter-native update UI under `Update/Update.ini`.
+
+Update channels:
+
+- `stable` — latest non-prerelease GitHub Release.
+- `beta` — latest prerelease GitHub Release.
+- `development` — latest `cloud-api` branch archive.
+
+The updater preserves local user state:
+
+- `@Resources/Includes/CloudSecrets.inc`
+- `@Resources/Includes/UserVariables.inc`
+- `Meteo/meteo_history.csv`
+- `@Resources/Diagnostics/ecowitt_cloud_debug.txt`
+
+Before installing an update it creates a ZIP backup in:
+
+`%LOCALAPPDATA%\EcowittRainmeter\Backups`
+
+Git-managed development checkouts are detected and are not overwritten by the public self-updater.
+
+### Releases
+
+Pushing a version tag such as `v1.11.0` or `v1.11.0-beta.1` triggers the GitHub Actions release workflow. It builds:
+
+- `EcowittWeather-v<version>.zip`
+- matching `.sha256`
+
+Tags containing `alpha`, `beta`, or `rc` are published as GitHub prereleases.
+
+
+## Configuration transfer
+
+The Settings skin can export and import a portable `.ecowittconfig` bundle for provisioning multiple PCs.
+
+The bundle contains:
+
+- Ecowitt Application Key and API Key
+- station MAC address
+- user sensor labels
+- refresh interval and update channel
+
+Before import, the current local configuration is backed up under `%LOCALAPPDATA%\EcowittRainmeter\ConfigBackups`.
+
+The exported bundle is not encrypted and must be treated as a sensitive file.
