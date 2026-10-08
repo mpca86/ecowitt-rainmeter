@@ -9,11 +9,12 @@ public enum SourceMode
 
 public sealed record StationProfile
 {
-    public string Id { get; init; } = "default";
+    public string Id { get; init; } = Guid.NewGuid().ToString("N");
     public string Name { get; init; } = "Moja stanica";
     public SourceMode SourceMode { get; init; } = SourceMode.Cloud;
     public string CloudMac { get; init; } = "";
     public string LocalGatewayHost { get; init; } = "";
+    public Dictionary<int, string> SensorAliases { get; init; } = [];
 }
 
 public sealed record CloudCredentials(string ApplicationKey, string ApiKey)
