@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Windows;
 using MessageBox = System.Windows.MessageBox;
 
@@ -12,7 +13,16 @@ public partial class AboutWindow : Window
         InitializeComponent();
         var attr = Assembly.GetExecutingAssembly()
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>();
-        VersionText.Text = "Verzia: " + (attr?.InformationalVersion ?? "vývojová");
+        var fullVersion = attr?.InformationalVersion ?? "vývojová";
+        var parts = fullVersion.Split('+', 2);
+        // Show a readable build identifier while retaining the full version in a tooltip.
+        var shortCommit = parts.Length == 2 && parts[1].Length >= 7
+            ? " · build " + parts[1][..7] : "";
+        VersionText.Text = "Verzia: " + parts[0] + shortCommit;
+        VersionText.ToolTip = fullVersion;
+        // Never hard-code the framework version in the About dialog.
+        TechnologyText.Text = "Technológia: " + RuntimeInformation.FrameworkDescription +
+                              " · WPF · Ecowitt Web API v3";
     }
 
     private void CloseClick(object sender, RoutedEventArgs e) => Close();

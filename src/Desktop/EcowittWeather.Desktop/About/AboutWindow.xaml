@@ -20,7 +20,8 @@
                     <TextBlock Text="Desktop Edition" Foreground="#FF86CFED"
                                FontSize="14" FontWeight="SemiBold"/>
                     <TextBlock Name="VersionText" Foreground="#FFC1D0DD"
-                               Margin="0,5,0,0"/>
+                               Margin="0,5,0,0" MaxWidth="310"
+                               TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
             </StackPanel>
             <Border BorderBrush="#FF425A74" BorderThickness="0,1,0,0"
@@ -29,7 +30,7 @@
                        TextWrapping="Wrap" FontSize="13" Margin="0,0,0,16"/>
             <TextBlock Text="Autor: Martin Šturcel (mpca86)" FontWeight="SemiBold"
                        Margin="0,0,0,9"/>
-            <TextBlock Text="Technológia: .NET 8 · WPF · Ecowitt Web API v3"
+            <TextBlock Name="TechnologyText" Text="Technológia: .NET · WPF · Ecowitt Web API v3"
                        Margin="0,0,0,9"/>
             <TextBlock Text="Licencia: Creative Commons BY-NC-SA 3.0"
                        Margin="0,0,0,12"/>
