@@ -6,6 +6,7 @@ using EcowittWeather.Infrastructure.Updates;
 using System.Text.Json;
 using EcowittWeather.Infrastructure.Configuration;
 using EcowittWeather.Infrastructure.Ecowitt.Cloud;
+using EcowittWeather.Desktop.ViewModels;
 
 static void Expect(bool condition, string message)
 {
@@ -401,6 +402,26 @@ using (var homeFields = JsonDocument.Parse(LoadGw3000Fixture("gw3000_fw1_2_4_hom
         "hex ID 0x05 must not match decimal VPD ID 5");
 }
 Console.WriteLine("PASS: GW3000 gust ID 0x0C and decimal/hex field ID isolation");
+
+// P0.2 UI semantics: never present Local HTTP retrieval time as a sensor
+// observation time. Also confirm the timestamp continues to use local time.
+var sampleRetrieval = new DateTimeOffset(2026, 10, 8, 18, 20, 0, TimeSpan.Zero);
+var sampleObservation = new DateTimeOffset(2026, 10, 8, 18, 15, 0, TimeSpan.Zero);
+var timeViewModel = new WeatherViewModel();
+var localTimed = officeGw3000 with { RetrievedAt = sampleRetrieval, ObservedAt = null };
+timeViewModel.ShowSnapshot(localTimed, "Kancelária", new Dictionary<int, string>());
+Expect(timeViewModel.Updated == "Načítané: " +
+       sampleRetrieval.ToLocalTime().ToString("dd.MM. HH:mm", System.Globalization.CultureInfo.CurrentCulture),
+    "Local GW3000 without ObservedAt labels retrieved timestamp as Načítané");
+
+var cloudTimed = localTimed with { ObservedAt = sampleObservation, Source = "Ecowitt Web API" };
+timeViewModel.ShowSnapshot(cloudTimed, "Kancelária", new Dictionary<int, string>());
+Expect(timeViewModel.Updated == "Meranie: " +
+       sampleObservation.ToLocalTime().ToString("dd.MM. HH:mm", System.Globalization.CultureInfo.CurrentCulture),
+    "Cloud snapshot with ObservedAt labels actual measurement timestamp");
+Expect(timeViewModel.Status == "Ecowitt Web API",
+    "timestamp fix preserves source status");
+Console.WriteLine("PASS: Desktop time labels use ObservedAt or RetrievedAt correctly");
 
 Console.WriteLine("PASS: real anonymized GW3000 FW 1.2.4 home/office fixtures");
 

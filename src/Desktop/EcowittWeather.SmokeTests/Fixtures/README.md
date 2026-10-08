@@ -17,3 +17,7 @@ The missing sections are a **gateway response fact, not proof of a parser failur
 - `common_list/0x03` (hex text ID): dew point; must not be matched by decimal `3`
 
 The office live capture confirmed current wind speed 0.3 m/s, gust 0.5 m/s, and day maximum 7.7 m/s. Regression tests check these values separately without storing an unredacted Live Data screenshot or the user's LAN address. Desktop currently displays only the existing normalized fields; this patch does not add new widget types or fields.
+
+## Measurement timestamps (Desktop Edition)
+
+These GW3000 Local API captures contain **no sensor observation timestamp**. Desktop footer must therefore label the time of the successful HTTP retrieval as **`Načítané:`**, never `Meranie:`. When a weather source provides `WeatherSnapshot.ObservedAt` (such as Cloud), the footer displays **`Meranie:`** with the observation time. Both are shown in the user's local time zone. The two timestamps must not be conflated.

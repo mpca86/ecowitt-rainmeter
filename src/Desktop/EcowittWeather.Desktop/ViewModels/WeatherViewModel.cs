@@ -65,9 +65,12 @@ public sealed class WeatherViewModel : INotifyPropertyChanged
                 Degrees(sensor.TemperatureC) + " / " + Percent(sensor.HumidityPercent)));
         }
 
-        var when = s.ObservedAt?.ToLocalTime().ToString("dd.MM. HH:mm", CultureInfo.CurrentCulture)
-                   ?? s.RetrievedAt.ToLocalTime().ToString("dd.MM. HH:mm", CultureInfo.CurrentCulture);
-        Updated = "Meranie: " + when;
+        // Local GW3000 does not supply an observation timestamp. Do not label
+        // the time of the HTTP request as if it were the time of measurement.
+        var hasObservationTime = s.ObservedAt.HasValue;
+        var timestamp = hasObservationTime ? s.ObservedAt.Value : s.RetrievedAt;
+        var when = timestamp.ToLocalTime().ToString("dd.MM. HH:mm", CultureInfo.CurrentCulture);
+        Updated = (hasObservationTime ? "Meranie: " : "Načítané: ") + when;
         Status = s.Source;
     }
 

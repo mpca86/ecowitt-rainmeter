@@ -9,5 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\EcowittWeather.Infrastructure\EcowittWeather.Infrastructure.csproj" />
     <EmbeddedResource Include="Fixtures\*.json" />
+    <!-- Headless regression of the production WPF-independent view model. -->
+    <Compile Include="..\EcowittWeather.Desktop\ViewModels\WeatherViewModel.cs" Link="ViewModels\WeatherViewModel.cs" />
   </ItemGroup>
 </Project>
