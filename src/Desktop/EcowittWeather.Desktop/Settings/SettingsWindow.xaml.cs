@@ -1,4 +1,6 @@
 using System.Net.Http;
+using System.Diagnostics;
+using EcowittWeather.Infrastructure.Ecowitt;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -32,7 +34,7 @@ public partial class SettingsWindow : Window
     public AppSettings ResultSettings { get; private set; }
     public CloudCredentials ResultCredentials { get; private set; }
 
-    public SettingsWindow(AppSettings settings, CloudCredentials credentials)
+    public SettingsWindow(AppSettings settings, CloudCredentials credentials, bool firstRun = false)
     {
         InitializeComponent();
         settings.Normalize();
@@ -75,6 +77,7 @@ public partial class SettingsWindow : Window
         ProfileCombo.SelectedIndex = 0;
         _loading = false;
         LoadProfile(_profiles[0]);
+        SettingsTabs.SelectedIndex = firstRun ? 0 : 1;
     }
 
     private void PersistEditor()
@@ -142,6 +145,8 @@ public partial class SettingsWindow : Window
     private void UpdateSourceModeHelp(SourceMode mode)
     {
         LocalGatewayPanel.Visibility = mode == SourceMode.Cloud
+            ? Visibility.Collapsed : Visibility.Visible;
+        CloudFieldsPanel.Visibility = mode == SourceMode.Local
             ? Visibility.Collapsed : Visibility.Visible;
         SourceModeDescription.Text = mode switch
         {
@@ -327,6 +332,86 @@ public partial class SettingsWindow : Window
 
         DialogResult = true;
         Close();
+    }
+
+    private void StartSetupClick(object sender, RoutedEventArgs e) =>
+        SettingsTabs.SelectedIndex = 2;
+
+    private void GuideClick(object sender, RoutedEventArgs e) =>
+        OpenBrowser("https://github.com/mpca86/ecowitt-rainmeter/blob/cloud-api/docs/desktop/PRVE_SPUSTENIE.md");
+
+    private void EcowittClick(object sender, RoutedEventArgs e) =>
+        OpenBrowser("https://www.ecowitt.net/");
+
+    private void OpenBrowser(string address)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo(address) { UseShellExecute = true });
+        }
+        catch
+        {
+            MessageBox.Show(this, "Nepodarilo sa otvoriť prehliadač. Odkaz: " + address,
+                "Otvoriť návod", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private async void TestConnectionClick(object sender, RoutedEventArgs e)
+    {
+        var selectedMode = (SourceModeCombo.SelectedItem as SourceChoice)?.Mode ?? SourceMode.Cloud;
+        var profile = _profiles.FirstOrDefault(p => p.Id == _currentId);
+        if (profile is null) return;
+
+        profile = profile with
+        {
+            SourceMode = selectedMode,
+            LocalGatewayHost = LocalGatewayBox.Text.Trim(),
+            CloudMac = MacBox.Text.Trim().Replace('-', ':').ToUpperInvariant()
+        };
+
+        var creds = new CloudCredentials(
+            ApplicationKeyBox.Password.Trim(), ApiKeyBox.Password.Trim());
+        if (selectedMode != SourceMode.Local && !creds.IsConfigured)
+        {
+            ConnectionTestStatus.Text = "Doplň Application Key a API Key.";
+            ConnectionTestStatus.Foreground = Brushes.LightSalmon;
+            return;
+        }
+
+        TestConnectionButton.IsEnabled = false;
+        ConnectionTestStatus.Text = "Overujem dostupnosť a načítavam meranie...";
+        ConnectionTestStatus.Foreground = Brushes.White;
+
+        try
+        {
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(22) };
+            var router = new StationWeatherRouter(
+                new EcowittLocalSource(http),
+                new EcowittCloudSource(http, creds));
+            var reading = await router.FetchAsync(profile);
+            if (!IsLoaded) return;
+            ConnectionTestStatus.Text =
+                "Pripojenie funguje. Zdroj: " + reading.Source +
+                ". Vonkajšia teplota: " +
+                (reading.OutdoorTemperatureC?.ToString("0.0") ?? "—") + " °C.";
+            ConnectionTestStatus.Foreground = new SolidColorBrush(
+                Color.FromRgb(136, 237, 205));
+        }
+        catch (Exception)
+        {
+            if (!IsLoaded) return;
+            ConnectionTestStatus.Text = selectedMode switch
+            {
+                SourceMode.Local => "Local API neodpovedá. Over IP adresu a prístup z tohto počítača.",
+                SourceMode.Auto => "Local ani Web API nevrátili merania. Skontroluj adresu gatewaya, MAC a kľúče.",
+                _ => "Web API nevrátilo merania. Skontroluj kľúče, MAC a internet."
+            };
+            ConnectionTestStatus.Foreground = Brushes.LightSalmon;
+        }
+        finally
+        {
+            if (IsLoaded) TestConnectionButton.IsEnabled = true;
+        }
     }
 
     private void UpdatesClick(object sender, RoutedEventArgs e)
