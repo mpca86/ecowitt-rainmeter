@@ -8,8 +8,8 @@ using EcowittWeather.Core.Models;
 namespace EcowittWeather.Desktop.Widgets;
 
 /// <summary>
-/// Clicking the widget opens its context menu. Shift+left-drag, or choosing
-/// "Presunúť widget" in that menu and then dragging, repositions the window.
+/// Left mouse drag repositions the widget; right mouse opens a shared,
+/// centrally themed context menu with station selection and settings.
 /// </summary>
 public partial class WeatherWidget : Window
 {
@@ -21,7 +21,6 @@ public partial class WeatherWidget : Window
 
     private readonly ContextMenu _menu = new();
     private readonly MenuItem _stations = new() { Header = "Zmeniť meteostanicu" };
-    private bool _moveOnNextClick;
 
     public WeatherWidget()
     {
@@ -31,12 +30,6 @@ public partial class WeatherWidget : Window
         AddMenuAction("Nastavenia", () => SettingsRequested?.Invoke(this, EventArgs.Empty));
         AddMenuAction("Aktualizácie", () => UpdateRequested?.Invoke(this, EventArgs.Empty));
         _menu.Items.Add(new Separator());
-        AddMenuAction("Presunúť widget (alebo Shift + potiahnuť)",
-            () =>
-            {
-                _moveOnNextClick = true;
-                Cursor = Cursors.SizeAll;
-            });
         AddMenuAction("Zavrieť widget", () => RemoveRequested?.Invoke(this, EventArgs.Empty));
     }
 
@@ -64,21 +57,20 @@ public partial class WeatherWidget : Window
         }
     }
 
+    private void DragWidget(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ChangedButton != MouseButton.Left || e.ButtonState != MouseButtonState.Pressed)
+            return;
+        e.Handled = true;
+        try { DragMove(); }
+        catch (InvalidOperationException) { }
+        finally { PositionCommitted?.Invoke(this, EventArgs.Empty); }
+    }
+
     private void ShowWidgetMenu(object sender, MouseButtonEventArgs e)
     {
-        if (e.ChangedButton != MouseButton.Left) return;
+        if (e.ChangedButton != MouseButton.Right) return;
         e.Handled = true;
-
-        if (_moveOnNextClick || Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
-        {
-            _moveOnNextClick = false;
-            Cursor = Cursors.Arrow;
-            try { DragMove(); }
-            catch (InvalidOperationException) { }
-            finally { PositionCommitted?.Invoke(this, EventArgs.Empty); }
-            return;
-        }
-
         _menu.PlacementTarget = sender as UIElement;
         _menu.Placement = PlacementMode.MousePoint;
         _menu.IsOpen = true;
