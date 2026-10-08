@@ -150,7 +150,8 @@ public sealed partial class DesktopUpdateService(HttpClient http)
             using var response = await http.GetAsync(
                 release.PackageUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
             response.EnsureSuccessStatusCode();
-            if (response.Content.Headers.ContentLength is long length && length > MaxArchiveBytes)
+            var length = response.Content.Headers.ContentLength;
+            if (length is > MaxArchiveBytes)
                 throw new InvalidDataException("Aktualizačný balík je priveľký.");
 
             await using (var source = await response.Content.ReadAsStreamAsync(cancellationToken))
@@ -165,7 +166,7 @@ public sealed partial class DesktopUpdateService(HttpClient http)
                     if (done > MaxArchiveBytes)
                         throw new InvalidDataException("Aktualizačný balík je priveľký.");
                     await target.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
-                    if (length > 0) progress?.Report((double)done / length);
+                    if (length is > 0) progress?.Report((double)done / length.Value);
                 }
             }
 
@@ -176,6 +177,13 @@ public sealed partial class DesktopUpdateService(HttpClient http)
                     throw new InvalidDataException("SHA-256 aktualizačného balíka nesúhlasí.");
             }
 
+            // Cap the uncompressed size too (a small ZIP must not create huge files).
+            using (var zip = System.IO.Compression.ZipFile.OpenRead(archivePath))
+            {
+                if (zip.Entries.Count > 200 ||
+                    zip.Entries.Sum(e => e.Length) > 550L * 1024L * 1024L)
+                    throw new InvalidDataException("Aktualizačný archív prekračuje bezpečný limit.");
+            }
             System.IO.Compression.ZipFile.ExtractToDirectory(archivePath, payloadPath);
 
             var exe = Path.Combine(payloadPath, "EcowittWeather.Desktop.exe");
