@@ -105,6 +105,8 @@ public partial class App : System.Windows.Application
         settings.Click += (_, _) => Dispatcher.Invoke(ShowSettings);
         var refresh = new Forms.ToolStripMenuItem("Obnoviť dáta");
         refresh.Click += (_, _) => Dispatcher.Invoke(() => _ = RefreshAllAsync(force: true));
+        var help = new Forms.ToolStripMenuItem("Prvé nastavenie / Pomoc");
+        help.Click += (_, _) => Dispatcher.Invoke(() => ShowSettings(firstRun: true));
         var updates = new Forms.ToolStripMenuItem("Aktualizácie");
         updates.Click += (_, _) => Dispatcher.Invoke(ShowUpdates);
         var about = new Forms.ToolStripMenuItem("O programe");
@@ -114,7 +116,7 @@ public partial class App : System.Windows.Application
 
         menu.Items.AddRange([
             open, _addWidgetMenu, settings, refresh,
-            new Forms.ToolStripSeparator(), updates, about,
+            new Forms.ToolStripSeparator(), help, updates, about,
             new Forms.ToolStripSeparator(), exit
         ]);
 
