@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using Cursors = System.Windows.Input.Cursors;
 using EcowittWeather.Core.Models;
 
 namespace EcowittWeather.Desktop.Widgets;
