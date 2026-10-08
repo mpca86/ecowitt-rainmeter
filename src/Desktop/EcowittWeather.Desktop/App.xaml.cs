@@ -10,7 +10,9 @@ using EcowittWeather.Desktop.Settings;
 using EcowittWeather.Desktop.ViewModels;
 using EcowittWeather.Desktop.Widgets;
 using EcowittWeather.Infrastructure.Configuration;
+using EcowittWeather.Infrastructure.Ecowitt;
 using EcowittWeather.Infrastructure.Ecowitt.Cloud;
+using EcowittWeather.Infrastructure.Ecowitt.Local;
 using EcowittWeather.Infrastructure.Security;
 using Forms = System.Windows.Forms;
 using MessageBox = System.Windows.MessageBox;
@@ -29,7 +31,7 @@ public partial class App : System.Windows.Application
 
     private AppSettings _settings = new();
     private CloudCredentials _credentials = new("", "");
-    private EcowittCloudSource? _source;
+    private StationWeatherRouter? _router;
     private DispatcherTimer? _timer;
     private Forms.NotifyIcon? _tray;
     private Forms.ToolStripMenuItem? _addWidgetMenu;
@@ -55,7 +57,7 @@ public partial class App : System.Windows.Application
         }
 
         _settings.Normalize();
-        _source = new EcowittCloudSource(_http, _credentials);
+        _router = CreateRouter();
         InitializeTray();
 
         foreach (var layout in _settings.Widgets.ToArray())
@@ -65,8 +67,7 @@ public partial class App : System.Windows.Application
         _timer.Tick += async (_, _) => await RefreshAllAsync(force: false);
         _timer.Start();
 
-        if (!_credentials.IsConfigured ||
-            !_settings.Profiles.Any(p => !string.IsNullOrWhiteSpace(p.CloudMac)))
+        if (!_settings.Profiles.Any(p => IsReady(p)))
         {
             foreach (var model in _models.Values)
                 model.ShowStatus("Nastav Ecowitt Cloud API v Nastaveniach.");
@@ -280,7 +281,7 @@ public partial class App : System.Windows.Application
             _settingsStore.Save(dialog.ResultSettings);
             _credentials = dialog.ResultCredentials;
             _settings = dialog.ResultSettings;
-            _source = new EcowittCloudSource(_http, _credentials);
+            _router = CreateRouter();
             _generation++;
             _lastAttempt.Clear();
 
@@ -315,14 +316,24 @@ public partial class App : System.Windows.Application
         }
     }
 
+    private StationWeatherRouter CreateRouter() => new(
+        new EcowittLocalSource(_http),
+        new EcowittCloudSource(_http, _credentials));
+
+    private bool IsReady(StationProfile profile) => profile.SourceMode switch
+    {
+        SourceMode.Cloud => _credentials.IsConfigured &&
+                            !string.IsNullOrWhiteSpace(profile.CloudMac),
+        SourceMode.Local => !string.IsNullOrWhiteSpace(profile.LocalGatewayHost),
+        SourceMode.Auto => _credentials.IsConfigured &&
+                           !string.IsNullOrWhiteSpace(profile.CloudMac) &&
+                           !string.IsNullOrWhiteSpace(profile.LocalGatewayHost),
+        _ => false
+    };
+
     private Task RefreshAllAsync(bool force)
     {
-        if (_source is null || !_credentials.IsConfigured)
-        {
-            foreach (var model in _models.Values)
-                model.ShowStatus("Vyplň Cloud API kľúče v Nastaveniach.");
-            return Task.CompletedTask;
-        }
+        if (_router is null) return Task.CompletedTask;
 
         var now = DateTimeOffset.UtcNow;
         var activeProfileIds = _settings.Widgets
@@ -331,6 +342,12 @@ public partial class App : System.Windows.Application
 
         foreach (var profile in _settings.Profiles.Where(p => activeProfileIds.Contains(p.Id)))
         {
+            if (!IsReady(profile))
+            {
+                ModelFor(profile.Id).ShowStatus(
+                    "Doplň nastavenia dátového zdroja pre túto stanicu.");
+                continue;
+            }
             if (_fetching.Contains(profile.Id)) continue;
             if (!force && _lastAttempt.TryGetValue(profile.Id, out var last) &&
                 (now - last).TotalSeconds < _settings.RefreshSeconds)
@@ -338,14 +355,14 @@ public partial class App : System.Windows.Application
 
             _lastAttempt[profile.Id] = now;
             _fetching.Add(profile.Id);
-            tasks.Add(FetchProfileAsync(profile, _source, _generation));
+            tasks.Add(FetchProfileAsync(profile, _router, _generation));
         }
 
         return Task.WhenAll(tasks);
     }
 
     private async Task FetchProfileAsync(
-        StationProfile profile, EcowittCloudSource source, int generation)
+        StationProfile profile, StationWeatherRouter source, int generation)
     {
         try
         {
@@ -363,7 +380,12 @@ public partial class App : System.Windows.Application
         {
             if (generation == _generation)
                 ModelFor(profile.Id).ShowStatus(
-                    "Nepodarilo sa načítať stanicu. Skontroluj MAC a Cloud API.");
+                    profile.SourceMode switch
+                    {
+                        SourceMode.Local => "Local API nedostupné. Skontroluj adresu gatewaya a LAN.",
+                        SourceMode.Auto => "Nedostupné Local aj Web API. Skontroluj sieť a nastavenia.",
+                        _ => "Web API nedostupné. Skontroluj MAC, kľúče a internet."
+                    });
         }
         finally
         {
