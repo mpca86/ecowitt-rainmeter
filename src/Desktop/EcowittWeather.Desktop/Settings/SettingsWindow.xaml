@@ -63,9 +63,30 @@
                     <Button Grid.Column="1" Content="+ Pridať" Click="AddProfileClick"/>
                     <Button Grid.Column="2" Content="Odstrániť" Click="RemoveProfileClick"/>
                 </Grid>
-                <TextBlock Text="Každý widget si môže vybrať vlastnú stanicu. Kľúče Cloud API sú spoločné pre účet."
+                <TextBlock Text="Každý widget má vlastný profil. Local API funguje bez kľúčov; Cloud/Auto používajú spoločné kľúče účtu."
                            TextWrapping="Wrap" Foreground="#FFBDCCDA"
                            FontSize="12" Margin="0,0,0,16"/>
+                <TextBlock Text="REŽIM ZDROJA DÁT" FontSize="14" FontWeight="Bold"
+                           Foreground="#FF86CFED" Margin="0,0,0,9"/>
+                <ComboBox Name="SourceModeCombo" MinHeight="38"
+                          Style="{StaticResource DarkStationCombo}"
+                          ItemContainerStyle="{StaticResource DarkStationComboItem}"
+                          DisplayMemberPath="Label"
+                          SelectionChanged="SourceModeSelectionChanged"
+                          Margin="0,0,0,9"/>
+                <TextBlock Name="SourceModeDescription" Foreground="#FFBDCCDA"
+                           FontSize="12" TextWrapping="Wrap" Margin="0,0,0,13"/>
+
+                <StackPanel Name="LocalGatewayPanel" Margin="0,0,0,15">
+                    <TextBlock Text="LOKÁLNY GATEWAY" FontSize="14" FontWeight="Bold"
+                               Foreground="#FF86CFED" Margin="0,0,0,7"/>
+                    <TextBlock Text="IP adresa alebo lokálny názov, prípadne port"
+                               FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <TextBox Name="LocalGatewayBox" Margin="0,0,0,6"/>
+                    <TextBlock Text="Napríklad 192.168.1.100 alebo gw3000.local:80. Adresa funguje iba v dostupnej LAN/VPN."
+                               Foreground="#FFBDCCDA" FontSize="11"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
                 <TextBlock Text="CLOUD API" FontSize="14" FontWeight="Bold"
                            Foreground="#FF86CFED" Margin="0,0,0,12"/>
                 <TextBlock Text="Application Key" FontWeight="SemiBold" Margin="0,0,0,5"/>
@@ -127,7 +148,7 @@
                 <StackPanel Name="AliasPanel" Margin="0,0,0,12"/>
                 <TextBlock TextWrapping="Wrap" Foreground="#FFB9CADA"
                            FontSize="11"
-                           Text="Cloud API pre všetky stanice z jedného účtu. Dopyty na rovnakú stanicu sa zdieľajú medzi widgetmi."/>
+                           Text="Local API číta gateway v sieti; Auto najskôr skúsi Local a pri výpadku použije Web API. Profily zdieľajú merania s widgetmi rovnakej stanice."/>
                 <StackPanel Orientation="Horizontal" Margin="0,18,0,4">
                     <Button Content="Aktualizácie" Click="UpdatesClick"/>
                     <Button Content="O programe" Click="AboutClick"/>
