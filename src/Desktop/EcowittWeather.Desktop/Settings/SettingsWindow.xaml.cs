@@ -5,6 +5,7 @@ using System.Windows.Media;
 using EcowittWeather.Core.Models;
 using EcowittWeather.Infrastructure.Configuration;
 using EcowittWeather.Infrastructure.Ecowitt.Cloud;
+using EcowittWeather.Infrastructure.Ecowitt.Local;
 using Color = System.Windows.Media.Color;
 using Brushes = System.Windows.Media.Brushes;
 using TextBox = System.Windows.Controls.TextBox;
@@ -19,6 +20,14 @@ public partial class SettingsWindow : Window
     private readonly Dictionary<int, TextBox> _aliases = [];
     private string _currentId = "";
     private bool _loading;
+    private sealed record SourceChoice(SourceMode Mode, string Label);
+
+    private readonly SourceChoice[] _sourceModes =
+    [
+        new(SourceMode.Cloud, "Web API – Ecowitt Cloud"),
+        new(SourceMode.Local, "Local API – lokálny gateway"),
+        new(SourceMode.Auto, "Auto – Local s Web zálohou")
+    ];
 
     public AppSettings ResultSettings { get; private set; }
     public CloudCredentials ResultCredentials { get; private set; }
@@ -38,6 +47,7 @@ public partial class SettingsWindow : Window
         RefreshSecondsBox.Text = settings.RefreshSeconds.ToString();
         ApplicationKeyBox.Password = credentials.ApplicationKey;
         ApiKeyBox.Password = credentials.ApiKey;
+        SourceModeCombo.ItemsSource = _sourceModes;
 
         for (var channel = 1; channel <= 8; channel++)
         {
@@ -77,6 +87,8 @@ public partial class SettingsWindow : Window
         {
             Name = ProfileNameBox.Text.Trim(),
             CloudMac = MacBox.Text.Trim().Replace('-', ':').ToUpperInvariant(),
+            LocalGatewayHost = LocalGatewayBox.Text.Trim(),
+            SourceMode = (SourceModeCombo.SelectedItem as SourceChoice)?.Mode ?? SourceMode.Cloud,
             SensorAliases = _aliases.ToDictionary(pair => pair.Key, pair => pair.Value.Text.Trim())
         };
     }
@@ -87,6 +99,9 @@ public partial class SettingsWindow : Window
         _currentId = profile.Id;
         ProfileNameBox.Text = profile.Name;
         MacBox.Text = profile.CloudMac;
+        LocalGatewayBox.Text = profile.LocalGatewayHost;
+        SourceModeCombo.SelectedItem = _sourceModes.First(x => x.Mode == profile.SourceMode);
+        UpdateSourceModeHelp(profile.SourceMode);
         foreach (var (channel, box) in _aliases)
             box.Text = profile.SensorAliases.GetValueOrDefault(channel, "");
 
@@ -115,6 +130,26 @@ public partial class SettingsWindow : Window
         if (_loading || ProfileCombo.SelectedItem is not StationProfile selected) return;
         PersistEditor();
         LoadProfile(_profiles.First(x => x.Id == selected.Id));
+    }
+
+    private void SourceModeSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading || SourceModeCombo.SelectedItem is not SourceChoice option)
+            return;
+        UpdateSourceModeHelp(option.Mode);
+    }
+
+    private void UpdateSourceModeHelp(SourceMode mode)
+    {
+        LocalGatewayPanel.Visibility = mode == SourceMode.Cloud
+            ? Visibility.Collapsed : Visibility.Visible;
+        SourceModeDescription.Text = mode switch
+        {
+            SourceMode.Cloud => "Web API: merania zo serverov Ecowitt; vyžaduje API kľúče a MAC.",
+            SourceMode.Local => "Local API: merania priamo z gatewaya v LAN; bez internetu a bez API kľúčov.",
+            _ => "Auto: prednostne Local API. Ak LAN nie je dostupná, prejde na Web API. " +
+                 "Lokálny gateway pravidelne skúša obnoviť."
+        };
     }
 
     private void ProfileNameLostFocus(object sender, RoutedEventArgs e)
@@ -233,32 +268,54 @@ public partial class SettingsWindow : Window
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(ApplicationKeyBox.Password) ||
-            string.IsNullOrWhiteSpace(ApiKeyBox.Password))
+        if (_profiles.Any(p => p.SourceMode != SourceMode.Local) &&
+            (string.IsNullOrWhiteSpace(ApplicationKeyBox.Password) ||
+             string.IsNullOrWhiteSpace(ApiKeyBox.Password)))
         {
-            MessageBox.Show(this, "Vyplň Application Key aj API Key.",
+            MessageBox.Show(this, "Web API a Auto režim vyžadujú Application Key aj API Key.",
                 "Chýbajúce údaje", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
         foreach (var profile in _profiles)
         {
-            var mac = profile.CloudMac.Trim().Replace('-', ':').ToUpperInvariant();
-            if (string.IsNullOrWhiteSpace(profile.Name) ||
-                !System.Text.RegularExpressions.Regex.IsMatch(
-                    mac, @"^([0-9A-F]{2}:){5}[0-9A-F]{2}$"))
+            if (string.IsNullOrWhiteSpace(profile.Name))
             {
-                MessageBox.Show(this,
-                    $"Profil '{profile.Name}' musí mať názov a platnú MAC (AA:BB:CC:DD:EE:FF).",
+                MessageBox.Show(this, "Každý profil musí mať názov.",
                     "Neplatná stanica", MessageBoxButton.OK, MessageBoxImage.Warning);
                 RefreshProfileList(profile.Id);
                 return;
+            }
+
+            if (profile.SourceMode != SourceMode.Local &&
+                !System.Text.RegularExpressions.Regex.IsMatch(
+                    profile.CloudMac, @"^([0-9A-F]{2}:){5}[0-9A-F]{2}$"))
+            {
+                MessageBox.Show(this,
+                    $"Profil '{profile.Name}': pre Web/Auto zadaj platnú MAC adresu.",
+                    "Neplatná MAC", MessageBoxButton.OK, MessageBoxImage.Warning);
+                RefreshProfileList(profile.Id);
+                return;
+            }
+
+            if (profile.SourceMode != SourceMode.Cloud)
+            {
+                try { EcowittLocalSource.GetGatewayUrl(profile.LocalGatewayHost); }
+                catch (InvalidOperationException)
+                {
+                    MessageBox.Show(this,
+                        $"Profil '{profile.Name}': zadaj privátnu IP adresu lokálneho gatewaya " +
+                        "alebo jeho názov (napr. 192.168.1.100:80).",
+                        "Neplatný gateway", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    RefreshProfileList(profile.Id);
+                    return;
+                }
             }
         }
 
         ResultSettings = new AppSettings
         {
-            Profiles = _profiles.Select(p => p with { SourceMode = SourceMode.Cloud }).ToList(),
+            Profiles = _profiles.ToList(),
             RefreshSeconds = interval,
             Widgets = _previous.Widgets
         };
