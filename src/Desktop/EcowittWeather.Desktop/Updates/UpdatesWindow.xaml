@@ -1,0 +1,55 @@
+<Window x:Class="EcowittWeather.Desktop.Updates.UpdatesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Ecowitt Weather – Aktualizácie"
+        Icon="pack://application:,,,/Assets/EcowittWeather.ico"
+        Width="530" Height="575" MinHeight="440" MinWidth="455"
+        WindowStartupLocation="CenterOwner"
+        Background="#FF141D2A" Foreground="#FFF5F8FC">
+    <DockPanel Margin="20">
+        <Border DockPanel.Dock="Top" BorderBrush="#FF425A74"
+                BorderThickness="0,0,0,1" Padding="0,0,0,13" Margin="0,0,0,14">
+            <StackPanel>
+                <TextBlock Text="AKTUALIZÁCIE" FontSize="19" FontWeight="Bold"/>
+                <TextBlock Text="Desktop Edition · Alpha kanál"
+                           Foreground="#FFBDCCDA" FontSize="12" Margin="0,4,0,0"/>
+            </StackPanel>
+        </Border>
+        <StackPanel DockPanel.Dock="Bottom" Margin="0,15,0,0">
+            <ProgressBar Name="DownloadProgress" Height="8" Minimum="0" Maximum="100"
+                         Margin="0,0,0,12" Visibility="Collapsed"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Name="CheckButton" Content="Skontrolovať"
+                        Width="125" Click="CheckClick"/>
+                <Button Name="InstallButton" Content="Stiahnuť a aktualizovať"
+                        Width="205" IsEnabled="False"
+                        Style="{StaticResource PrimaryActionButton}"
+                        Click="InstallClick"/>
+                <Button Content="Zavrieť" Width="90" Click="CloseClick"/>
+            </StackPanel>
+        </StackPanel>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <TextBlock Name="CurrentLabel" Grid.Row="0" Margin="0,0,0,10"
+                       FontSize="13"/>
+            <TextBlock Name="LatestLabel" Grid.Row="1" Margin="0,0,0,10"
+                       FontSize="13" FontWeight="Bold"/>
+            <TextBlock Name="StatusLabel" Grid.Row="2" Margin="0,0,0,15"
+                       Foreground="#FF8BDCC5" TextWrapping="Wrap"/>
+            <TextBlock Grid.Row="3" Text="ČO JE NOVÉ"
+                       FontWeight="Bold" Foreground="#FF86CFED"
+                       Margin="0,0,0,8"/>
+            <TextBox Grid.Row="4" Name="ReleaseNotes" IsReadOnly="True"
+                     TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                     Text="Poznámky k vydaniu sa načítajú pri kontrole."
+                     Background="#FF203044" Foreground="#FFF0F6FC"
+                     BorderBrush="#FF465F79" Padding="12" FontSize="12"/>
+        </Grid>
+    </DockPanel>
+</Window>

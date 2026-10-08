@@ -1,11 +1,14 @@
 # Rainmeter runtime / user state
 meteo_history.csv
 ecowitt_debug.txt
+ecowitt_cloud_debug.txt
 *.log
+UpdateState.inc
 
 # Local user configuration / secrets
 UserVariables.inc
 Secrets.inc
+CloudSecrets.inc
 .env
 .env.*
 
@@ -14,8 +17,15 @@ Secrets.inc
 dist/
 build/
 
+# Desktop .NET build state
+**/bin/
+**/obj/
+.vs/
+
 # OS / editor
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
+
+Changelog.txt

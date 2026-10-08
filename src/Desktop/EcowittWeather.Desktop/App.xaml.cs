@@ -1,0 +1,419 @@
+using System.Net.Http;
+using System.Reflection;
+using System.Windows;
+using System.Windows.Threading;
+using EcowittWeather.Core.Models;
+using EcowittWeather.Desktop.About;
+using EcowittWeather.Desktop.Updates;
+using EcowittWeather.Infrastructure.Updates;
+using EcowittWeather.Desktop.Settings;
+using EcowittWeather.Desktop.ViewModels;
+using EcowittWeather.Desktop.Widgets;
+using EcowittWeather.Infrastructure.Configuration;
+using EcowittWeather.Infrastructure.Ecowitt;
+using EcowittWeather.Infrastructure.Ecowitt.Cloud;
+using EcowittWeather.Infrastructure.Ecowitt.Local;
+using EcowittWeather.Infrastructure.Security;
+using Forms = System.Windows.Forms;
+using MessageBox = System.Windows.MessageBox;
+
+namespace EcowittWeather.Desktop;
+
+public partial class App : System.Windows.Application
+{
+    private readonly AppSettingsStore _settingsStore = new();
+    private readonly CloudSecretStore _secretsStore = new();
+    private readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(20) };
+    private readonly Dictionary<string, WeatherViewModel> _models = [];
+    private readonly Dictionary<string, WeatherWidget> _widgets = [];
+    private readonly Dictionary<string, DateTimeOffset> _lastAttempt = [];
+    private readonly HashSet<string> _fetching = [];
+
+    private AppSettings _settings = new();
+    private CloudCredentials _credentials = new("", "");
+    private StationWeatherRouter? _router;
+    private DispatcherTimer? _timer;
+    private Forms.NotifyIcon? _tray;
+    private Forms.ToolStripMenuItem? _addWidgetMenu;
+    private System.Drawing.Icon? _appIcon;
+    private int _generation;
+
+    protected override void OnStartup(StartupEventArgs e)
+    {
+        base.OnStartup(e);
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
+        try
+        {
+            _settings = _settingsStore.Load();
+            _credentials = _secretsStore.Load();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                "Nepodarilo sa načítať uloženú konfiguráciu: " + ex.Message,
+                "Ecowitt Weather",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+
+        _settings.Normalize();
+        _router = CreateRouter();
+        InitializeTray();
+
+        foreach (var layout in _settings.Widgets.ToArray())
+            CreateWidget(layout, saveSettings: false);
+
+        _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _timer.Tick += async (_, _) => await RefreshAllAsync(force: false);
+        _timer.Start();
+
+        if (!_settings.Profiles.Any(p => IsReady(p)))
+        {
+            foreach (var model in _models.Values)
+                model.ShowStatus("Nastav Ecowitt Cloud API v Nastaveniach.");
+            ShowSettings(firstRun: true);
+        }
+        else
+        {
+            _ = RefreshAllAsync(force: true);
+        }
+        _ = CheckUpdatesQuietlyAsync();
+    }
+
+    private WeatherViewModel ModelFor(string profileId)
+    {
+        if (_models.TryGetValue(profileId, out var model))
+            return model;
+
+        model = new WeatherViewModel();
+        model.SetStationName(_settings.Profiles.FirstOrDefault(p => p.Id == profileId)?.Name
+            ?? "METEO CLOUD");
+        _models[profileId] = model;
+        return model;
+    }
+
+    private void InitializeTray()
+    {
+        var menu = new Forms.ContextMenuStrip();
+        var open = new Forms.ToolStripMenuItem("Zobraziť widgety");
+        open.Click += (_, _) => Dispatcher.Invoke(ShowWidgets);
+
+        _addWidgetMenu = new Forms.ToolStripMenuItem("Pridať widget – vybrať stanicu");
+        _addWidgetMenu.DropDownOpening += (_, _) => BuildAddMenu();
+
+        var settings = new Forms.ToolStripMenuItem("Stanice a nastavenia");
+        settings.Click += (_, _) => Dispatcher.Invoke(ShowSettings);
+        var refresh = new Forms.ToolStripMenuItem("Obnoviť dáta");
+        refresh.Click += (_, _) => Dispatcher.Invoke(() => _ = RefreshAllAsync(force: true));
+        var help = new Forms.ToolStripMenuItem("Prvé nastavenie / Pomoc");
+        help.Click += (_, _) => Dispatcher.Invoke(() => ShowSettings(firstRun: true));
+        var updates = new Forms.ToolStripMenuItem("Aktualizácie");
+        updates.Click += (_, _) => Dispatcher.Invoke(ShowUpdates);
+        var about = new Forms.ToolStripMenuItem("O programe");
+        about.Click += (_, _) => Dispatcher.Invoke(ShowAbout);
+        var exit = new Forms.ToolStripMenuItem("Ukončiť aplikáciu");
+        exit.Click += (_, _) => Dispatcher.Invoke(Shutdown);
+
+        menu.Items.AddRange([
+            open, _addWidgetMenu, settings, refresh,
+            new Forms.ToolStripSeparator(), help, updates, about,
+            new Forms.ToolStripSeparator(), exit
+        ]);
+
+        using (var iconStream = Assembly.GetExecutingAssembly()
+            .GetManifestResourceStream("EcowittWeather.Icon"))
+        {
+            if (iconStream != null)
+                _appIcon = new System.Drawing.Icon(iconStream);
+        }
+
+        _tray = new Forms.NotifyIcon
+        {
+            Icon = _appIcon ?? System.Drawing.SystemIcons.Information,
+            Text = "Ecowitt Weather Desktop",
+            ContextMenuStrip = menu,
+            Visible = true
+        };
+        _tray.DoubleClick += (_, _) => Dispatcher.Invoke(ShowWidgets);
+    }
+
+    private void BuildAddMenu()
+    {
+        if (_addWidgetMenu is null) return;
+        _addWidgetMenu.DropDownItems.Clear();
+
+        foreach (var station in _settings.Profiles)
+        {
+            var id = station.Id;
+            var item = new Forms.ToolStripMenuItem(station.Name);
+            item.Click += (_, _) => Dispatcher.Invoke(() => AddWidget(id));
+            _addWidgetMenu.DropDownItems.Add(item);
+        }
+    }
+
+    private void AddWidget(string? profileId = null)
+    {
+        var profile = _settings.Profiles.FirstOrDefault(p => p.Id == profileId)
+            ?? _settings.Profiles[0];
+        var placement = new WidgetPlacement { ProfileId = profile.Id };
+        // Offset new windows so a second widget is visible instead of covering
+        // the existing one at exactly the same desktop coordinates.
+        var first = _widgets.Values.FirstOrDefault();
+        if (first != null)
+        {
+            var area = SystemParameters.WorkArea;
+            placement.Left = Math.Clamp(first.Left + 35, area.Left, area.Right - 290);
+            placement.Top = Math.Clamp(first.Top + 35, area.Top, area.Bottom - 160);
+        }
+        _settings.Widgets.Add(placement);
+        CreateWidget(placement, saveSettings: true);
+        _ = RefreshAllAsync(force: true);
+    }
+
+    private void CreateWidget(WidgetPlacement placement, bool saveSettings)
+    {
+        var widget = new WeatherWidget
+        {
+            DataContext = ModelFor(placement.ProfileId),
+            Topmost = placement.AlwaysOnTop
+        };
+
+        if (placement.Left is double x && placement.Top is double y &&
+            double.IsFinite(x) && double.IsFinite(y))
+        {
+            widget.Left = x;
+            widget.Top = y;
+        }
+        else
+        {
+            widget.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        }
+
+        widget.SettingsRequested += (_, _) => ShowSettings();
+        widget.UpdateRequested += (_, _) => ShowUpdates();
+        widget.RemoveRequested += (_, _) =>
+        {
+            _widgets.Remove(placement.Id);
+            _settings.Widgets.Remove(placement);
+            widget.Close();
+            SaveLayout();
+        };
+        widget.StationSwitchRequested += profileId =>
+        {
+            if (!_settings.Profiles.Any(p => p.Id == profileId)) return;
+            placement.ProfileId = profileId;
+            widget.DataContext = ModelFor(profileId);
+            widget.SetProfiles(_settings.Profiles, profileId);
+            SaveLayout();
+            _ = RefreshAllAsync(force: true);
+        };
+        widget.LocationChanged += (_, _) =>
+        {
+            if (!widget.IsLoaded) return;
+            placement.Left = widget.Left;
+            placement.Top = widget.Top;
+        };
+        widget.PositionCommitted += (_, _) => SaveLayout();
+
+        widget.SetProfiles(_settings.Profiles, placement.ProfileId);
+        widget.Show();
+        _widgets[placement.Id] = widget;
+        if (saveSettings) SaveLayout();
+    }
+
+    private void ShowWidgets()
+    {
+        if (_widgets.Count == 0)
+            AddWidget();
+
+        foreach (var widget in _widgets.Values)
+        {
+            if (!widget.IsVisible) widget.Show();
+            widget.Activate();
+        }
+    }
+
+    private void ShowUpdates()
+    {
+        var dialog = new UpdatesWindow();
+        var owner = _widgets.Values.FirstOrDefault(w => w.IsVisible);
+        if (owner != null) dialog.Owner = owner;
+        dialog.ShowDialog();
+    }
+
+    private async Task CheckUpdatesQuietlyAsync()
+    {
+        try
+        {
+            var update = await new DesktopUpdateService(_http)
+                .FindUpdateAsync(UpdatesWindow.CurrentVersion);
+            if (update != null && _tray != null)
+            {
+                _tray.BalloonTipTitle = "Ecowitt Weather – nová verzia";
+                _tray.BalloonTipText =
+                    "Dostupná je " + update.Version + ". Aktualizáciu otvoríš cez tray menu.";
+                _tray.ShowBalloonTip(6500);
+            }
+        }
+        catch
+        {
+            // Startup update checks must never disrupt weather collection.
+        }
+    }
+
+    private void ShowAbout()
+    {
+        var dialog = new AboutWindow();
+        var owner = _widgets.Values.FirstOrDefault(w => w.IsVisible);
+        if (owner != null) dialog.Owner = owner;
+        dialog.ShowDialog();
+    }
+
+    private void ShowSettings() => ShowSettings(firstRun: false);
+
+    private void ShowSettings(bool firstRun)
+    {
+        var dialog = new SettingsWindow(_settings, _credentials, firstRun);
+        var owner = _widgets.Values.FirstOrDefault(w => w.IsVisible);
+        if (owner != null) dialog.Owner = owner;
+
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            _secretsStore.Save(dialog.ResultCredentials);
+            _settingsStore.Save(dialog.ResultSettings);
+            _credentials = dialog.ResultCredentials;
+            _settings = dialog.ResultSettings;
+            _router = CreateRouter();
+            _generation++;
+            _lastAttempt.Clear();
+
+            var ids = _settings.Profiles.Select(p => p.Id).ToHashSet();
+            foreach (var layout in _settings.Widgets)
+            {
+                if (!ids.Contains(layout.ProfileId))
+                    layout.ProfileId = _settings.Profiles[0].Id;
+
+                if (_widgets.TryGetValue(layout.Id, out var widget))
+                {
+                    widget.DataContext = ModelFor(layout.ProfileId);
+                    widget.SetProfiles(_settings.Profiles, layout.ProfileId);
+                }
+            }
+
+            foreach (var profile in _settings.Profiles)
+                if (_models.TryGetValue(profile.Id, out var model))
+                {
+                    model.SetStationName(profile.Name);
+                    model.ShowStatus("Obnovujem údaje stanice...");
+                }
+
+            SaveLayout();
+            _ = RefreshAllAsync(force: true);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                "Nastavenia sa nepodarilo uložiť: " + ex.Message,
+                "Ecowitt Weather", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private StationWeatherRouter CreateRouter() => new(
+        new EcowittLocalSource(_http),
+        new EcowittCloudSource(_http, _credentials));
+
+    private bool IsReady(StationProfile profile) => profile.SourceMode switch
+    {
+        SourceMode.Cloud => _credentials.IsConfigured &&
+                            !string.IsNullOrWhiteSpace(profile.CloudMac),
+        SourceMode.Local => !string.IsNullOrWhiteSpace(profile.LocalGatewayHost),
+        SourceMode.Auto => _credentials.IsConfigured &&
+                           !string.IsNullOrWhiteSpace(profile.CloudMac) &&
+                           !string.IsNullOrWhiteSpace(profile.LocalGatewayHost),
+        _ => false
+    };
+
+    private Task RefreshAllAsync(bool force)
+    {
+        if (_router is null) return Task.CompletedTask;
+
+        var now = DateTimeOffset.UtcNow;
+        var activeProfileIds = _settings.Widgets
+            .Select(w => w.ProfileId).Distinct().ToHashSet();
+        var tasks = new List<Task>();
+
+        foreach (var profile in _settings.Profiles.Where(p => activeProfileIds.Contains(p.Id)))
+        {
+            if (!IsReady(profile))
+            {
+                ModelFor(profile.Id).ShowStatus(
+                    "Doplň nastavenia dátového zdroja pre túto stanicu.");
+                continue;
+            }
+            if (_fetching.Contains(profile.Id)) continue;
+            if (!force && _lastAttempt.TryGetValue(profile.Id, out var last) &&
+                (now - last).TotalSeconds < _settings.RefreshSeconds)
+                continue;
+
+            _lastAttempt[profile.Id] = now;
+            _fetching.Add(profile.Id);
+            tasks.Add(FetchProfileAsync(profile, _router, _generation));
+        }
+
+        return Task.WhenAll(tasks);
+    }
+
+    private async Task FetchProfileAsync(
+        StationProfile profile, StationWeatherRouter source, int generation)
+    {
+        try
+        {
+            var snapshot = await source.FetchAsync(profile);
+            if (generation != _generation) return;
+            ModelFor(profile.Id).ShowSnapshot(
+                snapshot, profile.Name, profile.SensorAliases);
+        }
+        catch (TaskCanceledException)
+        {
+            if (generation == _generation)
+                ModelFor(profile.Id).ShowStatus("Časový limit spojenia s Ecowitt API.");
+        }
+        catch (Exception)
+        {
+            if (generation == _generation)
+                ModelFor(profile.Id).ShowStatus(
+                    profile.SourceMode switch
+                    {
+                        SourceMode.Local => "Local API nedostupné. Skontroluj adresu gatewaya a LAN.",
+                        SourceMode.Auto => "Nedostupné Local aj Web API. Skontroluj sieť a nastavenia.",
+                        _ => "Web API nedostupné. Skontroluj MAC, kľúče a internet."
+                    });
+        }
+        finally
+        {
+            _fetching.Remove(profile.Id);
+        }
+    }
+
+    private void SaveLayout()
+    {
+        try { _settingsStore.Save(_settings); }
+        catch (Exception ex)
+        {
+            MessageBox.Show("Nepodarilo sa uložiť rozloženie: " + ex.Message,
+                "Ecowitt Weather", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        _timer?.Stop();
+        SaveLayout();
+        _tray?.Dispose();
+        _appIcon?.Dispose();
+        _http.Dispose();
+        base.OnExit(e);
+    }
+}
