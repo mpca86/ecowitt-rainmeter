@@ -23,7 +23,7 @@ Assert ($null -ne $ctxStyle) 'shared ContextMenu theme must be defined'
 Assert ($null -ne $itemStyle) 'shared MenuItem theme must be defined'
 Assert ($null -ne $ctxStyle.SelectSingleNode(".//*[local-name()='ControlTemplate']")) 'ContextMenu must override Windows chrome'
 Assert ($null -ne $itemStyle.SelectSingleNode(".//*[local-name()='ControlTemplate']")) 'MenuItem must override light selection/checkmark gutter'
-Assert ($null -ne $itemStyle.SelectSingleNode(".//*[local-name()='Popup' and @Name='PART_Popup']")) 'submenus must share dark Popup chrome'
+Assert ($null -ne $itemStyle.SelectSingleNode(".//*[local-name()='Popup' and @*[local-name()='Name' and .='PART_Popup']]")) 'submenus must share dark Popup chrome'
 
 $border = $widget.SelectSingleNode("//*[local-name()='Window']/*[local-name()='Border']")
 Assert ($null -ne $border) 'widget root border missing'
