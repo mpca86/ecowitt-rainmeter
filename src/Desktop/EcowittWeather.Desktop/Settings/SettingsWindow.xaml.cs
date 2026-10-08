@@ -15,7 +15,10 @@ namespace EcowittWeather.Desktop.Settings;
 public partial class SettingsWindow : Window
 {
     private readonly AppSettings _previous;
+    private readonly List<StationProfile> _profiles;
     private readonly Dictionary<int, TextBox> _aliases = [];
+    private string _currentId = "";
+    private bool _loading;
 
     public AppSettings ResultSettings { get; private set; }
     public CloudCredentials ResultCredentials { get; private set; }
@@ -23,12 +26,15 @@ public partial class SettingsWindow : Window
     public SettingsWindow(AppSettings settings, CloudCredentials credentials)
     {
         InitializeComponent();
+        settings.Normalize();
         _previous = settings;
+        _profiles = settings.Profiles.Select(p => p with
+        {
+            SensorAliases = new Dictionary<int, string>(p.SensorAliases)
+        }).ToList();
+
         ResultSettings = settings;
         ResultCredentials = credentials;
-
-        ProfileNameBox.Text = settings.Profile.Name;
-        MacBox.Text = settings.Profile.CloudMac;
         RefreshSecondsBox.Text = settings.RefreshSeconds.ToString();
         ApplicationKeyBox.Password = credentials.ApplicationKey;
         ApiKeyBox.Password = credentials.ApiKey;
@@ -46,17 +52,101 @@ public partial class SettingsWindow : Window
                 VerticalAlignment = VerticalAlignment.Center,
                 FontWeight = FontWeights.SemiBold
             };
-            var textBox = new TextBox
-            {
-                Text = settings.SensorAliases.GetValueOrDefault(channel, "")
-            };
-
+            var textBox = new TextBox();
             Grid.SetColumn(textBox, 1);
             row.Children.Add(label);
             row.Children.Add(textBox);
             AliasPanel.Children.Add(row);
             _aliases.Add(channel, textBox);
         }
+
+        _loading = true;
+        ProfileCombo.ItemsSource = _profiles;
+        ProfileCombo.SelectedIndex = 0;
+        _loading = false;
+        LoadProfile(_profiles[0]);
+    }
+
+    private void PersistEditor()
+    {
+        if (string.IsNullOrWhiteSpace(_currentId)) return;
+        var index = _profiles.FindIndex(p => p.Id == _currentId);
+        if (index < 0) return;
+
+        _profiles[index] = _profiles[index] with
+        {
+            Name = ProfileNameBox.Text.Trim(),
+            CloudMac = MacBox.Text.Trim().Replace('-', ':').ToUpperInvariant(),
+            SensorAliases = _aliases.ToDictionary(pair => pair.Key, pair => pair.Value.Text.Trim())
+        };
+    }
+
+    private void LoadProfile(StationProfile profile)
+    {
+        _loading = true;
+        _currentId = profile.Id;
+        ProfileNameBox.Text = profile.Name;
+        MacBox.Text = profile.CloudMac;
+        foreach (var (channel, box) in _aliases)
+            box.Text = profile.SensorAliases.GetValueOrDefault(channel, "");
+
+        StationCombo.SelectedItem = null;
+        if (StationCombo.ItemsSource is IEnumerable<EcowittDevice> devices)
+        {
+            var selected = devices.FirstOrDefault(d =>
+                string.Equals(d.Mac, profile.CloudMac, StringComparison.OrdinalIgnoreCase));
+            if (selected != null) StationCombo.SelectedItem = selected;
+        }
+        _loading = false;
+    }
+
+    private void RefreshProfileList(string id)
+    {
+        _loading = true;
+        ProfileCombo.ItemsSource = null;
+        ProfileCombo.ItemsSource = _profiles;
+        ProfileCombo.SelectedItem = _profiles.First(x => x.Id == id);
+        _loading = false;
+        LoadProfile(_profiles.First(x => x.Id == id));
+    }
+
+    private void ProfileSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading || ProfileCombo.SelectedItem is not StationProfile selected) return;
+        PersistEditor();
+        LoadProfile(_profiles.First(x => x.Id == selected.Id));
+    }
+
+    private void AddProfileClick(object sender, RoutedEventArgs e)
+    {
+        PersistEditor();
+        var profile = new StationProfile
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            Name = "Nová stanica"
+        };
+        _profiles.Add(profile);
+        RefreshProfileList(profile.Id);
+    }
+
+    private void RemoveProfileClick(object sender, RoutedEventArgs e)
+    {
+        if (_profiles.Count <= 1)
+        {
+            MessageBox.Show(this, "Aspoň jedna stanica musí zostať nastavená.",
+                "Stanice", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        if (MessageBox.Show(this,
+            "Odstrániť aktuálny profil? Widgety tejto stanice sa presunú na prvú zostávajúcu stanicu.",
+            "Odstránenie stanice", MessageBoxButton.YesNo,
+            MessageBoxImage.Question) != MessageBoxResult.Yes)
+            return;
+
+        _profiles.RemoveAll(p => p.Id == _currentId);
+        _currentId = "";
+        RefreshProfileList(_profiles[0].Id);
     }
 
     private async void LoadDevicesClick(object sender, RoutedEventArgs e)
@@ -79,10 +169,8 @@ public partial class SettingsWindow : Window
 
         try
         {
-            // The keys are used only for this request. They are not saved until Uložiť.
             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
             var devices = await new EcowittDeviceCatalog(http).ListAsync(creds);
-
             if (!IsLoaded) return;
 
             StationCombo.ItemsSource = devices;
@@ -107,7 +195,6 @@ public partial class SettingsWindow : Window
         catch (Exception)
         {
             if (!IsLoaded) return;
-            // Avoid displaying exception messages, which could contain API credentials.
             DeviceStatus.Text = "Načítanie zlyhalo. Skontroluj API kľúče, internet a oprávnenie účtu.";
             DeviceStatus.Foreground = Brushes.LightSalmon;
         }
@@ -119,40 +206,23 @@ public partial class SettingsWindow : Window
 
     private void DeviceSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (StationCombo.SelectedItem is not EcowittDevice selected) return;
-
+        if (_loading || StationCombo.SelectedItem is not EcowittDevice selected) return;
         MacBox.Text = selected.Mac;
 
-        // Preserve the user's own profile label if they already chose one.
         if (string.IsNullOrWhiteSpace(ProfileNameBox.Text) ||
-            ProfileNameBox.Text == "Moja stanica")
+            ProfileNameBox.Text is "Moja stanica" or "Nová stanica")
             ProfileNameBox.Text = selected.Name;
     }
 
     private void SaveClick(object sender, RoutedEventArgs e)
     {
+        PersistEditor();
+
         if (!int.TryParse(RefreshSecondsBox.Text, out var interval) ||
             interval is < 30 or > 3600)
         {
             MessageBox.Show(this, "Interval musí byť medzi 30 a 3600 sekundami.",
                 "Neplatný interval", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
-        }
-
-        var name = ProfileNameBox.Text.Trim();
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            MessageBox.Show(this, "Zadaj názov stanice.",
-                "Neplatný názov", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
-        }
-
-        var mac = MacBox.Text.Trim().Replace('-', ':').ToUpperInvariant();
-        if (!System.Text.RegularExpressions.Regex.IsMatch(
-                mac, @"^([0-9A-F]{2}:){5}[0-9A-F]{2}$"))
-        {
-            MessageBox.Show(this, "MAC musí mať tvar AA:BB:CC:DD:EE:FF.",
-                "Neplatná MAC", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
@@ -164,24 +234,41 @@ public partial class SettingsWindow : Window
             return;
         }
 
+        foreach (var profile in _profiles)
+        {
+            var mac = profile.CloudMac.Trim().Replace('-', ':').ToUpperInvariant();
+            if (string.IsNullOrWhiteSpace(profile.Name) ||
+                !System.Text.RegularExpressions.Regex.IsMatch(
+                    mac, @"^([0-9A-F]{2}:){5}[0-9A-F]{2}$"))
+            {
+                MessageBox.Show(this,
+                    $"Profil '{profile.Name}' musí mať názov a platnú MAC (AA:BB:CC:DD:EE:FF).",
+                    "Neplatná stanica", MessageBoxButton.OK, MessageBoxImage.Warning);
+                RefreshProfileList(profile.Id);
+                return;
+            }
+        }
+
         ResultSettings = new AppSettings
         {
-            Profile = _previous.Profile with
-            {
-                Name = name,
-                CloudMac = mac,
-                SourceMode = SourceMode.Cloud
-            },
+            Profiles = _profiles.Select(p => p with { SourceMode = SourceMode.Cloud }).ToList(),
             RefreshSeconds = interval,
-            SensorAliases = _aliases.ToDictionary(pair => pair.Key, pair => pair.Value.Text.Trim()),
             Widgets = _previous.Widgets
         };
+        ResultSettings.Normalize();
+
         ResultCredentials = new CloudCredentials(
             ApplicationKeyBox.Password.Trim(),
             ApiKeyBox.Password.Trim());
 
         DialogResult = true;
         Close();
+    }
+
+    private void AboutClick(object sender, RoutedEventArgs e)
+    {
+        var about = new About.AboutWindow { Owner = this };
+        about.ShowDialog();
     }
 
     private void CancelClick(object sender, RoutedEventArgs e)
