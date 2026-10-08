@@ -1,0 +1,31 @@
+name: Desktop Edition Windows build
+
+on:
+  push:
+    branches: [cloud-api]
+    paths:
+      - "src/Desktop/**"
+      - ".github/workflows/desktop-build.yml"
+  pull_request:
+    paths:
+      - "src/Desktop/**"
+      - ".github/workflows/desktop-build.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  desktop:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Restore
+        run: dotnet restore src/Desktop/EcowittWeather.sln
+      - name: Build
+        run: dotnet build src/Desktop/EcowittWeather.sln -c Release --no-restore
+      - name: Test parser
+        run: dotnet run --project src/Desktop/EcowittWeather.SmokeTests -c Release --no-build
