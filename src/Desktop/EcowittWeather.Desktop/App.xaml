@@ -93,29 +93,96 @@
             <Setter Property="Foreground" Value="White"/>
         </Style>
 
-        <!-- Context menus are deliberately dark; the Windows-default WPF menu
-             renders almost white text over light gray on some Windows themes. -->
+        <!-- One shared theme for ALL desktop menus, including submenus.
+             WPF's default MenuItem template paints a light checkmark gutter;
+             styles limited to Background/Foreground cannot override it. -->
         <Style TargetType="{x:Type ContextMenu}">
-            <Setter Property="Background" Value="#FF202F42"/>
-            <Setter Property="Foreground" Value="#FFF6FBFF"/>
-            <Setter Property="BorderBrush" Value="#FF65849E"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="4"/>
+            <Setter Property="Background" Value="#FF1B2A3A"/>
+            <Setter Property="Foreground" Value="#FFF5F9FE"/>
+            <Setter Property="BorderBrush" Value="#FF63849D"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ContextMenu}">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1" CornerRadius="5"
+                                Padding="4" SnapsToDevicePixels="True">
+                            <StackPanel IsItemsHost="True"
+                                        KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
         <Style TargetType="{x:Type MenuItem}">
-            <Setter Property="Foreground" Value="#FFF6FBFF"/>
-            <Setter Property="Background" Value="#FF202F42"/>
+            <Setter Property="Background" Value="#FF1B2A3A"/>
+            <Setter Property="Foreground" Value="#FFF5F9FE"/>
             <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Padding" Value="8,6"/>
-            <Style.Triggers>
-                <Trigger Property="IsHighlighted" Value="True">
-                    <Setter Property="Background" Value="#FF336C8A"/>
-                    <Setter Property="Foreground" Value="#FFFFFFFF"/>
-                </Trigger>
-            </Style.Triggers>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type MenuItem}">
+                        <Grid SnapsToDevicePixels="True">
+                            <Border x:Name="ItemChrome" Background="{TemplateBinding Background}"
+                                    CornerRadius="3" Padding="8,7" MinWidth="195">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="23"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="18"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="CheckMark" Text="✓" Visibility="Collapsed"
+                                               Foreground="#FF82E2C6" FontWeight="Bold"
+                                               VerticalAlignment="Center"/>
+                                    <ContentPresenter Grid.Column="1" ContentSource="Header"
+                                                      TextElement.Foreground="{TemplateBinding Foreground}"
+                                                      VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                                    <TextBlock x:Name="Arrow" Grid.Column="2" Text="›"
+                                               FontSize="18" Foreground="#FFA9CBDD"
+                                               Visibility="Collapsed" VerticalAlignment="Center"
+                                               HorizontalAlignment="Right"/>
+                                </Grid>
+                            </Border>
+                            <Popup x:Name="PART_Popup" Placement="Right" HorizontalOffset="-2"
+                                   AllowsTransparency="True" Focusable="False"
+                                   IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}">
+                                <Border Background="#FF1B2A3A" BorderBrush="#FF63849D"
+                                        BorderThickness="1" CornerRadius="5" Padding="4">
+                                    <StackPanel IsItemsHost="True"
+                                                KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="ItemChrome" Property="Background" Value="#FF315E79"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="Role" Value="SubmenuHeader">
+                                <Setter TargetName="Arrow" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="Role" Value="TopLevelHeader">
+                                <Setter TargetName="Arrow" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="ItemChrome" Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
         <Style TargetType="{x:Type Separator}">
-            <Setter Property="Background" Value="#FF52718D"/>
+            <Setter Property="Margin" Value="7,3"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Separator}">
+                        <Border Height="1" Background="#FF46657D"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <!-- Fully templated ComboBox: same dark contrast in open/closed/selected
