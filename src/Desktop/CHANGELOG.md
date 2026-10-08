@@ -3,6 +3,24 @@
 Tento súbor sa týka výlučne **Desktop Edition**. Rainmeter Edition má samostatný
 changelog v koreňovom adresári repozitára.
 
+## v0.2.0-alpha.3 — 2026-10-08
+
+### Prvé spustenie a nastavenia
+- Odstránený rušivý tooltip zobrazovaný pri prejdení myšou nad widgetom.
+- Nastavenia preusporiadané do piatich logických častí: **Začíname**, **Stanice**, **Pripojenie**, **Senzory** a **Aplikácia**.
+- Pri prvej konfigurácii sa otvára jednoduchý sprievodca s vysvetlením režimov Web API / Local API / Auto.
+- V Pripojení sa zobrazujú iba polia potrebné pre vybraný režim.
+- Nové tlačidlo **Otestovať pripojenie** načíta meranie bez uloženia konfigurácie.
+- Priame odkazy na oficiálny Ecowitt web a slovenský návod.
+- Jeden centrálny tmavý štýl aj pre karty Nastavení.
+- Rozšírené regresné testy na prítomnosť sekcií, pomocníka a neprítomnosť tooltipu.
+
+### Dokumentácia a bezpečnosť
+- [Slovenský návod pre prvé spustenie](../../docs/desktop/PRVE_SPUSTENIE.md) vrátane krokov na získanie Application Key a API Key.
+- Aplikácia **nežiada prihlasovacie meno ani heslo** do ecowitt.net.
+- Kľúče sa získavajú priamo z používateľského profilu na oficiálnom webe a ukladajú lokálne cez Windows DPAPI.
+- Návod rozlišuje Web, Local a Auto a uvádza najčastejšie problémy s pripojením.
+
 ## v0.2.0-alpha.2 — 2026-10-08
 
 ### Ovládanie a používateľské rozhranie
