@@ -15,6 +15,7 @@ existujúcich staníc a API kľúčov.
   Web API, Local API alebo Auto.
 - Nové tlačidlo **Otestovať pripojenie** umožňuje preveriť skutočné
   merania bez nutnosti ukladať rozpracované nastavenia.
+- Položka **Prvé nastavenie / Pomoc** je dostupná aj z ikony v systémovej lište.
 - Priame odkazy na oficiálnu stránku Ecowitt a
   [slovenský návod na prvé spustenie](https://github.com/mpca86/ecowitt-rainmeter/blob/cloud-api/docs/desktop/PRVE_SPUSTENIE.md).
 - Stabilná tmavá podkladová šablóna kariet Nastavení vo Windows.

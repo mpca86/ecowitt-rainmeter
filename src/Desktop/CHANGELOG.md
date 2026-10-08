@@ -12,6 +12,7 @@ changelog v koreňovom adresári repozitára.
 - V Pripojení sa zobrazujú iba polia potrebné pre vybraný režim.
 - Nové tlačidlo **Otestovať pripojenie** načíta meranie bez uloženia konfigurácie.
 - Priame odkazy na oficiálny Ecowitt web a slovenský návod.
+- Prvotného sprievodcu možno kedykoľvek znovu otvoriť z tray menu cez **Prvé nastavenie / Pomoc**.
 - Jeden centrálny tmavý štýl aj pre karty Nastavení.
 - Rozšírené regresné testy na prítomnosť sekcií, pomocníka a neprítomnosť tooltipu.
 
