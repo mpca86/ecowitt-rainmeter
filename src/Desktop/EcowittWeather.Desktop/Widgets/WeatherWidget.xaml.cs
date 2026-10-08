@@ -1,6 +1,8 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using ContextMenu = System.Windows.Controls.ContextMenu;
+using MenuItem = System.Windows.Controls.MenuItem;
 using System.Windows.Input;
 using Cursors = System.Windows.Input.Cursors;
 using EcowittWeather.Core.Models;
