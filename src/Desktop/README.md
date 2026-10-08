@@ -6,6 +6,8 @@ Prvý spustiteľný základ samostatnej Windows aplikácie bez Rainmetera.
 - .NET 8 / WPF widget bez rámu (aktuálne merania z Ecowitt Web API v3)
 - Ecowitt Cloud API: teplota, vlhkosť, tlak, vietor, zrážky, UV, solárne žiarenie a CH1–CH8
 - nastavenie MAC, Application Key a API Key; aliasy kanálov a interval načítania
+- tlačidlo **Načítať stanice z Ecowitt**: zoznam meteorologických staníc priradených k API účtu, výber MAC bez prepisovania
+- kontrastný tmavý formulár s trvalo dostupnými tlačidlami **Uložiť** a **Zrušiť**
 - uloženie nastavení v JSON, **API kľúče chránené cez Windows DPAPI** pre aktuálne konto
 - tray ikona s ovládaním a možnosťou pridať viac widgetov
 - viac widgetov jednej stanice zdieľa **jediný polling cyklus**
@@ -37,6 +39,17 @@ Nikdy ich neukladaj do Git repozitára.
 
 Dvojklik na ikonu v oblasti oznámení zobrazí widgety, pravý klik otvorí menu
 so zobrazením okien, pridaním widgetu, Nastaveniami, obnovením a ukončením.
+
+### Zoznam staníc z Ecowitt
+
+V Nastaveniach vyplň Application Key a API Key, potom stlač **Načítať stanice z Ecowitt**.
+Aplikácia zavolá `GET /api/v3/device/list`, ktorý pre zoznam nevyžaduje MAC.
+Zo zoznamu vyberie iba meteorologické stanice s platnou MAC adresou
+(`type=1`), nie kamery ani jednotlivé WH31/ostatné bezdrôtové senzory.
+
+Výber automaticky vyplní pole MAC; zmeny sa uložia až po kliknutí na **Uložiť**.
+Ručné zadanie MAC zostáva dostupné. API kľúče sa kvôli tomuto dopytu
+nezapisujú do logu ani Git repozitára.
 
 ### Lokálne uložené dáta
 
