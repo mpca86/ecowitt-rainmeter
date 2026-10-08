@@ -10,13 +10,14 @@ Prvý spustiteľný základ samostatnej Windows aplikácie bez Rainmetera.
 - kontrastný tmavý formulár s trvalo dostupnými tlačidlami **Uložiť** a **Zrušiť**
 - uloženie nastavení v JSON, **API kľúče chránené cez Windows DPAPI** pre aktuálne konto
 - tray ikona s ovládaním a možnosťou pridať viac widgetov
-- viac widgetov jednej stanice zdieľa **jediný polling cyklus**
+- **viac nezávislých staníc a profilov** (pridanie / odstránenie v Nastaveniach)
+- každý widget možno priradiť k ľubovoľnej stanici z profilov cez tray menu alebo prepínač **⇄** v hlavičke
+- viac widgetov jednej stanice zdieľa **jediný polling cyklus**; odlišné stanice sa načítavajú samostatne
 - presúvanie widgetov myšou a zapamätanie pozícií
 - Windows CI zostavenie a parser smoke testy
 
 **Zatiaľ neimplementované:**
 - Local API a Auto/fallback medzi zdrojmi
-- viac samostatných staníc/profilov (viac okien teraz sleduje tú istú stanicu)
 - rôzne typy/layouty widgetov, SQLite história, grafy, desktop updater
 - export/import Desktop konfigurácie a samostatný installer
 - farebné UI stavy a autostart
@@ -50,6 +51,30 @@ Zo zoznamu vyberie iba meteorologické stanice s platnou MAC adresou
 Výber automaticky vyplní pole MAC; zmeny sa uložia až po kliknutí na **Uložiť**.
 Ručné zadanie MAC zostáva dostupné. API kľúče sa kvôli tomuto dopytu
 nezapisujú do logu ani Git repozitára.
+
+### Viac staníc a widgetov
+
+1. V **Nastaveniach** pri výbere profilu stlač **+ Pridať**.
+2. Pomocou **Načítať stanice z Ecowitt** vyber inú stanicu alebo ručne zadaj jej MAC. Vyplň názov a stlač **Uložiť**.
+3. Klikni pravým tlačidlom myši na ikonu v systémovej lište (tray) → **Pridať widget – vybrať stanicu** → vyber profil.
+4. V otvorenom widgete možno stanicu kedykoľvek zmeniť cez **⇄**.
+
+Odlišné stanice používajú samostatné načítanie dát; dva widgety tej istej stanice zdieľajú jedno načítanie. Označenia CH1–CH8 sú nezávislé pre každú stanicu.
+
+### Migrácia existujúcej konfigurácie
+
+Pri prvom spustení nového buildu sa starý `Profile` a `SensorAliases`
+z `settings.json` automaticky prevedú do poľa `Profiles`.
+Existujúce okná a ich pozície zostanú zachované; staré widgety sú naviazané
+na pôvodnú stanicu. API kľúče zostávajú v chránenom súbore
+`cloud-secrets.dat` a migrovať ich nie je potrebné.
+
+### Ikona a informácie o programe
+
+Desktop Edition má vlastnú ikonu počasia v spustiteľnom súbore, vo Windows tray
+aj v titulku Nastavení. V tray menu a na spodku Nastavení je dostupné
+**O programe** (autor, verzia, licencia a projektové odkazy).
+Aktuálna vývojová verzia: `0.2.0-preview.1`.
 
 ### Lokálne uložené dáta
 
