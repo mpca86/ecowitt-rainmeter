@@ -1,8 +1,8 @@
-using System.Net.Http;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Threading;
-using MessageBox = System.Windows.MessageBox;
 using EcowittWeather.Core.Models;
+using EcowittWeather.Desktop.About;
 using EcowittWeather.Desktop.Settings;
 using EcowittWeather.Desktop.ViewModels;
 using EcowittWeather.Desktop.Widgets;
@@ -10,6 +10,7 @@ using EcowittWeather.Infrastructure.Configuration;
 using EcowittWeather.Infrastructure.Ecowitt.Cloud;
 using EcowittWeather.Infrastructure.Security;
 using Forms = System.Windows.Forms;
+using MessageBox = System.Windows.MessageBox;
 
 namespace EcowittWeather.Desktop;
 
@@ -18,15 +19,19 @@ public partial class App : System.Windows.Application
     private readonly AppSettingsStore _settingsStore = new();
     private readonly CloudSecretStore _secretsStore = new();
     private readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(20) };
-    private readonly WeatherViewModel _weather = new();
+    private readonly Dictionary<string, WeatherViewModel> _models = [];
     private readonly Dictionary<string, WeatherWidget> _widgets = [];
+    private readonly Dictionary<string, DateTimeOffset> _lastAttempt = [];
+    private readonly HashSet<string> _fetching = [];
 
     private AppSettings _settings = new();
     private CloudCredentials _credentials = new("", "");
     private EcowittCloudSource? _source;
     private DispatcherTimer? _timer;
     private Forms.NotifyIcon? _tray;
-    private bool _isFetching;
+    private Forms.ToolStripMenuItem? _addWidgetMenu;
+    private System.Drawing.Icon? _appIcon;
+    private int _generation;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -43,32 +48,41 @@ public partial class App : System.Windows.Application
             MessageBox.Show(
                 "Nepodarilo sa načítať uloženú konfiguráciu: " + ex.Message,
                 "Ecowitt Weather",
-                MessageBoxButton.OK,
-                MessageBoxImage.Warning);
+                MessageBoxButton.OK, MessageBoxImage.Warning);
         }
 
+        _settings.Normalize();
         _source = new EcowittCloudSource(_http, _credentials);
         InitializeTray();
 
-        foreach (var layout in _settings.Widgets)
+        foreach (var layout in _settings.Widgets.ToArray())
             CreateWidget(layout, saveSettings: false);
 
-        _timer = new DispatcherTimer
-        {
-            Interval = TimeSpan.FromSeconds(_settings.RefreshSeconds)
-        };
-        _timer.Tick += async (_, _) => await RefreshAsync();
+        _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _timer.Tick += async (_, _) => await RefreshAllAsync(force: false);
         _timer.Start();
 
-        if (!_credentials.IsConfigured || string.IsNullOrWhiteSpace(_settings.Profile.CloudMac))
+        if (!_credentials.IsConfigured ||
+            !_settings.Profiles.Any(p => !string.IsNullOrWhiteSpace(p.CloudMac)))
         {
-            _weather.ShowStatus("Nastav Ecowitt Cloud API cez ozubené koliesko.");
+            foreach (var model in _models.Values)
+                model.ShowStatus("Nastav Ecowitt Cloud API v Nastaveniach.");
             ShowSettings();
         }
         else
         {
-            _ = RefreshAsync();
+            _ = RefreshAllAsync(force: true);
         }
+    }
+
+    private WeatherViewModel ModelFor(string profileId)
+    {
+        if (_models.TryGetValue(profileId, out var model))
+            return model;
+
+        model = new WeatherViewModel();
+        _models[profileId] = model;
+        return model;
     }
 
     private void InitializeTray()
@@ -76,20 +90,35 @@ public partial class App : System.Windows.Application
         var menu = new Forms.ContextMenuStrip();
         var open = new Forms.ToolStripMenuItem("Zobraziť widgety");
         open.Click += (_, _) => Dispatcher.Invoke(ShowWidgets);
-        var add = new Forms.ToolStripMenuItem("Pridať widget");
-        add.Click += (_, _) => Dispatcher.Invoke(AddWidget);
-        var settings = new Forms.ToolStripMenuItem("Nastavenia");
+
+        _addWidgetMenu = new Forms.ToolStripMenuItem("Pridať widget – vybrať stanicu");
+        _addWidgetMenu.DropDownOpening += (_, _) => BuildAddMenu();
+
+        var settings = new Forms.ToolStripMenuItem("Stanice a nastavenia");
         settings.Click += (_, _) => Dispatcher.Invoke(ShowSettings);
         var refresh = new Forms.ToolStripMenuItem("Obnoviť dáta");
-        refresh.Click += (_, _) => Dispatcher.Invoke(() => _ = RefreshAsync());
+        refresh.Click += (_, _) => Dispatcher.Invoke(() => _ = RefreshAllAsync(force: true));
+        var about = new Forms.ToolStripMenuItem("O programe");
+        about.Click += (_, _) => Dispatcher.Invoke(ShowAbout);
         var exit = new Forms.ToolStripMenuItem("Ukončiť aplikáciu");
         exit.Click += (_, _) => Dispatcher.Invoke(Shutdown);
 
-        menu.Items.AddRange([open, add, settings, refresh, new Forms.ToolStripSeparator(), exit]);
+        menu.Items.AddRange([
+            open, _addWidgetMenu, settings, refresh,
+            new Forms.ToolStripSeparator(), about,
+            new Forms.ToolStripSeparator(), exit
+        ]);
+
+        using (var iconStream = Assembly.GetExecutingAssembly()
+            .GetManifestResourceStream("EcowittWeather.Icon"))
+        {
+            if (iconStream != null)
+                _appIcon = new System.Drawing.Icon(iconStream);
+        }
 
         _tray = new Forms.NotifyIcon
         {
-            Icon = System.Drawing.SystemIcons.Information,
+            Icon = _appIcon ?? System.Drawing.SystemIcons.Information,
             Text = "Ecowitt Weather Desktop",
             ContextMenuStrip = menu,
             Visible = true
@@ -97,18 +126,35 @@ public partial class App : System.Windows.Application
         _tray.DoubleClick += (_, _) => Dispatcher.Invoke(ShowWidgets);
     }
 
-    private void AddWidget()
+    private void BuildAddMenu()
     {
-        var placement = new WidgetPlacement();
+        if (_addWidgetMenu is null) return;
+        _addWidgetMenu.DropDownItems.Clear();
+
+        foreach (var station in _settings.Profiles)
+        {
+            var id = station.Id;
+            var item = new Forms.ToolStripMenuItem(station.Name);
+            item.Click += (_, _) => Dispatcher.Invoke(() => AddWidget(id));
+            _addWidgetMenu.DropDownItems.Add(item);
+        }
+    }
+
+    private void AddWidget(string? profileId = null)
+    {
+        var profile = _settings.Profiles.FirstOrDefault(p => p.Id == profileId)
+            ?? _settings.Profiles[0];
+        var placement = new WidgetPlacement { ProfileId = profile.Id };
         _settings.Widgets.Add(placement);
         CreateWidget(placement, saveSettings: true);
+        _ = RefreshAllAsync(force: true);
     }
 
     private void CreateWidget(WidgetPlacement placement, bool saveSettings)
     {
         var widget = new WeatherWidget
         {
-            DataContext = _weather,
+            DataContext = ModelFor(placement.ProfileId),
             Topmost = placement.AlwaysOnTop
         };
 
@@ -131,15 +177,26 @@ public partial class App : System.Windows.Application
             widget.Close();
             SaveLayout();
         };
+        widget.StationSwitchRequested += profileId =>
+        {
+            if (!_settings.Profiles.Any(p => p.Id == profileId)) return;
+            placement.ProfileId = profileId;
+            widget.DataContext = ModelFor(profileId);
+            widget.SetProfiles(_settings.Profiles, profileId);
+            SaveLayout();
+            _ = RefreshAllAsync(force: true);
+        };
         widget.LocationChanged += (_, _) =>
         {
             if (!widget.IsLoaded) return;
             placement.Left = widget.Left;
             placement.Top = widget.Top;
+            SaveLayout();
         };
+
+        widget.SetProfiles(_settings.Profiles, placement.ProfileId);
         widget.Show();
         _widgets[placement.Id] = widget;
-
         if (saveSettings) SaveLayout();
     }
 
@@ -155,14 +212,21 @@ public partial class App : System.Windows.Application
         }
     }
 
+    private void ShowAbout()
+    {
+        var dialog = new AboutWindow();
+        var owner = _widgets.Values.FirstOrDefault(w => w.IsVisible);
+        if (owner != null) dialog.Owner = owner;
+        dialog.ShowDialog();
+    }
+
     private void ShowSettings()
     {
         var dialog = new SettingsWindow(_settings, _credentials);
         var owner = _widgets.Values.FirstOrDefault(w => w.IsVisible);
-        if (owner is not null) dialog.Owner = owner;
+        if (owner != null) dialog.Owner = owner;
 
-        if (dialog.ShowDialog() != true)
-            return;
+        if (dialog.ShowDialog() != true) return;
 
         try
         {
@@ -171,54 +235,90 @@ public partial class App : System.Windows.Application
             _credentials = dialog.ResultCredentials;
             _settings = dialog.ResultSettings;
             _source = new EcowittCloudSource(_http, _credentials);
+            _generation++;
+            _lastAttempt.Clear();
 
-            if (_timer is not null)
+            var ids = _settings.Profiles.Select(p => p.Id).ToHashSet();
+            foreach (var layout in _settings.Widgets)
             {
-                _timer.Interval = TimeSpan.FromSeconds(_settings.RefreshSeconds);
-                _timer.Stop();
-                _timer.Start();
+                if (!ids.Contains(layout.ProfileId))
+                    layout.ProfileId = _settings.Profiles[0].Id;
+
+                if (_widgets.TryGetValue(layout.Id, out var widget))
+                {
+                    widget.DataContext = ModelFor(layout.ProfileId);
+                    widget.SetProfiles(_settings.Profiles, layout.ProfileId);
+                }
             }
 
-            _ = RefreshAsync();
+            foreach (var profile in _settings.Profiles)
+                if (_models.TryGetValue(profile.Id, out var model))
+                    model.ShowStatus("Obnovujem údaje stanice...");
+
+            SaveLayout();
+            _ = RefreshAllAsync(force: true);
         }
         catch (Exception ex)
         {
             MessageBox.Show(
                 "Nastavenia sa nepodarilo uložiť: " + ex.Message,
-                "Ecowitt Weather",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
+                "Ecowitt Weather", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
-    private async Task RefreshAsync()
+    private Task RefreshAllAsync(bool force)
     {
-        if (_isFetching || _source is null) return;
-
-        if (!_credentials.IsConfigured || string.IsNullOrWhiteSpace(_settings.Profile.CloudMac))
+        if (_source is null || !_credentials.IsConfigured)
         {
-            _weather.ShowStatus("Najprv vyplň Cloud API údaje v Nastaveniach.");
-            return;
+            foreach (var model in _models.Values)
+                model.ShowStatus("Vyplň Cloud API kľúče v Nastaveniach.");
+            return Task.CompletedTask;
         }
 
-        _isFetching = true;
+        var now = DateTimeOffset.UtcNow;
+        var activeProfileIds = _settings.Widgets
+            .Select(w => w.ProfileId).Distinct().ToHashSet();
+        var tasks = new List<Task>();
+
+        foreach (var profile in _settings.Profiles.Where(p => activeProfileIds.Contains(p.Id)))
+        {
+            if (_fetching.Contains(profile.Id)) continue;
+            if (!force && _lastAttempt.TryGetValue(profile.Id, out var last) &&
+                (now - last).TotalSeconds < _settings.RefreshSeconds)
+                continue;
+
+            _lastAttempt[profile.Id] = now;
+            _fetching.Add(profile.Id);
+            tasks.Add(FetchProfileAsync(profile, _source, _generation));
+        }
+
+        return Task.WhenAll(tasks);
+    }
+
+    private async Task FetchProfileAsync(
+        StationProfile profile, EcowittCloudSource source, int generation)
+    {
         try
         {
-            var snapshot = await _source.FetchAsync(_settings.Profile);
-            _weather.ShowSnapshot(snapshot, _settings.Profile.Name, _settings.SensorAliases);
+            var snapshot = await source.FetchAsync(profile);
+            if (generation != _generation) return;
+            ModelFor(profile.Id).ShowSnapshot(
+                snapshot, profile.Name, profile.SensorAliases);
         }
         catch (TaskCanceledException)
         {
-            _weather.ShowStatus("Vypršal časový limit spojenia s Ecowitt API.");
+            if (generation == _generation)
+                ModelFor(profile.Id).ShowStatus("Časový limit spojenia s Ecowitt API.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            // The adapter never includes the credential-bearing request URL in errors.
-            _weather.ShowStatus("Chyba načítania: " + ex.Message);
+            if (generation == _generation)
+                ModelFor(profile.Id).ShowStatus(
+                    "Nepodarilo sa načítať stanicu. Skontroluj MAC a Cloud API.");
         }
         finally
         {
-            _isFetching = false;
+            _fetching.Remove(profile.Id);
         }
     }
 
@@ -237,6 +337,7 @@ public partial class App : System.Windows.Application
         _timer?.Stop();
         SaveLayout();
         _tray?.Dispose();
+        _appIcon?.Dispose();
         _http.Dispose();
         base.OnExit(e);
     }
