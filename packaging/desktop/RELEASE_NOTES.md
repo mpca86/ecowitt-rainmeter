@@ -1,34 +1,50 @@
-# Ecowitt Weather Desktop v0.2.0-alpha.2
+# Ecowitt Weather Desktop v0.2.0-alpha.3
 
-Druhá verejná alpha verzia samostatnej aplikácie pre Windows 10/11 (x64).
+Tretie verejné alpha vydanie. Toto vydanie sa sústreďuje na **jednoduché
+prvé spustenie a prehľadné Nastavenia**, bez zmeny spôsobu uloženia
+existujúcich staníc a API kľúčov.
 
-## Opravené ovládanie a vzhľad
+## Novinky
 
-- **Ľavým tlačidlom myši** možno widget priamo potiahnuť na nové miesto.
-- **Pravým tlačidlom myši** sa otvorí kontextová ponuka.
-- Z kontextovej ponuky bolo odstránené nadbytočné tlačidlo na presun widgetu.
-- Hlavná ponuka aj vnorený zoznam meteostaníc používajú **jednu spoločnú tmavú WPF šablónu** vrátane pozadia, zaškrtávacích značiek a aktívnych položiek.
-- Pridaný automatický test spoločnej témy, ovládania myšou a absencie rušivých tlačidiel vo widgete.
+- Odstránený rušivý bledý tooltip pri prejdení myšou nad widgetom.
+- Nastavenia sú rozdelené do piatich kariet:
+  **Začíname · Stanice · Pripojenie · Senzory · Aplikácia**.
+- Pri nenastavenej aplikácii sa automaticky zobrazí jednoduchý
+  **trojkrokový úvodný sprievodca**.
+- Nastavenia pripojenia zobrazujú len polia potrebné pre vybraný režim:
+  Web API, Local API alebo Auto.
+- Nové tlačidlo **Otestovať pripojenie** umožňuje preveriť skutočné
+  merania bez nutnosti ukladať rozpracované nastavenia.
+- Priame odkazy na oficiálnu stránku Ecowitt a
+  [slovenský návod na prvé spustenie](https://github.com/mpca86/ecowitt-rainmeter/blob/cloud-api/docs/desktop/PRVE_SPUSTENIE.md).
+- Stabilná tmavá podkladová šablóna kariet Nastavení vo Windows.
+- CI regresné kontroly neprítomnosti tooltipu, rozloženia kariet a
+  ovládacích prvkov pomocníka.
+- Aktualizovaný samostatný [changelog Desktop Edition](https://github.com/mpca86/ecowitt-rainmeter/blob/cloud-api/src/Desktop/CHANGELOG.md).
 
-## Local API a automatický hybridný režim
+## Bezpečnosť a ochrana súkromia
 
-- Každý profil má vlastnú voľbu **Web API / Local API / Auto**.
-- Local API získava živé merania z dostupného Ecowitt gatewaya cez `http://HOST:PORT/get_livedata_info`.
-- Parser podporuje teplotu, vlhkosť, tlak, vietor, nárazy, zrážky, UV, slnečné žiarenie a kanály CH1–CH8.
-- Rozpoznané jednotky sa prepočítavajú na °C, hPa, m/s a mm.
-- Local API nepotrebuje Ecowitt Application Key ani API Key.
-- **Auto** prioritne používa Local API. Pri chybe gatewaya prepne na Web API; lokálne pripojenie skúša opäť po dvoch minútach.
-- Aktuálny zdroj dát je uvedený v pätičke widgetu vrátane informácie o záložnom Web API.
-- Lokálny zdroj akceptuje IP adresy privátnej siete alebo názvy lokálnych gatewayov, s voliteľným portom.
+Ecowitt prihlasovacie meno a heslo **nikdy nezadávaj do Desktop aplikácie**.
+Application Key a API Key vytvoríš vo svojom používateľskom profile na
+oficiálnej stránke ecowitt.net. Desktop aplikácia ich používa pri prístupe
+k Web API a chráni ich cez Windows DPAPI.
 
-## Aktualizácia
+Režim **Local API** nevyžaduje žiadne Ecowitt API kľúče.
 
-Ak používaš `v0.2.0-alpha.1`, otvor kontextovú ponuku widgetu → **Aktualizácie** → **Skontrolovať** → **Stiahnuť a aktualizovať**. Alpha.2 je určená aj na prvý praktický test zabudovaného aktualizátora.
+## Ako aktualizovať
 
-Doterajšie stanice, widgety, pozície a API kľúče sa zachovávajú.
+V nainštalovanej alpha.2 vyber **pravý klik na widget → Aktualizácie**,
+alebo použi ikonu aplikácie v systémovej lište.
+
+**Existujúce nastavenia, widgety, API kľúče a rozloženie zostávajú zachované.**
+
+Ak aktualizácia zo ZIP zlyhá, stiahni prenosný ZIP z tohto vydania,
+ukonči aplikáciu a rozbaľ ho do pôvodného priečinka aplikácie.
 
 ## Známe obmedzenia
 
-- Local API bolo overené automatickými testami podľa vzorovej odpovede z Rainmeter Edition, **reálne spojenie na konkrétny gateway ešte treba odskúšať**.
-- Rôzne typy widgetov, grafy, história SQLite a samostatný inštalátor zatiaľ nie sú dostupné.
-- Automatická výmena programových súborov s rollbackom sa musí overiť na testovacom Windows PC.
+- Aktualizáciu a vzhľad treba overiť aj v používateľskom prostredí
+  Windows 10/11; automatické testy nepokrývajú všetky motívy systému.
+- Local API je podporované podľa odpovede kompatibilných Ecowitt gatewayov,
+  nie každého možného senzora.
+- História SQLite, grafy a samostatný inštalátor sú stále vo vývoji.
