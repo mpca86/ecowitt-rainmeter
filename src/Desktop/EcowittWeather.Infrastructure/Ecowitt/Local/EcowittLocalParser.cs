@@ -31,7 +31,7 @@ public static partial class EcowittLocalParser
                     sensors.Any(s => s.Channel == channel))
                     continue;
 
-                var temperature = Field(item, "temp");
+                var temperature = ConvertTemperature(Field(item, "temp"), StringField(item, "unit"));
                 var humidity = Field(item, "humidity");
                 if (temperature is null && humidity is null) continue;
 
@@ -44,9 +44,9 @@ public static partial class EcowittLocalParser
         {
             RetrievedAt = retrievedAt,
             Source = "Ecowitt Local API",
-            OutdoorTemperatureC = Common(data, "0x02"),
+            OutdoorTemperatureC = ConvertTemperature(Common(data, "0x02"), CommonUnit(data, "0x02")),
             OutdoorHumidityPercent = Common(data, "0x07"),
-            IndoorTemperatureC = Station(data, "intemp"),
+            IndoorTemperatureC = ConvertTemperature(Station(data, "intemp"), StationUnit(data)),
             IndoorHumidityPercent = Station(data, "inhumi"),
             RelativePressureHpa = StationPressure(data, "rel"),
             AbsolutePressureHpa = StationPressure(data, "abs"),
@@ -143,6 +143,19 @@ public static partial class EcowittLocalParser
 
     private static double? Station(JsonElement data, string field) =>
         StationBlock(data) is { } block ? Field(block, field) : null;
+
+    private static string? StationUnit(JsonElement data) =>
+        StationBlock(data) is { } block ? StringField(block, "unit") : null;
+
+    private static double? ConvertTemperature(double? value, string? unit)
+    {
+        if (value is null) return null;
+        var text = (unit ?? "").Trim().ToUpperInvariant();
+        return text == "F" || text.Contains("°F") || text.Contains("ºF") ||
+               text.EndsWith(" F", StringComparison.Ordinal)
+            ? (value - 32) * (5.0 / 9.0)
+            : value;
+    }
 
     private static double? StationPressure(JsonElement data, string field)
     {
