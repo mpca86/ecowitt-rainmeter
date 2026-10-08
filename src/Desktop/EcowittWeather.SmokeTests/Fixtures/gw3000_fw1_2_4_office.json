@@ -1,0 +1,137 @@
+{
+  "common_list": [
+    {
+      "id": "0x02",
+      "val": "14.0",
+      "unit": "C"
+    },
+    {
+      "id": "0x07",
+      "val": "62%"
+    },
+    {
+      "id": "3",
+      "val": "14.0",
+      "unit": "C"
+    },
+    {
+      "id": "5",
+      "val": "0.607 kPa"
+    },
+    {
+      "id": "0x03",
+      "val": "6.9",
+      "unit": "C"
+    },
+    {
+      "id": "0x0B",
+      "val": "0.0 m/s"
+    },
+    {
+      "id": "0x0C",
+      "val": "0.0 m/s"
+    },
+    {
+      "id": "0x19",
+      "val": "7.7 m/s"
+    },
+    {
+      "id": "0x15",
+      "val": "0.00 W/m2"
+    },
+    {
+      "id": "0x17",
+      "val": "0"
+    },
+    {
+      "id": "0x0A",
+      "val": "151"
+    },
+    {
+      "id": "0x6D",
+      "val": "151"
+    }
+  ],
+  "rain": [
+    {
+      "id": "0x0D",
+      "val": "0.0 mm"
+    },
+    {
+      "id": "0x0E",
+      "val": "0.0 mm/Hr"
+    },
+    {
+      "id": "0x7D",
+      "val": "0.0 mm"
+    },
+    {
+      "id": "0x7C",
+      "val": "0.0 mm"
+    },
+    {
+      "id": "0x10",
+      "val": "0.0 mm"
+    },
+    {
+      "id": "0x11",
+      "val": "0.0 mm"
+    },
+    {
+      "id": "0x12",
+      "val": "0.0 mm"
+    },
+    {
+      "id": "0x13",
+      "val": "0.0 mm",
+      "battery": "0"
+    },
+    {
+      "id": "0x14",
+      "val": "0.0 mm"
+    }
+  ],
+  "wh25": [
+    {
+      "intemp": "21.6",
+      "unit": "C",
+      "inhumi": "41%",
+      "abs": "932.7 hPa",
+      "rel": "1009.4 hPa"
+    }
+  ],
+  "ch_aisle": [
+    {
+      "channel": "1",
+      "name": "Sensor CH1",
+      "battery": "0",
+      "temp": "20.1",
+      "unit": "C",
+      "humidity": "45%"
+    },
+    {
+      "channel": "2",
+      "name": "Sensor CH2",
+      "battery": "0",
+      "temp": "19.6",
+      "unit": "C",
+      "humidity": "45%"
+    },
+    {
+      "channel": "3",
+      "name": "Sensor CH3",
+      "battery": "0",
+      "temp": "15.8",
+      "unit": "C",
+      "humidity": "57%"
+    },
+    {
+      "channel": "4",
+      "name": "Sensor CH4",
+      "battery": "0",
+      "temp": "20.2",
+      "unit": "C",
+      "humidity": "45%"
+    }
+  ]
+}
