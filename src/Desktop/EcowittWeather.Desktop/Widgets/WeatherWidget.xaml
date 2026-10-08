@@ -10,21 +10,11 @@
         WindowStartupLocation="Manual">
     <Border Background="#EB151B25" BorderBrush="#50667987"
             BorderThickness="1" CornerRadius="9" Padding="14"
-            MouseLeftButtonDown="DragWidget">
+            MouseLeftButtonDown="ShowWidgetMenu" ToolTip="Ľavý klik: ponuka · Shift + potiahnutie: presun">
         <StackPanel>
-            <Grid Margin="0,0,0,10">
-                <TextBlock Text="{Binding StationName}" FontWeight="SemiBold"
-                           FontSize="12" VerticalAlignment="Center"
-                           MaxWidth="164" TextTrimming="CharacterEllipsis" />
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="⇄" ToolTip="Prepnúť stanicu pre tento widget"
-                            FontSize="14" Padding="5,2" Click="ChooseStation"/>
-                    <Button Content="⚙" ToolTip="Nastavenia"
-                            FontSize="12" Padding="5,2" Click="OpenSettings"/>
-                    <Button Content="×" ToolTip="Odstrániť widget"
-                            FontSize="14" Padding="6,2" Click="RemoveWidget"/>
-                </StackPanel>
-            </Grid>
+            <TextBlock Text="{Binding StationName}" FontWeight="SemiBold"
+                       FontSize="13" HorizontalAlignment="Left" Margin="2,0,0,12"
+                       MaxWidth="250" TextTrimming="CharacterEllipsis"/>
             <Border BorderBrush="#47637A8D" BorderThickness="0,0,0,1"
                     Margin="0,0,0,9"/>
             <Grid Margin="0,2,0,9">
