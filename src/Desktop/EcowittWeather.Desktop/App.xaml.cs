@@ -4,6 +4,8 @@ using System.Windows;
 using System.Windows.Threading;
 using EcowittWeather.Core.Models;
 using EcowittWeather.Desktop.About;
+using EcowittWeather.Desktop.Updates;
+using EcowittWeather.Infrastructure.Updates;
 using EcowittWeather.Desktop.Settings;
 using EcowittWeather.Desktop.ViewModels;
 using EcowittWeather.Desktop.Widgets;
@@ -74,6 +76,7 @@ public partial class App : System.Windows.Application
         {
             _ = RefreshAllAsync(force: true);
         }
+        _ = CheckUpdatesQuietlyAsync();
     }
 
     private WeatherViewModel ModelFor(string profileId)
@@ -101,6 +104,8 @@ public partial class App : System.Windows.Application
         settings.Click += (_, _) => Dispatcher.Invoke(ShowSettings);
         var refresh = new Forms.ToolStripMenuItem("Obnoviť dáta");
         refresh.Click += (_, _) => Dispatcher.Invoke(() => _ = RefreshAllAsync(force: true));
+        var updates = new Forms.ToolStripMenuItem("Aktualizácie");
+        updates.Click += (_, _) => Dispatcher.Invoke(ShowUpdates);
         var about = new Forms.ToolStripMenuItem("O programe");
         about.Click += (_, _) => Dispatcher.Invoke(ShowAbout);
         var exit = new Forms.ToolStripMenuItem("Ukončiť aplikáciu");
@@ -108,7 +113,7 @@ public partial class App : System.Windows.Application
 
         menu.Items.AddRange([
             open, _addWidgetMenu, settings, refresh,
-            new Forms.ToolStripSeparator(), about,
+            new Forms.ToolStripSeparator(), updates, about,
             new Forms.ToolStripSeparator(), exit
         ]);
 
@@ -182,6 +187,7 @@ public partial class App : System.Windows.Application
         }
 
         widget.SettingsRequested += (_, _) => ShowSettings();
+        widget.UpdateRequested += (_, _) => ShowUpdates();
         widget.RemoveRequested += (_, _) =>
         {
             _widgets.Remove(placement.Id);
@@ -221,6 +227,34 @@ public partial class App : System.Windows.Application
         {
             if (!widget.IsVisible) widget.Show();
             widget.Activate();
+        }
+    }
+
+    private void ShowUpdates()
+    {
+        var dialog = new UpdatesWindow(_http);
+        var owner = _widgets.Values.FirstOrDefault(w => w.IsVisible);
+        if (owner != null) dialog.Owner = owner;
+        dialog.ShowDialog();
+    }
+
+    private async Task CheckUpdatesQuietlyAsync()
+    {
+        try
+        {
+            var update = await new DesktopUpdateService(_http)
+                .FindUpdateAsync(UpdatesWindow.CurrentVersion);
+            if (update != null && _tray != null)
+            {
+                _tray.BalloonTipTitle = "Ecowitt Weather – nová verzia";
+                _tray.BalloonTipText =
+                    "Dostupná je " + update.Version + ". Aktualizáciu otvoríš cez tray menu.";
+                _tray.ShowBalloonTip(6500);
+            }
+        }
+        catch
+        {
+            // Startup update checks must never disrupt weather collection.
         }
     }
 
