@@ -1,3 +1,7 @@
+using EcowittWeather.Core.Abstractions;
+using EcowittWeather.Core.Models;
+using EcowittWeather.Infrastructure.Ecowitt;
+using EcowittWeather.Infrastructure.Ecowitt.Local;
 using EcowittWeather.Infrastructure.Updates;
 using System.Text.Json;
 using EcowittWeather.Infrastructure.Configuration;
@@ -214,5 +218,108 @@ Expect(DesktopUpdateService.TryVersion("0.2.0-alpha.1+abcdef", out var parsed) &
        parsed.prerelease == 1,
     "assembly informational version suffix is accepted");
 
-Console.WriteLine("PASS: cloud parser, device list, migration and Desktop alpha release tests");
+// Sample GW3000 Local API payload shape from Rainmeter Edition fixture.
+// Numbers intentionally use mixed raw / suffixed units.
+const string localJson = """
+{
+  "common_list": [
+    {"id":"0x02","val":"5.2","unit":"C"},
+    {"id":"0x07","val":"83%"},
+    {"id":"0x0B","val":"7.2 km/h"},
+    {"id":"0x19","val":"3.6 m/s"},
+    {"id":"0x0A","val":"71"},
+    {"id":"0x15","val":"0.00 W/m2"},
+    {"id":"0x17","val":"0"}
+  ],
+  "rain": [
+    {"id":"0x0E","val":"0.0 mm/Hr"},
+    {"id":"0x10","val":"1.5 mm"}
+  ],
+  "wh25":[{"intemp":"20.6","inhumi":"40%","abs":"946.3 hPa","rel":"1027.2 hPa"}],
+  "ch_aisle": [
+    {"channel":"1","name":"Kancelária","battery":"0","temp":"21.1","unit":"C","humidity":"41%"},
+    {"channel":"2","name":"Dielňa","battery":"1","temp":"16.9","unit":"C","humidity":"46%"}
+  ]
+}
+""";
+var localReading = EcowittLocalParser.Parse(localJson, DateTimeOffset.UtcNow);
+Expect(localReading.Source == "Ecowitt Local API", "local origin");
+Expect(localReading.OutdoorTemperatureC == 5.2 && localReading.OutdoorHumidityPercent == 83,
+    "local outdoor temperature and humidity");
+Expect(localReading.IndoorTemperatureC == 20.6 &&
+       localReading.IndoorHumidityPercent == 40, "local indoor measurements");
+Expect(Math.Abs((localReading.WindSpeedMs ?? 0) - 2.0) < 0.001 &&
+       localReading.WindGustMs == 3.6, "local wind unit conversion");
+Expect(localReading.RelativePressureHpa == 1027.2, "local relative pressure");
+Expect(localReading.DailyRainMm == 1.5 && localReading.RainRateMmH == 0,
+    "local rainfall");
+Expect(localReading.Sensors.Count == 2 && localReading.Sensors[1].Channel == 2 &&
+       localReading.Sensors[0].TemperatureC == 21.1,
+    "local CH1 and CH2 normalized");
+Expect(localReading.SolarWattsM2 == 0 && localReading.UvIndex == 0,
+    "local solar/UV zero values");
+
+bool malformedLocal = false;
+try { EcowittLocalParser.Parse("""{"debug":[{"runtime":"20"}]}""", DateTimeOffset.UtcNow); }
+catch (InvalidDataException) { malformedLocal = true; }
+Expect(malformedLocal, "malformed local weather falls back");
+
+Expect(EcowittLocalSource.GetGatewayUrl("192.168.1.42:8080").AbsoluteUri ==
+       "http://192.168.1.42:8080/get_livedata_info",
+       "local endpoint URI and port");
+Expect(EcowittLocalSource.GetGatewayUrl("gw3000.local").Host == "gw3000.local",
+    "LAN mDNS hostname allowed");
+bool invalidHost = false;
+try { EcowittLocalSource.GetGatewayUrl("api.ecowitt.net:80"); }
+catch (InvalidOperationException) { invalidHost = true; }
+Expect(invalidHost, "public hosts rejected as Local API destinations");
+
+// Auto always prefers LAN, switches to Web on failure, throttles unsuccessful
+// LAN probes and tries local again after cooldown.
+var simulatedNow = DateTimeOffset.UtcNow;
+var localMock = new FakeSource(localReading);
+var cloudMock = new FakeSource(snapshot);
+var router = new StationWeatherRouter(localMock, cloudMock, () => simulatedNow);
+var autoStation = new StationProfile
+{
+    Id = "hybrid-test", Name = "Hybridná stanica", SourceMode = SourceMode.Auto,
+    LocalGatewayHost = "192.168.1.42", CloudMac = "AA:BB:CC:DD:EE:FF"
+};
+var first = await router.FetchAsync(autoStation);
+Expect(first.Source == "Ecowitt Local API" &&
+       localMock.Count == 1 && cloudMock.Count == 0, "auto prefers Local API");
+
+localMock.Throw = true;
+var secondRead = await router.FetchAsync(autoStation);
+Expect(secondRead.Source.Contains("záložný zdroj") &&
+       localMock.Count == 2 && cloudMock.Count == 1,
+       "auto fails over to Web API");
+
+var third = await router.FetchAsync(autoStation);
+Expect(localMock.Count == 2 && cloudMock.Count == 2,
+       "auto skips unreachable LAN until retry");
+localMock.Throw = false;
+simulatedNow += StationWeatherRouter.LocalRetryInterval + TimeSpan.FromSeconds(1);
+var recovered = await router.FetchAsync(autoStation);
+Expect(recovered.Source == "Ecowitt Local API" &&
+       localMock.Count == 3 && cloudMock.Count == 2,
+       "auto returns to LAN after recovery");
+
+Console.WriteLine("PASS: cloud and local parsers, hybrid failover/recovery, migration and update tests");
+
+// This helper never contacts a physical Ecowitt gateway or exposes keys.
+public sealed class FakeSource(WeatherSnapshot reading) : IWeatherSource
+{
+    public int Count { get; private set; }
+    public bool Throw { get; set; }
+    public Task<WeatherSnapshot> FetchAsync(
+        StationProfile profile, CancellationToken cancellationToken = default)
+    {
+        Count++;
+        return Throw
+            ? Task.FromException<WeatherSnapshot>(new TimeoutException("Simulovaný výpadok"))
+            : Task.FromResult(reading);
+    }
+}
+
 
