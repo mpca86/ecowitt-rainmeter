@@ -5,6 +5,8 @@ using System.Windows.Media;
 using EcowittWeather.Core.Models;
 using EcowittWeather.Infrastructure.Configuration;
 using EcowittWeather.Infrastructure.Ecowitt.Cloud;
+using Color = System.Windows.Media.Color;
+using Brushes = System.Windows.Media.Brushes;
 using TextBox = System.Windows.Controls.TextBox;
 using MessageBox = System.Windows.MessageBox;
 
