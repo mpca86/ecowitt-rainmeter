@@ -51,7 +51,7 @@ public static partial class EcowittLocalParser
             RelativePressureHpa = StationPressure(data, "rel"),
             AbsolutePressureHpa = StationPressure(data, "abs"),
             WindSpeedMs = ConvertWind(Common(data, "0x0B"), CommonUnit(data, "0x0B")),
-            WindGustMs = ConvertWind(Common(data, "0x19"), CommonUnit(data, "0x19")),
+            WindGustMs = ConvertWind(Common(data, "0x0C"), CommonUnit(data, "0x0C")),
             WindDirectionDegrees = Common(data, "0x0A"),
             RainRateMmH = ConvertRain(Rain(data, "0x0E"), RainUnit(data, "0x0E")),
             DailyRainMm = ConvertRain(Rain(data, "0x10"), RainUnit(data, "0x10")),
@@ -72,26 +72,40 @@ public static partial class EcowittLocalParser
         return result;
     }
 
-    private static JsonElement? Item(JsonElement root, string section, string hexId)
+    private static JsonElement? Item(JsonElement root, string section, string fieldId)
     {
         if (!root.TryGetProperty(section, out var values) || values.ValueKind != JsonValueKind.Array)
             return null;
 
-        var idNumber = Convert.ToInt32(hexId[2..], 16);
         foreach (var element in values.EnumerateArray())
         {
             if (element.ValueKind != JsonValueKind.Object ||
                 !element.TryGetProperty("id", out var id))
                 continue;
-            var s = id.ToString();
-            var parsed = s.StartsWith("0x", StringComparison.OrdinalIgnoreCase)
-                ? int.TryParse(s[2..], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var h)
-                    ? h : -1
-                : int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out var d)
-                    ? d : -1;
-            if (parsed == idNumber) return element;
+            if (FieldIdMatches(id.ToString(), fieldId))
+                return element;
         }
         return null;
+    }
+
+    private static bool FieldIdMatches(string actual, string expected)
+    {
+        // GW3000 distinguishes decimal ID "3" (feels like) from hexadecimal
+        // ID "0x03" (dew point). Compare numeric values only within the same
+        // notation, allowing different hexadecimal padding/casing.
+        var actualHex = actual.StartsWith("0x", StringComparison.OrdinalIgnoreCase);
+        var expectedHex = expected.StartsWith("0x", StringComparison.OrdinalIgnoreCase);
+        if (actualHex != expectedHex) return false;
+
+        if (actualHex)
+            return int.TryParse(actual.AsSpan(2), NumberStyles.AllowHexSpecifier,
+                       CultureInfo.InvariantCulture, out var a) &&
+                   int.TryParse(expected.AsSpan(2), NumberStyles.AllowHexSpecifier,
+                       CultureInfo.InvariantCulture, out var b) && a == b;
+
+        return int.TryParse(actual, NumberStyles.None, CultureInfo.InvariantCulture, out var decimalActual) &&
+               int.TryParse(expected, NumberStyles.None, CultureInfo.InvariantCulture, out var decimalExpected) &&
+               decimalActual == decimalExpected;
     }
 
     private static string? ItemUnit(JsonElement? item)
@@ -117,7 +131,9 @@ public static partial class EcowittLocalParser
             ? value : null;
     }
 
-    private static double? Common(JsonElement data, string id) =>
+    // Internal visibility allows fixture tests to verify field ID semantics
+    // without expanding the public WeatherSnapshot contract before beta.
+    internal static double? Common(JsonElement data, string id) =>
         Item(data, "common_list", id) is { } found ? Field(found, "val") : null;
 
     private static string? CommonUnit(JsonElement data, string id) =>

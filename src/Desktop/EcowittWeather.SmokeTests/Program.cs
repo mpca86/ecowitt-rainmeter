@@ -226,7 +226,8 @@ const string localJson = """
     {"id":"0x02","val":"5.2","unit":"C"},
     {"id":"0x07","val":"83%"},
     {"id":"0x0B","val":"7.2 km/h"},
-    {"id":"0x19","val":"3.6 m/s"},
+    {"id":"0x0C","val":"3.6 m/s"},
+    {"id":"0x19","val":"12.0 m/s"},
     {"id":"0x0A","val":"71"},
     {"id":"0x15","val":"0.00 W/m2"},
     {"id":"0x17","val":"0"}
@@ -356,18 +357,51 @@ Expect(officeGw3000.OutdoorTemperatureC == 14.0 &&
        officeGw3000.RelativePressureHpa == 1009.4,
     "GW3000 FW 1.2.4 office basic readings");
 Expect(officeGw3000.WindSpeedMs == 0.0 &&
-       Math.Abs((officeGw3000.WindGustMs ?? double.NaN) - 7.7) < 0.001 &&
+       officeGw3000.WindGustMs == 0.0 &&
        officeGw3000.WindDirectionDegrees == 151 &&
        officeGw3000.RainRateMmH == 0.0 &&
        officeGw3000.DailyRainMm == 0.0 &&
        officeGw3000.UvIndex == 0.0 &&
        officeGw3000.SolarWattsM2 == 0.0,
-    "GW3000 office wind/rain/UV/solar zero values must remain valid readings");
+    "GW3000 office gust (0x0C) and other zero values must remain valid readings, not daily max 0x19");
 Expect(officeGw3000.Sensors.Count == 4 &&
        officeGw3000.Sensors.Select(s => s.Channel).SequenceEqual(new[] { 1, 2, 3, 4 }) &&
        officeGw3000.Sensors[0].TemperatureC == 20.1 &&
        officeGw3000.Sensors[3].HumidityPercent == 45,
     "GW3000 office four CH sensors and normalized values");
+// Live office GW3000 FW 1.2.4 capture: wind 0.3 m/s, current gust 0.5 m/s,
+// daily maximum gust 7.7 m/s. Keep the two distinct in normalized output.
+var observedOfficeWind = EcowittLocalParser.Parse("""
+{
+  "common_list": [
+    { "id": "0x0B", "val": "0.3 m/s" },
+    { "id": "0x0C", "val": "0.5 m/s" },
+    { "id": "0x19", "val": "7.7 m/s" }
+  ]
+}
+""", DateTimeOffset.UtcNow);
+Expect(observedOfficeWind.WindSpeedMs == 0.3 &&
+       observedOfficeWind.WindGustMs == 0.5,
+    "GW3000 live office gust 0x0C is not daily max 0x19");
+
+// Same payload contains decimal IDs for feels-like (3) and VPD (5)
+// alongside a hexadecimal dew-point ID (0x03). These must not collide.
+using (var homeFields = JsonDocument.Parse(LoadGw3000Fixture("gw3000_fw1_2_4_home.json")))
+{
+    var data = homeFields.RootElement;
+    Expect(EcowittLocalParser.Common(data, "3") == 15.0 &&
+           EcowittLocalParser.Common(data, "0x03") == 7.3 &&
+           EcowittLocalParser.Common(data, "5") == 0.682,
+        "GW3000 decimal feels-like/VPD and hexadecimal dew point are distinct");
+    Expect(EcowittLocalParser.Common(data, "0X3") == 7.3 &&
+           EcowittLocalParser.Common(data, "0x003") == 7.3 &&
+           EcowittLocalParser.Common(data, "03") == 15.0,
+        "ID normalization preserves decimal/hex namespaces");
+    Expect(EcowittLocalParser.Common(data, "0x05") is null,
+        "hex ID 0x05 must not match decimal VPD ID 5");
+}
+Console.WriteLine("PASS: GW3000 gust ID 0x0C and decimal/hex field ID isolation");
+
 Console.WriteLine("PASS: real anonymized GW3000 FW 1.2.4 home/office fixtures");
 
 Console.WriteLine("PASS: cloud and local parsers, hybrid failover/recovery, migration and update tests");
