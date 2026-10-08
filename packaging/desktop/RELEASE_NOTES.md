@@ -1,41 +1,34 @@
-# Ecowitt Weather Desktop v0.2.0-alpha.1
+# Ecowitt Weather Desktop v0.2.0-alpha.2
 
-Prvé samostatné **alpha vydanie Desktop Edition** pre Windows 10/11 (64-bit).
-Rainmeter nie je potrebný.
+Druhá verejná alpha verzia samostatnej aplikácie pre Windows 10/11 (x64).
 
-## Novinky
+## Opravené ovládanie a vzhľad
 
-- Samostatná aplikácia vo Windows systémovej lište.
-- Podpora viacerých meteorologických staníc Ecowitt a viacerých widgetov.
-- Cloud API v3 a načítanie staníc priradených k API účtu.
-- Jeden dotaz na stanicu obsluhuje všetky widgety, ktoré ju zobrazujú.
-- Každý widget má vlastné priradenie stanice a názvy senzorov CH1–CH8.
-- **Ľavý klik na widget otvorí kontextovú ponuku**: zmeniť stanicu, nastavenia, aktualizácie, presunúť alebo zatvoriť.
-- Odstránené rušivé ikony z hlavičky widgetov.
-- Kontrastný tmavý výber staníc a tmavá kontextová ponuka.
-- Vlastná ikona počasia, metadáta autora a slovenská sekcia O programe.
-- Zabudovaná **kontrola alpha aktualizácií** z GitHub Releases.
-- Overené stiahnutie ZIP cez SHA-256, zálohovanie pred výmenou súborov a pokus o obnovu pri chybe.
-- Automatická migrácia nastavení zo starších preview verzií.
-- API kľúče sú uložené v šifrovanom lokálnom súbore chránenom Windows DPAPI.
+- **Ľavým tlačidlom myši** možno widget priamo potiahnuť na nové miesto.
+- **Pravým tlačidlom myši** sa otvorí kontextová ponuka.
+- Z kontextovej ponuky bolo odstránené nadbytočné tlačidlo na presun widgetu.
+- Hlavná ponuka aj vnorený zoznam meteostaníc používajú **jednu spoločnú tmavú WPF šablónu** vrátane pozadia, zaškrtávacích značiek a aktívnych položiek.
+- Pridaný automatický test spoločnej témy, ovládania myšou a absencie rušivých tlačidiel vo widgete.
 
-## Inštalácia
+## Local API a automatický hybridný režim
 
-1. Stiahni `EcowittWeather-Desktop-v0.2.0-alpha.1-win-x64.zip`.
-2. Rozbaľ ZIP do vlastného priečinka, napríklad `C:\Apps\EcowittWeather\`.
-3. Spusti `EcowittWeather.Desktop.exe`.
-4. Vyplň Ecowitt Application Key a API Key, načítaj zoznam staníc a ulož nastavenia.
+- Každý profil má vlastnú voľbu **Web API / Local API / Auto**.
+- Local API získava živé merania z dostupného Ecowitt gatewaya cez `http://HOST:PORT/get_livedata_info`.
+- Parser podporuje teplotu, vlhkosť, tlak, vietor, nárazy, zrážky, UV, slnečné žiarenie a kanály CH1–CH8.
+- Rozpoznané jednotky sa prepočítavajú na °C, hPa, m/s a mm.
+- Local API nepotrebuje Ecowitt Application Key ani API Key.
+- **Auto** prioritne používa Local API. Pri chybe gatewaya prepne na Web API; lokálne pripojenie skúša opäť po dvoch minútach.
+- Aktuálny zdroj dát je uvedený v pätičke widgetu vrátane informácie o záložnom Web API.
+- Lokálny zdroj akceptuje IP adresy privátnej siete alebo názvy lokálnych gatewayov, s voliteľným portom.
 
-Neodporúčame spúšťať aplikáciu priamo z otvoreného ZIP ani z chráneného priečinka Program Files. Aktualizátor musí mať oprávnenie zapisovať do priečinka aplikácie.
+## Aktualizácia
 
-## Ovládanie
+Ak používaš `v0.2.0-alpha.1`, otvor kontextovú ponuku widgetu → **Aktualizácie** → **Skontrolovať** → **Stiahnuť a aktualizovať**. Alpha.2 je určená aj na prvý praktický test zabudovaného aktualizátora.
 
-- Ľavý klik na plochu widgetu: kontextová ponuka.
-- Shift + ľavé potiahnutie: presun widgetu.
-- Pravý klik na ikonu v systémovej lište: správa všetkých widgetov, nastavenia, aktualizácie a O programe.
+Doterajšie stanice, widgety, pozície a API kľúče sa zachovávajú.
 
-## Stav alpha
+## Známe obmedzenia
 
-V tejto verzii funguje **Ecowitt Web API**. Local API, automatické prepínanie Local/Web, grafy a SQLite história sú plánované.
-
-Aktualizátor je súčasťou tejto alpha verzie; jeho kompletný proces bude možné prakticky otestovať pri nasledujúcom alpha vydaní.
+- Local API bolo overené automatickými testami podľa vzorovej odpovede z Rainmeter Edition, **reálne spojenie na konkrétny gateway ešte treba odskúšať**.
+- Rôzne typy widgetov, grafy, história SQLite a samostatný inštalátor zatiaľ nie sú dostupné.
+- Automatická výmena programových súborov s rollbackom sa musí overiť na testovacom Windows PC.
