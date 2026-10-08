@@ -3,7 +3,7 @@
 Samostatná Windows aplikácia s podporou viacerých widgetov a viacerých staníc. Aktuálne alpha vydanie: **v0.2.0-alpha.3**.
 
 **Aktuálne implementované:**
-- .NET 8 / WPF widget bez rámu (aktuálne merania z Ecowitt Web API v3)
+- .NET 10 / WPF widget bez rámu (aktuálne merania z Ecowitt Web API v3)
 - Ecowitt Cloud API: teplota, vlhkosť, tlak, vietor, zrážky, UV, solárne žiarenie a CH1–CH8
 - nastavenie MAC, Application Key a API Key; aliasy kanálov a interval načítania
 - tlačidlo **Načítať stanice z Ecowitt**: zoznam meteorologických staníc priradených k API účtu, výber MAC bez prepisovania
@@ -36,7 +36,9 @@ nie je potrebné mať Rainmeter ani Visual Studio.
 
 ## Spustenie zo zdrojového kódu na Windows 10/11
 
-Na vývoj je potrebný .NET 8 SDK s Windows Desktop podporou (prípadne Visual Studio 2022).
+Na vývoj je potrebné **.NET 10 SDK** s Windows Desktop podporou a kompatibilné vývojové prostredie. Cieľový framework Desktop projektov je `net10.0-windows` (`Core`: `net10.0`).
+
+**Poznámka k vydaniam:** Posledné verejné vydanie `v0.2.0-alpha.3` bolo zostavené na .NET 8. Vývojová vetva s migráciou P0.1 používa .NET 10. Kým nebude schválené nové vydanie, verejný ZIP sa nemení.
 
 ```powershell
 git clone --branch cloud-api https://github.com/mpca86/ecowitt-rainmeter.git

@@ -2,7 +2,7 @@
 
 ## Cieľ
 
-Desktop Edition bude samostatná Windows aplikácia postavená na .NET 8 + WPF. Nemá byť závislá od Rainmetera a má podporovať viac nezávislých widgetov, staníc a zdrojov dát.
+Desktop Edition bude samostatná Windows aplikácia postavená na .NET 10 + WPF. Nemá byť závislá od Rainmetera a má podporovať viac nezávislých widgetov, staníc a zdrojov dát.
 
 Rainmeter Edition zostáva samostatnou distribučnou vetvou produktu. Existujúce verejné balíky a updater ostávajú kompatibilné.
 
