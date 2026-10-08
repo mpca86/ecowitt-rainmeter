@@ -76,4 +76,40 @@ catch (InvalidDataException)
 }
 Expect(rejected, "API failure must be rejected");
 
-Console.WriteLine("PASS: 12 cloud-parser smoke checks");
+// /device/list is linked to the API account and requires no station MAC.
+const string deviceList = """
+{
+  "code": 0, "msg": "success",
+  "data": {
+    "list": [
+      {"id":1,"type":1,"name":"Záhrada","mac":"AA:BB:CC:DD:EE:FF","stationtype":"GW2000"},
+      {"id":2,"type":2,"name":"Kamera","mac":"11:22:33:44:55:66","stationtype":"Camera"},
+      {"id":3,"type":"1","name":"Doma","mac":"00:11:22:33:44:55","stationtype":"GW3000"},
+      {"id":4,"type":1,"name":"Duplicitná","mac":"aa:bb:cc:dd:ee:ff"}
+    ]
+  }
+}
+""";
+
+var devices = EcowittDeviceCatalog.Parse(deviceList);
+Expect(devices.Count == 2, "list should include only weather stations with unique MACs");
+Expect(devices.Any(x => x.Mac == "AA:BB:CC:DD:EE:FF"), "first station MAC");
+Expect(devices.Any(x => x.Name == "Doma" && x.Model == "GW3000"),
+    "station name and model");
+Expect(!devices.Any(x => x.Name == "Kamera"), "exclude camera devices");
+Expect(EcowittDeviceCatalog.Parse("""{"code":0,"data":{"list":[]}}""").Count == 0,
+    "empty registered station list");
+
+var listRejected = false;
+try
+{
+    EcowittDeviceCatalog.Parse("""{"code":45001,"msg":"limit"}""");
+}
+catch (InvalidDataException)
+{
+    listRejected = true;
+}
+Expect(listRejected, "device-list API failure must be rejected");
+
+Console.WriteLine("PASS: cloud parser and device-list checks");
+
