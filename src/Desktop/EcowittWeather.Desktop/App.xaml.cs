@@ -71,7 +71,7 @@ public partial class App : System.Windows.Application
         {
             foreach (var model in _models.Values)
                 model.ShowStatus("Nastav Ecowitt Cloud API v Nastaveniach.");
-            ShowSettings();
+            ShowSettings(firstRun: true);
         }
         else
         {
@@ -267,9 +267,11 @@ public partial class App : System.Windows.Application
         dialog.ShowDialog();
     }
 
-    private void ShowSettings()
+    private void ShowSettings() => ShowSettings(firstRun: false);
+
+    private void ShowSettings(bool firstRun)
     {
-        var dialog = new SettingsWindow(_settings, _credentials);
+        var dialog = new SettingsWindow(_settings, _credentials, firstRun);
         var owner = _widgets.Values.FirstOrDefault(w => w.IsVisible);
         if (owner != null) dialog.Owner = owner;
 
