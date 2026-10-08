@@ -76,4 +76,4 @@ catch (InvalidDataException)
 }
 Expect(rejected, "API failure must be rejected");
 
-Console.WriteLine("PASS: 11 cloud-parser smoke checks");
+Console.WriteLine("PASS: 12 cloud-parser smoke checks");

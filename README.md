@@ -69,6 +69,18 @@ Credentials remain local in `CloudSecrets.inc` and are not part of release packa
 - persistent CSV history
 - Settings and Diagnostics skins
 
+## Desktop Edition (preview)
+
+A standalone .NET 8 / WPF Windows app is under development at
+[`src/Desktop/`](src/Desktop/README.md). It currently supports Ecowitt
+Cloud API, a tray icon, multiple weather windows sharing a single poller,
+and DPAPI-protected credentials. Local API, hybrid fallback and multiple
+stations are planned next.
+
+Windows build and parser smoke tests run through
+[Desktop CI](.github/workflows/desktop-build.yml). Desktop previews are
+built separately from Rainmeter Releases.
+
 ## License
 
 Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported. See [LICENSE.md](LICENSE.md).
