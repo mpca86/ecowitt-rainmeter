@@ -22,6 +22,35 @@
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
+        <!-- Stable dark tab content across Windows themes (default TabControl
+             can paint a white page behind dark tab headers). -->
+        <Style TargetType="TabControl">
+            <Setter Property="Background" Value="#FF192635"/>
+            <Setter Property="BorderBrush" Value="#FF425A74"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabControl">
+                        <Grid KeyboardNavigation.TabNavigation="Local">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TabPanel Grid.Row="0" IsItemsHost="True"
+                                      Background="Transparent"
+                                      KeyboardNavigation.TabIndex="1"/>
+                            <Border Grid.Row="1"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="1" CornerRadius="0,0,6,6">
+                                <ContentPresenter Name="PART_SelectedContentHost"
+                                                  ContentSource="SelectedContent"
+                                                  KeyboardNavigation.DirectionalNavigation="Contained"/>
+                            </Border>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style TargetType="TabItem">
             <Setter Property="Foreground" Value="#FFF1F7FF"/>
             <Setter Property="Background" Value="#FF27384D"/>
