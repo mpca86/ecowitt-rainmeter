@@ -317,6 +317,114 @@ Expect(recovered.Source == "Ecowitt Local API" &&
        localMock.Count == 3 && cloudMock.Count == 2,
        "auto returns to LAN after recovery");
 
+// P0.3: router regression tests are deterministic and never contact a gateway.
+// Each scenario uses an injected clock and scripted in-memory IWeatherSource.
+{
+    var onlyCloudLocal = new FakeSource(localReading) { Throw = true };
+    var onlyCloudCloud = new FakeSource(snapshot);
+    var onlyCloudRouter = new StationWeatherRouter(onlyCloudLocal, onlyCloudCloud);
+    var cloudOnlyReading = await onlyCloudRouter.FetchAsync(
+        autoStation with { SourceMode = SourceMode.Cloud });
+    Expect(onlyCloudLocal.Count == 0 && onlyCloudCloud.Count == 1 &&
+           cloudOnlyReading.Source == "Ecowitt Web API",
+        "P0.3 T01: Cloud mode never probes LAN and never marks direct Cloud as fallback");
+
+    var onlyLocalLocal = new FakeSource(localReading);
+    var onlyLocalCloud = new FakeSource(snapshot) { Throw = true };
+    var onlyLocalRouter = new StationWeatherRouter(onlyLocalLocal, onlyLocalCloud);
+    var localOnlyReading = await onlyLocalRouter.FetchAsync(
+        autoStation with { SourceMode = SourceMode.Local });
+    Expect(onlyLocalLocal.Count == 1 && onlyLocalCloud.Count == 0 &&
+           localOnlyReading.Source == "Ecowitt Local API",
+        "P0.3 T01: Local mode never calls Cloud");
+
+    var errorLocal = new ScriptedSource((_, _) => Task.FromException<WeatherSnapshot>(
+        new InvalidDataException("Simulované neplatné údaje LAN")));
+    var errorCloud = new FakeSource(snapshot);
+    var errorRouter = new StationWeatherRouter(errorLocal, errorCloud);
+    var recoveredWithCloud = await errorRouter.FetchAsync(autoStation);
+    Expect(errorLocal.Count == 1 && errorCloud.Count == 1 &&
+           recoveredWithCloud.Source.Contains("záložný zdroj"),
+        "P0.3 T02: malformed Local response triggers Cloud fallback");
+
+    var isolatedNow = new DateTimeOffset(2026, 10, 8, 12, 0, 0, TimeSpan.Zero);
+    var isolatedLocal = new ScriptedSource((p, _) => p.Id == "offline"
+        ? Task.FromException<WeatherSnapshot>(new TimeoutException("Offline LAN"))
+        : Task.FromResult(localReading));
+    var isolatedCloud = new FakeSource(snapshot);
+    var isolatedRouter = new StationWeatherRouter(isolatedLocal, isolatedCloud, () => isolatedNow);
+    var offline = autoStation with { Id = "offline" };
+    var online = autoStation with { Id = "online" };
+    var fallbackA = await isolatedRouter.FetchAsync(offline);
+    var firstB = await isolatedRouter.FetchAsync(online);
+    var repeatA = await isolatedRouter.FetchAsync(offline);
+    Expect(fallbackA.Source.Contains("záložný zdroj") &&
+           firstB.Source == "Ecowitt Local API" &&
+           repeatA.Source.Contains("záložný zdroj") &&
+           isolatedLocal.Count == 2 && isolatedCloud.Count == 2,
+        "P0.3 T06: two stations have independent Local retry cooldowns");
+
+    isolatedNow += StationWeatherRouter.LocalRetryInterval - TimeSpan.FromTicks(1);
+    await isolatedRouter.FetchAsync(offline);
+    Expect(isolatedLocal.Count == 2 && isolatedCloud.Count == 3,
+        "P0.3 T03: LAN probe is suppressed immediately before retry boundary");
+    isolatedNow += TimeSpan.FromTicks(1);
+    await isolatedRouter.FetchAsync(offline);
+    Expect(isolatedLocal.Count == 3 && isolatedCloud.Count == 4,
+        "P0.3 T03: LAN probe retries exactly at 2-minute boundary");
+
+    var resetNow = new DateTimeOffset(2026, 10, 8, 12, 0, 0, TimeSpan.Zero);
+    var resetLocal = new FakeSource(localReading) { Throw = true };
+    var resetCloud = new FakeSource(snapshot);
+    var resetRouter = new StationWeatherRouter(resetLocal, resetCloud, () => resetNow);
+    await resetRouter.FetchAsync(autoStation);
+    resetLocal.Throw = false;
+    var duringCooldown = await resetRouter.FetchAsync(autoStation);
+    Expect(duringCooldown.Source.Contains("záložný zdroj") && resetLocal.Count == 1,
+        "P0.3 T03: restored LAN is not probed before cooldown");
+    resetRouter.Reset();
+    var afterReset = await resetRouter.FetchAsync(autoStation);
+    Expect(afterReset.Source == "Ecowitt Local API" &&
+           resetLocal.Count == 2 && resetCloud.Count == 2,
+        "P0.3 T03: Reset forces immediate Local retry");
+
+    var bothNow = new DateTimeOffset(2026, 10, 8, 12, 0, 0, TimeSpan.Zero);
+    var bothLocal = new FakeSource(localReading) { Throw = true };
+    var bothCloud = new FakeSource(snapshot) { Throw = true };
+    var bothRouter = new StationWeatherRouter(bothLocal, bothCloud, () => bothNow);
+    var bothFailed = false;
+    try { await bothRouter.FetchAsync(autoStation); }
+    catch (TimeoutException) { bothFailed = true; }
+    Expect(bothFailed && bothLocal.Count == 1 && bothCloud.Count == 1,
+        "P0.3 T04: when both sources fail no fake successful snapshot is returned");
+    bothLocal.Throw = false;
+    bothCloud.Throw = false;
+    var cloudDuringCooldown = await bothRouter.FetchAsync(autoStation);
+    Expect(cloudDuringCooldown.Source.Contains("záložný zdroj") &&
+           bothLocal.Count == 1 && bothCloud.Count == 2,
+        "P0.3 T04: Cloud can recover while Local cooldown is still active");
+    bothNow += StationWeatherRouter.LocalRetryInterval;
+    var localRecovered = await bothRouter.FetchAsync(autoStation);
+    Expect(localRecovered.Source == "Ecowitt Local API" &&
+           bothLocal.Count == 2 && bothCloud.Count == 2,
+        "P0.3 T04: Local recovers automatically after both were unavailable");
+
+    using var canceled = new CancellationTokenSource();
+    canceled.Cancel();
+    var canceledLocal = new ScriptedSource((_, ct) =>
+        Task.FromCanceled<WeatherSnapshot>(ct));
+    var canceledCloud = new FakeSource(snapshot);
+    var canceledRouter = new StationWeatherRouter(canceledLocal, canceledCloud);
+    var propagatedCancellation = false;
+    try { await canceledRouter.FetchAsync(autoStation, canceled.Token); }
+    catch (OperationCanceledException) { propagatedCancellation = true; }
+    Expect(propagatedCancellation && canceledLocal.Count == 1 && canceledCloud.Count == 0,
+        "P0.3 T05: caller cancellation propagates without Cloud fallback");
+
+    Console.WriteLine("PASS: P0.3 mode isolation, invalid Local fallback, per-profile cooldown, " +
+                      "retry boundary, Reset, dual failure recovery and cancellation");
+}
+
 // P0.2: real GW3000 FW 1.2.4 payloads, anonymized before committing.
 // Home gateway has no rain/ch_aisle sections or wind/UV/solar IDs.
 // Office gateway has all of them. Missing must stay null, real zero must stay zero.
@@ -442,4 +550,16 @@ public sealed class FakeSource(WeatherSnapshot reading) : IWeatherSource
     }
 }
 
+// In-memory source allows deterministic error/cancellation tests without HTTP.
+public sealed class ScriptedSource(
+    Func<StationProfile, CancellationToken, Task<WeatherSnapshot>> handler) : IWeatherSource
+{
+    public int Count { get; private set; }
 
+    public Task<WeatherSnapshot> FetchAsync(
+        StationProfile profile, CancellationToken cancellationToken = default)
+    {
+        Count++;
+        return handler(profile, cancellationToken);
+    }
+}
