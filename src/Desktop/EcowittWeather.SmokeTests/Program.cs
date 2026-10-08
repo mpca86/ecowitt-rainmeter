@@ -1,3 +1,5 @@
+using System.Text.Json;
+using EcowittWeather.Infrastructure.Configuration;
 using EcowittWeather.Infrastructure.Ecowitt.Cloud;
 
 static void Expect(bool condition, string message)
@@ -111,5 +113,48 @@ catch (InvalidDataException)
 }
 Expect(listRejected, "device-list API failure must be rejected");
 
-Console.WriteLine("PASS: cloud parser and device-list checks");
+// Existing installations (single Profile + root SensorAliases) must migrate safely.
+const string oldSettings = """
+{
+    "Profile": {
+        "Id": "old-station", "Name": "Pôvodná stanica",
+        "CloudMac": "AA:BB:CC:DD:EE:FF", "SourceMode": 0
+    },
+    "RefreshSeconds": 60,
+    "SensorAliases": { "1": "Kancelária", "2": "Dielňa" },
+    "Widgets": [{"Id":"old-widget"}]
+}
+""";
+var migrated = JsonSerializer.Deserialize<AppSettings>(oldSettings)!;
+migrated.Normalize();
+Expect(migrated.Profiles.Count == 1, "legacy settings migrate to one station");
+Expect(migrated.Profiles[0].Name == "Pôvodná stanica" &&
+       migrated.Profiles[0].CloudMac == "AA:BB:CC:DD:EE:FF",
+       "legacy station properties preserved");
+Expect(migrated.Profiles[0].SensorAliases[1] == "Kancelária",
+       "legacy sensor aliases preserved");
+Expect(migrated.Widgets[0].ProfileId == migrated.Profiles[0].Id,
+       "legacy widget assigned to migrated station");
+Expect(!JsonSerializer.Serialize(migrated).Contains("\"SensorAliases\"",
+    StringComparison.Ordinal),
+    "legacy root sensor aliases removed on save");
+
+// Adding second station does not alter the first station's aliases or widget.
+var second = migrated.Profiles[0] with
+{
+    Id = "second-station", Name = "Druhá stanica",
+    CloudMac = "00:11:22:33:44:55",
+    SensorAliases = new Dictionary<int, string> { [1] = "Chata" }
+};
+migrated.Profiles.Add(second);
+migrated.Widgets.Add(new WidgetPlacement { Id="second-widget", ProfileId=second.Id });
+migrated.Normalize();
+Expect(migrated.Widgets.Count == 2 &&
+       migrated.Widgets[0].ProfileId != migrated.Widgets[1].ProfileId,
+       "different widgets can target different stations");
+Expect(migrated.Profiles[0].SensorAliases[1] == "Kancelária" &&
+       migrated.Profiles[1].SensorAliases[1] == "Chata",
+       "per-station aliases remain independent");
+
+Console.WriteLine("PASS: parser, device-list and multi-station migration checks");
 
