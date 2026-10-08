@@ -1,5 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
+using TextBox = System.Windows.Controls.TextBox;
+using MessageBox = System.Windows.MessageBox;
 using EcowittWeather.Core.Models;
 using EcowittWeather.Infrastructure.Configuration;
 

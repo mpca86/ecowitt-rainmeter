@@ -1,6 +1,7 @@
 using System.Net.Http;
 using System.Windows;
 using System.Windows.Threading;
+using MessageBox = System.Windows.MessageBox;
 using EcowittWeather.Core.Models;
 using EcowittWeather.Desktop.Settings;
 using EcowittWeather.Desktop.ViewModels;
