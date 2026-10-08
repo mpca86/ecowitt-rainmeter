@@ -259,6 +259,16 @@ Expect(localReading.Sensors.Count == 2 && localReading.Sensors[1].Channel == 2 &
 Expect(localReading.SolarWattsM2 == 0 && localReading.UvIndex == 0,
     "local solar/UV zero values");
 
+var fahrenheitReading = EcowittLocalParser.Parse("""
+{
+ "common_list":[{"id":"0x02","val":"68","unit":"F"}],
+ "ch_aisle":[{"channel":"1","temp":"50","unit":"F","humidity":"70%"}]
+}
+""", DateTimeOffset.UtcNow);
+Expect(Math.Abs((fahrenheitReading.OutdoorTemperatureC ?? -100) - 20) < 0.001 &&
+       Math.Abs((fahrenheitReading.Sensors[0].TemperatureC ?? -100) - 10) < 0.001,
+       "Local API Fahrenheit values normalized to Celsius");
+
 bool malformedLocal = false;
 try { EcowittLocalParser.Parse("""{"debug":[{"runtime":"20"}]}""", DateTimeOffset.UtcNow); }
 catch (InvalidDataException) { malformedLocal = true; }
