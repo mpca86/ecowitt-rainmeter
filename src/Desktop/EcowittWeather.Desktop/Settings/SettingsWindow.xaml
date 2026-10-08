@@ -49,7 +49,25 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <ComboBox Name="ProfileCombo" MinHeight="35" VerticalAlignment="Center"
+                              Background="#FFF1F5FA" Foreground="#FF162B3C"
+                              BorderBrush="#FF89A5BF"
                               SelectionChanged="ProfileSelectionChanged">
+                        <ComboBox.ItemContainerStyle>
+                            <Style TargetType="ComboBoxItem">
+                                <Setter Property="Foreground" Value="#FF162B3C"/>
+                                <Setter Property="Background" Value="#FFF1F5FA"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsHighlighted" Value="True">
+                                        <Setter Property="Background" Value="#FFD8E8F6"/>
+                                        <Setter Property="Foreground" Value="#FF162B3C"/>
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="#FFC4E0F2"/>
+                                        <Setter Property="Foreground" Value="#FF162B3C"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ComboBox.ItemContainerStyle>
                         <ComboBox.ItemTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding Name}" Foreground="#FF192B3C"
@@ -92,6 +110,16 @@
                                 <Style TargetType="ComboBoxItem">
                                     <Setter Property="Foreground" Value="#FF162B3C"/>
                                     <Setter Property="Background" Value="#FFF1F5FA"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsHighlighted" Value="True">
+                                            <Setter Property="Background" Value="#FFD8E8F6"/>
+                                            <Setter Property="Foreground" Value="#FF162B3C"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="#FFC4E0F2"/>
+                                            <Setter Property="Foreground" Value="#FF162B3C"/>
+                                        </Trigger>
+                                    </Style.Triggers>
                                 </Style>
                             </ComboBox.ItemContainerStyle>
                             <ComboBox.ItemTemplate>
