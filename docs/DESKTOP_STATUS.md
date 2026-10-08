@@ -1,46 +1,54 @@
 # Desktop Edition – implementačný stav
 
-Prvý funkčný *Cloud API vertical slice*:
+## v0.2.0-alpha.2
+
+Implementované:
+
+- WPF desktop aplikácia a viaceré widgety / profily Ecowitt staníc
+- Cloud API v3 vrátane načítania zoznamu staníc podľa kľúčov
+- Local API (`/get_livedata_info`) podľa vzorovej odpovede GW3000
+- hybridný režim Auto, preferujúci LAN a prechádzajúci na Web API pri výpadku
+- periodický návrat k Local API s dvojminútovým odstupom pri nedostupnosti
+- normalizácia meraní teploty, vlhkosti, vetra, tlaku, zrážok, UV, žiarenia, CH1–CH8
+- zdieľané načítanie dát pre widgety jednej stanice
+- pravý klik na widget pre kontextovú ponuku; ľavé potiahnutie pre presun
+- jednotná tmavá šablóna hlavnej aj vnorenej ponuky s automatickým UI kontraktovým testom
+- Windows DPAPI pre API kľúče, samostatný Desktop GitHub alpha updater a changelog
+
+## Dátový tok
 
 ```text
-Ecowitt Web API v3
-      |
-      v
-EcowittCloudSource
-      |
-      v
-EcowittCloudParser
-      |
-      v
-WeatherSnapshot (Core)
-      |
-      v
+StationProfile (Cloud / Local / Auto)
+    |
+    v
+StationWeatherRouter
+    |        |
+    v        v
+Local API   Ecowitt Cloud API v3
+    |        |
+    +----+---+
+         |
+         v
+WeatherSnapshot
+         |
+         v
 WeatherViewModel
-      |
-      +--> WeatherWidget 1
-      +--> WeatherWidget 2
-      +--> WeatherWidget N
+    |         |
+    v         v
+Widget 1    Widget N
 ```
 
-`App` vlastní iba jeden HTTP klient a jeden plánovač dopytov. Každý otvorený
-widget zdieľa `WeatherViewModel`; pridanie ďalšieho okna nezvyšuje počet
-dotazov na Ecowitt Cloud API.
+## Overenie
 
-Pre zatiaľ jediný profil je podporované len Cloud API. Model `StationProfile`
-už vyčleňuje `SourceMode` (Cloud / Local / Auto) a budúci Local API adaptér
-implementuje rovnaké rozhranie `IWeatherSource`.
+Windows CI: zostavenie, parser, Local gateway URL, výpadok a návrat hybridného režimu,
+migrácia nastavení, výber alpha release, šablóny WPF a gestá myši.
 
-## Ďalšie kroky
+Automatické testy **nenahrádzajú test na reálnom gatewayi a vizuálnu kontrolu** v používateľskom Windows prostredí.
 
-1. Overiť WPF zostavenie na Windows a reálne Cloud API načítanie.
-2. Pridať Local API adaptér pre gateway /get_livedata_info.
-3. Pridať DataSourceManager s oddeleným pollingom pre viac profilov a automatickým fallbackom.
-4. Pridať widget šablóny (Senzory, Tlak, Zrážky) a správcu rozloženia.
-5. História SQLite, trendy, autostart, bezpečný export/import a desktop updater.
+## Ďalšie priority
 
-## Bezpečnosť
-
-- API kľúče zostávajú v lokálnom DPAPI úložisku.
-- Pri HTTP chybe neprezentujeme adresu požiadavky, keďže Ecowitt používa autentizáciu v query stringu.
-- Žiadne reálne prihlasovacie údaje neboli vložené do GitHub súborov.
-- Desktop Edition sa zatiaľ nevydáva ako verejný release.
+1. Prakticky otestovať alpha.1 → alpha.2 cez zabudovaný aktualizátor.
+2. Otestovať Local API s fyzickým gatewayom vrátane režimu Auto a výpadku siete.
+3. Pridať ďalšie šablóny widgetov a panel diagnostiky pripojení.
+4. História SQLite, grafy a trendové ukazovatele.
+5. Voliteľný štart s Windows a bezpečný export/import Desktop konfigurácie.
