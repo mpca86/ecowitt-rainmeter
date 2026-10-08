@@ -8,9 +8,23 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>EcowittWeather.Desktop</AssemblyName>
+    <Version>0.2.0-preview.1</Version>
+    <AssemblyVersion>0.2.0.0</AssemblyVersion>
+    <FileVersion>0.2.0.0</FileVersion>
+    <Product>Ecowitt Weather Desktop Edition</Product>
+    <Title>Ecowitt Weather Desktop</Title>
+    <Authors>Martin Šturcel (mpca86)</Authors>
+    <Company>mpca86</Company>
+    <Description>Desktopové widgety meteorologických staníc Ecowitt s Web API a podporou viacerých staníc.</Description>
+    <Copyright>© 2026 Martin Šturcel</Copyright>
+    <PackageLicenseExpression>CC-BY-NC-SA-3.0</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/mpca86/ecowitt-rainmeter</RepositoryUrl>
+    <ApplicationIcon>Assets\EcowittWeather.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\EcowittWeather.Core\EcowittWeather.Core.csproj" />
     <ProjectReference Include="..\EcowittWeather.Infrastructure\EcowittWeather.Infrastructure.csproj" />
+    <Resource Include="Assets\EcowittWeather.ico"/>
+    <EmbeddedResource Include="Assets\EcowittWeather.ico" LogicalName="EcowittWeather.Icon"/>
   </ItemGroup>
 </Project>

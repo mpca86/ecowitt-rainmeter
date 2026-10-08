@@ -1,0 +1,45 @@
+<Window x:Class="EcowittWeather.Desktop.About.AboutWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="O programe – Ecowitt Weather Desktop"
+        Icon="pack://application:,,,/Assets/EcowittWeather.ico"
+        Width="475" Height="455" MinWidth="430" MinHeight="415"
+        WindowStartupLocation="CenterOwner"
+        Background="#FF141D2A" FontFamily="Segoe UI">
+    <DockPanel Margin="24">
+        <Button DockPanel.Dock="Bottom" Content="Zavrieť" Width="110"
+                HorizontalAlignment="Right" Margin="0,18,0,0"
+                Click="CloseClick"/>
+        <StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                <Image Width="64" Height="64"
+                       Source="pack://application:,,,/Assets/EcowittWeather.ico"
+                       Margin="0,0,16,0"/>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="ECOWITT WEATHER" FontSize="21" FontWeight="Bold"/>
+                    <TextBlock Text="Desktop Edition" Foreground="#FF86CFED"
+                               FontSize="14" FontWeight="SemiBold"/>
+                    <TextBlock Name="VersionText" Foreground="#FFC1D0DD"
+                               Margin="0,5,0,0"/>
+                </StackPanel>
+            </StackPanel>
+            <Border BorderBrush="#FF425A74" BorderThickness="0,1,0,0"
+                    Margin="0,0,0,16"/>
+            <TextBlock Text="Samostatné widgety meteorologických staníc Ecowitt pre Windows."
+                       TextWrapping="Wrap" FontSize="13" Margin="0,0,0,16"/>
+            <TextBlock Text="Autor: Martin Šturcel (mpca86)" FontWeight="SemiBold"
+                       Margin="0,0,0,9"/>
+            <TextBlock Text="Technológia: .NET 8 · WPF · Ecowitt Web API v3"
+                       Margin="0,0,0,9"/>
+            <TextBlock Text="Licencia: Creative Commons BY-NC-SA 3.0"
+                       Margin="0,0,0,12"/>
+            <TextBlock Text="Vývojová verzia. Rainmeter Edition je samostatný produktový variant."
+                       Foreground="#FFC0CEDE" TextWrapping="Wrap"
+                       Margin="0,0,0,16"/>
+            <Button Content="Zdrojový kód na GitHube"
+                    HorizontalAlignment="Left" Click="GithubClick"/>
+            <Button Content="Stránka autora"
+                    HorizontalAlignment="Left" Click="WebsiteClick"/>
+        </StackPanel>
+    </DockPanel>
+</Window>
