@@ -17,6 +17,11 @@ CloudSecrets.inc
 dist/
 build/
 
+# Desktop .NET build state
+**/bin/
+**/obj/
+.vs/
+
 # OS / editor
 .DS_Store
 Thumbs.db
