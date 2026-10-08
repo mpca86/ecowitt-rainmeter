@@ -105,3 +105,19 @@ Pushing a version tag such as `v1.11.0` or `v1.11.0-beta.1` triggers the GitHub 
 - matching `.sha256`
 
 Tags containing `alpha`, `beta`, or `rc` are published as GitHub prereleases.
+
+
+## Configuration transfer
+
+The Settings skin can export and import a portable `.ecowittconfig` bundle for provisioning multiple PCs.
+
+The bundle contains:
+
+- Ecowitt Application Key and API Key
+- station MAC address
+- user sensor labels
+- refresh interval and update channel
+
+Before import, the current local configuration is backed up under `%LOCALAPPDATA%\EcowittRainmeter\ConfigBackups`.
+
+The exported bundle is not encrypted and must be treated as a sensitive file.
