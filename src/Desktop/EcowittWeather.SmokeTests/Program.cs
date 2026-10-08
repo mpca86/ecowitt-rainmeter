@@ -1,3 +1,4 @@
+using EcowittWeather.Infrastructure.Updates;
 using System.Text.Json;
 using EcowittWeather.Infrastructure.Configuration;
 using EcowittWeather.Infrastructure.Ecowitt.Cloud;
@@ -162,5 +163,56 @@ migrated.Normalize();
 Expect(migrated.Widgets.All(w => w.ProfileId == "second-station"),
     "deleted station widgets are reassigned to an existing station");
 
-Console.WriteLine("PASS: parser, device-list and multi-station migration checks");
+// Release channel must not accidentally pick Rainmeter beta tags, old
+// Desktop alphas or a release whose ZIP/checksum are missing.
+const string releases = """
+[
+  {
+    "tag_name": "v1.11.0-beta.6", "draft": false, "body": "Rainmeter",
+    "assets": [
+      {"name": "wrong.zip", "browser_download_url": "https://github.com/test/wrong.zip"}
+    ]
+  },
+  {
+    "tag_name": "desktop-v0.2.0-alpha.1", "draft": false, "body": "Initial",
+    "assets": [
+      {"name": "EcowittWeather-Desktop-v0.2.0-alpha.1-win-x64.zip",
+       "browser_download_url": "https://github.com/test/alpha1.zip"},
+      {"name": "EcowittWeather-Desktop-v0.2.0-alpha.1-win-x64.zip.sha256",
+       "browser_download_url": "https://github.com/test/alpha1.sha256"}
+    ]
+  },
+  {
+    "tag_name": "desktop-v0.2.0-alpha.2", "draft": false, "body": "Novinky v alphe 2",
+    "assets": [
+      {"name": "EcowittWeather-Desktop-v0.2.0-alpha.2-win-x64.zip",
+       "browser_download_url": "https://github.com/test/alpha2.zip"},
+      {"name": "EcowittWeather-Desktop-v0.2.0-alpha.2-win-x64.zip.sha256",
+       "browser_download_url": "https://github.com/test/alpha2.sha256"}
+    ]
+  },
+  {
+    "tag_name": "desktop-v0.2.0-alpha.3", "draft": true, "body": "Draft",
+    "assets": [
+      {"name": "EcowittWeather-Desktop-v0.2.0-alpha.3-win-x64.zip",
+       "browser_download_url": "https://github.com/test/alpha3.zip"},
+      {"name": "EcowittWeather-Desktop-v0.2.0-alpha.3-win-x64.zip.sha256",
+       "browser_download_url": "https://github.com/test/alpha3.sha256"}
+    ]
+  }
+]
+""";
+var next = DesktopUpdateService.SelectUpdate(releases, "0.2.0-alpha.1");
+Expect(next?.Tag == "desktop-v0.2.0-alpha.2" &&
+       next.Notes == "Novinky v alphe 2",
+    "alpha channel finds newest complete Desktop release");
+Expect(DesktopUpdateService.SelectUpdate(releases, "0.2.0-alpha.2") == null,
+    "installed alpha is not offered again");
+Expect(DesktopUpdateService.SelectUpdate(releases, "0.2.0-alpha.3") == null,
+    "draft alpha is not offered");
+Expect(DesktopUpdateService.TryVersion("0.2.0-alpha.1+abcdef", out var parsed) &&
+       parsed.prerelease == 1,
+    "assembly informational version suffix is accepted");
+
+Console.WriteLine("PASS: cloud parser, device list, migration and Desktop alpha release tests");
 
