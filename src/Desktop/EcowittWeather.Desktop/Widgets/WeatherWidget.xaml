@@ -10,7 +10,7 @@
         WindowStartupLocation="Manual">
     <Border Background="#EB151B25" BorderBrush="#50667987"
             BorderThickness="1" CornerRadius="9" Padding="14"
-            MouseLeftButtonDown="DragWidget" MouseRightButtonUp="ShowWidgetMenu" ToolTip="Ľavé potiahnutie: presun · pravý klik: ponuka">
+            MouseLeftButtonDown="DragWidget" MouseRightButtonUp="ShowWidgetMenu">
         <StackPanel>
             <TextBlock Text="{Binding StationName}" FontWeight="SemiBold"
                        FontSize="13" HorizontalAlignment="Left" Margin="2,0,0,12"
