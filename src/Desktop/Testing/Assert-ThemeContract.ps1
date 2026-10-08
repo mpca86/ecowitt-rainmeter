@@ -32,6 +32,12 @@ Assert ($border.GetAttribute('MouseRightButtonUp') -eq 'ShowWidgetMenu') 'right 
 Assert ($null -eq $widget.SelectSingleNode("//*[local-name()='Button']")) 'weather widget should contain no visible header buttons'
 Assert ($widgetCode -match 'MouseButton.Right' -and $widgetCode -match 'DragMove\(\)') 'mouse handlers do not match intent'
 
+Assert ($null -eq $border.Attributes['ToolTip']) 'widget hover tooltip must be absent'
+foreach ($tab in @('Začíname', 'Stanice', 'Pripojenie', 'Senzory', 'Aplikácia')) {
+    Assert ($null -ne $settings.SelectSingleNode("//*[local-name()='TabItem' and @Header='$tab']")) "settings tab missing: $tab"
+}
+Assert ($null -ne $settings.SelectSingleNode("//*[local-name()='Button' and @Click='GuideClick']")) 'API key help link missing'
+Assert ($null -ne $settings.SelectSingleNode("//*[local-name()='Button' and @Click='TestConnectionClick']")) 'connection preflight button missing'
 Assert ($null -ne $settings.SelectSingleNode("//*[local-name()='ComboBox' and @Name='SourceModeCombo']")) 'source-mode picker missing'
 Assert ($null -ne $settings.SelectSingleNode("//*[local-name()='TextBox' and @Name='LocalGatewayBox']")) 'Local API gateway field missing'
 
