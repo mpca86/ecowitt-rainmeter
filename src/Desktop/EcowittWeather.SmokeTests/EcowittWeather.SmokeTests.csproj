@@ -8,5 +8,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\EcowittWeather.Infrastructure\EcowittWeather.Infrastructure.csproj" />
+    <EmbeddedResource Include="Fixtures\*.json" />
   </ItemGroup>
 </Project>

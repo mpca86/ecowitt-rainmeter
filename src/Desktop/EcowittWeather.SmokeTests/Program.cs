@@ -315,6 +315,61 @@ Expect(recovered.Source == "Ecowitt Local API" &&
        localMock.Count == 3 && cloudMock.Count == 2,
        "auto returns to LAN after recovery");
 
+// P0.2: real GW3000 FW 1.2.4 payloads, anonymized before committing.
+// Home gateway has no rain/ch_aisle sections or wind/UV/solar IDs.
+// Office gateway has all of them. Missing must stay null, real zero must stay zero.
+static string LoadGw3000Fixture(string filename)
+{
+    var resource = "EcowittWeather.SmokeTests.Fixtures." + filename;
+    using var stream = typeof(FakeSource).Assembly.GetManifestResourceStream(resource)
+        ?? throw new InvalidDataException("Missing GW3000 fixture: " + resource);
+    using var reader = new StreamReader(stream);
+    return reader.ReadToEnd();
+}
+
+var homeGw3000 = EcowittLocalParser.Parse(
+    LoadGw3000Fixture("gw3000_fw1_2_4_home.json"), DateTimeOffset.UtcNow);
+Expect(homeGw3000.OutdoorTemperatureC == 15.0 &&
+       homeGw3000.OutdoorHumidityPercent == 60 &&
+       homeGw3000.IndoorTemperatureC == 21.6 &&
+       homeGw3000.IndoorHumidityPercent == 52 &&
+       homeGw3000.RelativePressureHpa == 1008.5,
+    "GW3000 FW 1.2.4 home basic readings");
+Expect(homeGw3000.WindSpeedMs is null &&
+       homeGw3000.WindGustMs is null &&
+       homeGw3000.WindDirectionDegrees is null &&
+       homeGw3000.RainRateMmH is null &&
+       homeGw3000.DailyRainMm is null &&
+       homeGw3000.UvIndex is null &&
+       homeGw3000.SolarWattsM2 is null &&
+       homeGw3000.Sensors.Count == 0,
+    "GW3000 home missing sensors must remain unavailable, not zero");
+Expect(homeGw3000.ObservedAt is null,
+    "GW3000 payload without observation timestamp must not invent one");
+
+var officeGw3000 = EcowittLocalParser.Parse(
+    LoadGw3000Fixture("gw3000_fw1_2_4_office.json"), DateTimeOffset.UtcNow);
+Expect(officeGw3000.OutdoorTemperatureC == 14.0 &&
+       officeGw3000.OutdoorHumidityPercent == 62 &&
+       officeGw3000.IndoorTemperatureC == 21.6 &&
+       officeGw3000.IndoorHumidityPercent == 41 &&
+       officeGw3000.RelativePressureHpa == 1009.4,
+    "GW3000 FW 1.2.4 office basic readings");
+Expect(officeGw3000.WindSpeedMs == 0.0 &&
+       Math.Abs((officeGw3000.WindGustMs ?? double.NaN) - 7.7) < 0.001 &&
+       officeGw3000.WindDirectionDegrees == 151 &&
+       officeGw3000.RainRateMmH == 0.0 &&
+       officeGw3000.DailyRainMm == 0.0 &&
+       officeGw3000.UvIndex == 0.0 &&
+       officeGw3000.SolarWattsM2 == 0.0,
+    "GW3000 office wind/rain/UV/solar zero values must remain valid readings");
+Expect(officeGw3000.Sensors.Count == 4 &&
+       officeGw3000.Sensors.Select(s => s.Channel).SequenceEqual(new[] { 1, 2, 3, 4 }) &&
+       officeGw3000.Sensors[0].TemperatureC == 20.1 &&
+       officeGw3000.Sensors[3].HumidityPercent == 45,
+    "GW3000 office four CH sensors and normalized values");
+Console.WriteLine("PASS: real anonymized GW3000 FW 1.2.4 home/office fixtures");
+
 Console.WriteLine("PASS: cloud and local parsers, hybrid failover/recovery, migration and update tests");
 
 // This helper never contacts a physical Ecowitt gateway or exposes keys.
