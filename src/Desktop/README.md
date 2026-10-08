@@ -1,6 +1,6 @@
-# Ecowitt Weather – Desktop Edition (prototyp)
+# Ecowitt Weather – Desktop Edition (alpha)
 
-Prvý spustiteľný základ samostatnej Windows aplikácie bez Rainmetera.
+Samostatná Windows aplikácia s podporou viacerých widgetov a viacerých staníc. Prvé verejné vydanie: **v0.2.0-alpha.1**.
 
 **Aktuálne implementované:**
 - .NET 8 / WPF widget bez rámu (aktuálne merania z Ecowitt Web API v3)
@@ -11,20 +11,31 @@ Prvý spustiteľný základ samostatnej Windows aplikácie bez Rainmetera.
 - uloženie nastavení v JSON, **API kľúče chránené cez Windows DPAPI** pre aktuálne konto
 - tray ikona s ovládaním a možnosťou pridať viac widgetov
 - **viac nezávislých staníc a profilov** (pridanie / odstránenie v Nastaveniach)
-- každý widget možno priradiť k ľubovoľnej stanici z profilov cez tray menu alebo prepínač **⇄** v hlavičke
+- každý widget možno priradiť k ľubovoľnej stanici z profilov cez tray menu alebo cez **ľavý klik na widget** → Zmeniť meteostanicu
 - viac widgetov jednej stanice zdieľa **jediný polling cyklus**; odlišné stanice sa načítavajú samostatne
 - presúvanie widgetov myšou a zapamätanie pozícií
-- Windows CI zostavenie a parser smoke testy
+- vlastný tmavý kontextový zoznam, svetlý kontrastný text a hlavička widgetu bez ikon
+- zmena stanice, Nastavenia, Aktualizácie, presun a zatvorenie z kontextovej ponuky
+- **samostatný Desktop alpha update kanál** oddelený od Rainmeter verzií; SHA-256, záloha a rollback skript
+- Windows CI zostavenie a parser/update smoke testy
 
 **Zatiaľ neimplementované:**
 - Local API a Auto/fallback medzi zdrojmi
-- rôzne typy/layouty widgetov, SQLite história, grafy, desktop updater
+- rôzne typy/layouty widgetov, SQLite história a grafy
 - export/import Desktop konfigurácie a samostatný installer
 - farebné UI stavy a autostart
 
-## Spustenie na Windows 10/11
+## Inštalácia prvej alpha verzie
 
-Potrebný je .NET 8 SDK s Windows Desktop podporou (prípadne Visual Studio 2022).
+V [GitHub Releases](https://github.com/mpca86/ecowitt-rainmeter/releases) si otvor
+`desktop-v0.2.0-alpha.1` a stiahni `EcowittWeather-Desktop-v0.2.0-alpha.1-win-x64.zip`.
+Rozbaľ do zapisovateľného priečinka (napr. `C:\\Apps\\EcowittWeather\\`) a spusti
+`EcowittWeather.Desktop.exe`. Portable build obsahuje aj .NET runtime,
+nie je potrebné mať Rainmeter ani Visual Studio.
+
+## Spustenie zo zdrojového kódu na Windows 10/11
+
+Na vývoj je potrebný .NET 8 SDK s Windows Desktop podporou (prípadne Visual Studio 2022).
 
 ```powershell
 git clone --branch cloud-api https://github.com/mpca86/ecowitt-rainmeter.git
@@ -57,9 +68,31 @@ nezapisujú do logu ani Git repozitára.
 1. V **Nastaveniach** pri výbere profilu stlač **+ Pridať**.
 2. Pomocou **Načítať stanice z Ecowitt** vyber inú stanicu alebo ručne zadaj jej MAC. Vyplň názov a stlač **Uložiť**.
 3. Klikni pravým tlačidlom myši na ikonu v systémovej lište (tray) → **Pridať widget – vybrať stanicu** → vyber profil.
-4. V otvorenom widgete možno stanicu kedykoľvek zmeniť cez **⇄**.
+4. V otvorenom widgete klikni **ľavým tlačidlom** a vyber **Zmeniť meteostanicu**.
 
 Odlišné stanice používajú samostatné načítanie dát; dva widgety tej istej stanice zdieľajú jedno načítanie. Označenia CH1–CH8 sú nezávislé pre každú stanicu.
+
+### Kontextová ponuka widgetu
+
+Ľavý klik na widget otvorí tmavú kontextovú ponuku: **Zmeniť meteostanicu**,
+**Nastavenia**, **Aktualizácie**, **Presunúť widget** a **Zavrieť widget**.
+Pre rýchly presun funguje aj **Shift + ľavé potiahnutie**. Ikony v hlavičke
+boli odstránené, aby nezakrývali dlhšie názvy staníc.
+
+### Desktop alpha aktualizácie
+
+- Pri spustení sa skontrolujú nové verejné vydania s tagom `desktop-v...`.
+- V tray menu, vo widgete alebo v Nastaveniach je dostupný panel Aktualizácie.
+- Aktualizátor stiahne samostatný ZIP a jeho SHA-256 súbor, porovná kontrolný súčet,
+  rozbalí aktualizáciu mimo priečinka aplikácie a pri potvrdení spustí
+  lokálny pomocný skript.
+- Po ukončení aplikácie skript zálohuje existujúce súbory, vymení súbory
+  a aplikáciu znova spustí; pri chybe sa pokúsi obnoviť zálohu.
+- Dáta a API kľúče v `%APPDATA%\\EcowittWeather\\Desktop` sa neprepisujú.
+- Priečinok aplikácie musí byť zapisovateľný, preto sa neodporúča `Program Files`.
+
+**Inštaláciu cez zabudovaný aktualizátor ešte treba overiť na dvojici alpha.1 → alpha.2.**
+Automatické buildy a testy neznamenajú odskúšanie výmeny súborov na reálnom počítači.
 
 ### Migrácia existujúcej konfigurácie
 
@@ -74,7 +107,7 @@ na pôvodnú stanicu. API kľúče zostávajú v chránenom súbore
 Desktop Edition má vlastnú ikonu počasia v spustiteľnom súbore, vo Windows tray
 aj v titulku Nastavení. V tray menu a na spodku Nastavení je dostupné
 **O programe** (autor, verzia, licencia a projektové odkazy).
-Aktuálna vývojová verzia: `0.2.0-preview.1`.
+Aktuálna verzia: `0.2.0-alpha.1`.
 
 ### Lokálne uložené dáta
 
