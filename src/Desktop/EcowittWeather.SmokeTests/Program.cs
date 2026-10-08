@@ -135,9 +135,9 @@ Expect(migrated.Profiles[0].SensorAliases[1] == "Kancelária",
        "legacy sensor aliases preserved");
 Expect(migrated.Widgets[0].ProfileId == migrated.Profiles[0].Id,
        "legacy widget assigned to migrated station");
-Expect(!JsonSerializer.Serialize(migrated).Contains("\"SensorAliases\"",
-    StringComparison.Ordinal),
-    "legacy root sensor aliases removed on save");
+using (var saved = JsonDocument.Parse(JsonSerializer.Serialize(migrated)))
+    Expect(!saved.RootElement.TryGetProperty("SensorAliases", out _),
+        "legacy root sensor aliases removed on save");
 
 // Adding second station does not alter the first station's aliases or widget.
 var second = migrated.Profiles[0] with
