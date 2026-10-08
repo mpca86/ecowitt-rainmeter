@@ -117,6 +117,13 @@ public partial class SettingsWindow : Window
         LoadProfile(_profiles.First(x => x.Id == selected.Id));
     }
 
+    private void ProfileNameLostFocus(object sender, RoutedEventArgs e)
+    {
+        if (_loading || string.IsNullOrWhiteSpace(_currentId)) return;
+        PersistEditor();
+        RefreshProfileList(_currentId);
+    }
+
     private void AddProfileClick(object sender, RoutedEventArgs e)
     {
         PersistEditor();

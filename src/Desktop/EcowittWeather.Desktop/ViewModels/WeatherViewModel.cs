@@ -37,6 +37,8 @@ public sealed class WeatherViewModel : INotifyPropertyChanged
 
     public void ShowStatus(string status) => Status = status;
 
+    public void SetStationName(string name) => StationName = name.ToUpperInvariant();
+
     public void ShowSnapshot(WeatherSnapshot s, string name, IReadOnlyDictionary<int, string> aliases)
     {
         StationName = name.ToUpperInvariant();

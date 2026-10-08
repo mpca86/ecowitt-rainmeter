@@ -82,6 +82,8 @@ public partial class App : System.Windows.Application
             return model;
 
         model = new WeatherViewModel();
+        model.SetStationName(_settings.Profiles.FirstOrDefault(p => p.Id == profileId)?.Name
+            ?? "METEO CLOUD");
         _models[profileId] = model;
         return model;
     }
@@ -146,6 +148,15 @@ public partial class App : System.Windows.Application
         var profile = _settings.Profiles.FirstOrDefault(p => p.Id == profileId)
             ?? _settings.Profiles[0];
         var placement = new WidgetPlacement { ProfileId = profile.Id };
+        // Offset new windows so a second widget is visible instead of covering
+        // the existing one at exactly the same desktop coordinates.
+        var first = _widgets.Values.FirstOrDefault();
+        if (first != null)
+        {
+            var area = SystemParameters.WorkArea;
+            placement.Left = Math.Clamp(first.Left + 35, area.Left, area.Right - 290);
+            placement.Top = Math.Clamp(first.Top + 35, area.Top, area.Bottom - 160);
+        }
         _settings.Widgets.Add(placement);
         CreateWidget(placement, saveSettings: true);
         _ = RefreshAllAsync(force: true);
@@ -254,7 +265,10 @@ public partial class App : System.Windows.Application
 
             foreach (var profile in _settings.Profiles)
                 if (_models.TryGetValue(profile.Id, out var model))
+                {
+                    model.SetStationName(profile.Name);
                     model.ShowStatus("Obnovujem údaje stanice...");
+                }
 
             SaveLayout();
             _ = RefreshAllAsync(force: true);

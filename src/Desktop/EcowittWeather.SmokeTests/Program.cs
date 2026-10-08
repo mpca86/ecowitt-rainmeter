@@ -156,5 +156,11 @@ Expect(migrated.Profiles[0].SensorAliases[1] == "Kancelária" &&
        migrated.Profiles[1].SensorAliases[1] == "Chata",
        "per-station aliases remain independent");
 
+// When deleting a station, the old widget must be reassigned safely.
+migrated.Profiles.RemoveAll(p => p.Id == "old-station");
+migrated.Normalize();
+Expect(migrated.Widgets.All(w => w.ProfileId == "second-station"),
+    "deleted station widgets are reassigned to an existing station");
+
 Console.WriteLine("PASS: parser, device-list and multi-station migration checks");
 

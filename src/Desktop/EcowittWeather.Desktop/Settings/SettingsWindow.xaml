@@ -108,7 +108,7 @@
                 </Border>
 
                 <TextBlock Text="Názov profilu" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                <TextBox Name="ProfileNameBox" Margin="0,0,0,12"/>
+                <TextBox Name="ProfileNameBox" Margin="0,0,0,12" LostFocus="ProfileNameLostFocus"/>
                 <TextBlock Text="MAC adresa stanice" FontWeight="SemiBold" Margin="0,0,0,5"/>
                 <TextBox Name="MacBox" Margin="0,0,0,4"/>
                 <TextBlock Text="MAC možno zadať aj ručne (AA:BB:CC:DD:EE:FF)."
