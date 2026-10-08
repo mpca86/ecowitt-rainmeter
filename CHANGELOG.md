@@ -1,13 +1,12 @@
 # Prehľad zmien
 
-## Nevydané
+## v1.11.0-beta.6 — 2026-10-08
 
 - Do panela Nastavenia pridaný export a import kompletnej používateľskej konfigurácie.
 - Export vytvára jeden súbor `.ecowittconfig` s API kľúčmi, MAC adresou, názvami senzorov a používateľskými nastaveniami.
 - Import pred prepísaním automaticky zálohuje existujúce lokálne nastavenia.
 - Import spracuje iba očakávané konfiguračné súbory a po dokončení obnoví Rainmeter.
 - Exportovaný balík nie je šifrovaný a treba ho uchovávať ako citlivý súbor.
-
 
 ## v1.11.0-beta.5 — 2026-10-07
 

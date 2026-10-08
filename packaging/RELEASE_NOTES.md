@@ -1,20 +1,22 @@
-# Ecowitt Weather v1.11.0-beta.5
+# Ecowitt Weather v1.11.0-beta.6
 
-Piata verejná beta verzia Rainmeter skinu **Ecowitt Weather – Cloud API**.
+Šiesta verejná beta verzia Rainmeter skinu **Ecowitt Weather – Cloud API**.
 
 ## Čo je nové
 
-- Do panela **Aktualizácie** pribudla sekcia **ČO JE NOVÉ** s poznámkami k najnovšej verzii.
-- Changelog sa po kontrole aktualizácií načíta priamo z GitHub Release a zobrazí sa v Rainmeteri.
-- Pribudlo tlačidlo **OTVORIŤ CELÝ CHANGELOG**, ktoré otvorí kompletný lokálny výpis v Notepade.
-- Opravené zobrazovanie času poslednej kontroly aktualizácií.
-- Changelog a poznámky k vydaniam sú odteraz písané po slovensky.
-- Runtime súbor `Changelog.txt` sa nezahŕňa do Git repozitára ani distribučných balíkov.
+- Do panela **Nastavenia** pribudol **EXPORT** a **IMPORT** kompletnej používateľskej konfigurácie.
+- Export vytvára jeden prenosný súbor `.ecowittconfig`.
+- Balík obsahuje Ecowitt Application Key, API Key, MAC adresu stanice, názvy senzorov, refresh interval a update kanál.
+- Import pred prepísaním automaticky vytvorí zálohu aktuálnej konfigurácie.
+- Po úspešnom importe sa Rainmeter automaticky obnoví.
+- Import prijíma iba očakávané konfiguračné súbory a overuje základný manifest balíka.
+
+## Bezpečnosť
+
+Exportovaný `.ecowittconfig` obsahuje API kľúče a **nie je šifrovaný**. Uchovávaj ho ako citlivý súbor a nezverejňuj ho na GitHube ani vo verejnom úložisku.
 
 ## Aktualizácia
 
-Používatelia verzie `v1.11.0-beta.4` môžu aktualizovať priamo cez:
+Používatelia verzie `v1.11.0-beta.5` môžu aktualizovať priamo cez:
 
 `METEO CLOUD ●` → **Aktualizácie** → **AKTUALIZOVAŤ**
-
-Pri aktualizácii sa naďalej zachovávajú používateľské API údaje, aliasy senzorov, história a diagnostika.
