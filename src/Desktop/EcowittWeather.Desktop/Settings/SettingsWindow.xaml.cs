@@ -272,6 +272,13 @@ public partial class SettingsWindow : Window
         Close();
     }
 
+    private void UpdatesClick(object sender, RoutedEventArgs e)
+    {
+        using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
+        var dialog = new Updates.UpdatesWindow(http) { Owner = this };
+        dialog.ShowDialog();
+    }
+
     private void AboutClick(object sender, RoutedEventArgs e)
     {
         var about = new About.AboutWindow { Owner = this };
