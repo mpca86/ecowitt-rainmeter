@@ -192,8 +192,8 @@ public partial class App : System.Windows.Application
             if (!widget.IsLoaded) return;
             placement.Left = widget.Left;
             placement.Top = widget.Top;
-            SaveLayout();
         };
+        widget.PositionCommitted += (_, _) => SaveLayout();
 
         widget.SetProfiles(_settings.Profiles, placement.ProfileId);
         widget.Show();

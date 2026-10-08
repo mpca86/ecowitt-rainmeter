@@ -9,6 +9,7 @@ public partial class WeatherWidget : Window
 {
     public event EventHandler? SettingsRequested;
     public event EventHandler? RemoveRequested;
+    public event EventHandler? PositionCommitted;
     public event Action<string>? StationSwitchRequested;
     private readonly ContextMenu _profileMenu = new();
 
@@ -23,6 +24,7 @@ public partial class WeatherWidget : Window
         {
             try { DragMove(); }
             catch (InvalidOperationException) { /* Windows may end the drag early. */ }
+            finally { PositionCommitted?.Invoke(this, EventArgs.Empty); }
         }
     }
 
