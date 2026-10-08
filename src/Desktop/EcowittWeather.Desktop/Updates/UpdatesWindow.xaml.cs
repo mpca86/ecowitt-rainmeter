@@ -15,6 +15,11 @@ namespace EcowittWeather.Desktop.Updates;
 /// </summary>
 public partial class UpdatesWindow : Window
 {
+    // Release ZIPs can be tens of MB, so never reuse the 20-second weather client.
+    private readonly HttpClient _downloadClient = new()
+    {
+        Timeout = TimeSpan.FromMinutes(10)
+    };
     private readonly DesktopUpdateService _updates;
     private DesktopRelease? _release;
     private bool _busy;
@@ -23,10 +28,10 @@ public partial class UpdatesWindow : Window
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
             .InformationalVersion ?? "0.2.0-alpha.1";
 
-    public UpdatesWindow(HttpClient http)
+    public UpdatesWindow()
     {
         InitializeComponent();
-        _updates = new DesktopUpdateService(http);
+        _updates = new DesktopUpdateService(_downloadClient);
         CurrentLabel.Text = "Nainštalovaná verzia: " + CurrentVersion.Split('+')[0];
         LatestLabel.Text = "Najnovšia verzia: —";
         Loaded += async (_, _) => await CheckAsync();
@@ -148,6 +153,12 @@ public partial class UpdatesWindow : Window
 
         using var process = Process.Start(psi)
             ?? throw new InvalidOperationException("Aktualizátor sa nepodarilo spustiť.");
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        _downloadClient.Dispose();
+        base.OnClosed(e);
     }
 
     private void CloseClick(object sender, RoutedEventArgs e) => Close();

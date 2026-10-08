@@ -232,7 +232,7 @@ public partial class App : System.Windows.Application
 
     private void ShowUpdates()
     {
-        var dialog = new UpdatesWindow(_http);
+        var dialog = new UpdatesWindow();
         var owner = _widgets.Values.FirstOrDefault(w => w.IsVisible);
         if (owner != null) dialog.Owner = owner;
         dialog.ShowDialog();

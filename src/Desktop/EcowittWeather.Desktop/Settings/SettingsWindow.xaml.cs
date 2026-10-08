@@ -274,8 +274,7 @@ public partial class SettingsWindow : Window
 
     private void UpdatesClick(object sender, RoutedEventArgs e)
     {
-        using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
-        var dialog = new Updates.UpdatesWindow(http) { Owner = this };
+        var dialog = new Updates.UpdatesWindow { Owner = this };
         dialog.ShowDialog();
     }
 
