@@ -63,6 +63,10 @@ h1 span { color: var(--accent); display: block; }
 .placeholder-symbol { width: 94px; height: 94px; display: grid; place-items: center; border: 1px solid #4b817f; border-radius: 24px; background: #1c3b46; color: var(--accent); font-size: 2.8rem; line-height: 1; margin-bottom: 1.2rem; }
 .placeholder strong { font-size: 1.2rem; letter-spacing: -.02em; }
 .placeholder p { font-size: .89rem; color: var(--muted); max-width: 31ch; margin: .55rem 0 0; }
+/* Authentic Rainmeter screenshot: preserve aspect ratio and never upscale the source. */
+.real-preview { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .8rem; margin: 1.4rem auto 1.5rem; width: 100%; position: relative; z-index: 1; }
+.real-preview-image { display: block; width: min(265px, 100%); height: auto; aspect-ratio: 265 / 335; object-fit: contain; border-radius: 9px; box-shadow: 0 14px 34px rgba(0,0,0,.26); }
+.real-preview figcaption { max-width: 33ch; margin: 0; color: #c3d5dc; text-align: center; font-size: .88rem; line-height: 1.5; }
 .panel-foot { border-top: 1px solid #365269; padding-top: .85rem; color: #b1c7d2; font-size: .8rem; display: flex; justify-content: space-between; gap: .75rem; z-index: 1; }
 .quick-facts { display: flex; flex-wrap: wrap; gap: 1rem 1.6rem; font-size: .79rem; font-weight: 650; color: #b4ced4; }
 .fact-dot { display: inline-block; height: 7px; width: 7px; border-radius: 50%; background: #75dabb; margin-right: .45rem; }
