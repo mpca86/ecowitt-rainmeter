@@ -1,6 +1,6 @@
 # T11-A – Ecowitt Rainmeter project website MVP
 
-Status: **bilingual staging proposal deployed only to preview.mpca86.sk via the feature branch**. Draft PR #14 remains unmerged. Do not merge into `hostcreators-test` without approval.
+Status (11 Oct 2026): **bilingual SK/EN website deployed separately to preview (`website-preview`) and production (`website-production`)**. The original Draft PR #14 remains unmerged and must not be merged into `hostcreators-test`. See [T11-C1 – separated deployments](T11-C1-DEPLOYMENT.md) for exact environment roots, CI checks, change history and rollback steps.
 
 ## Purpose and accuracy
 
@@ -21,14 +21,15 @@ The Rainmeter project license is **CC BY-NC-SA 3.0**. This should not be describ
 
 Both pages include: headline, honest alpha status, authentic METEO CLOUD beta screenshot, 6 capability cards, separate Local / Cloud state, 3 high-level getting-started steps, FAQ, GitHub + GitHub Issues, author and project-license credit. Locale switching uses normal links and does not rely on JavaScript. Navigation is semantic and keyboard accessible. No trackers or external web fonts.
 
-## Staging and release process
+## Website environments and release process (T11-C1)
 
-- Base branch: `hostcreators-test` (HostCreators document root: `site`).
-- Feature branch: `feature/t11-site-mvp`. Only changes to this branch until approved.
-- Deploy contract: `bash deploy/preflight.sh` in HostCreators; GitHub Actions check `static-site-preflight` on PR.
-- Staging pages contain `robots: noindex, nofollow` and must stay that way until a proper production-domain decision.
-- Merge only after content/design feedback, screenshots decision, access/security review, CI PASS and user approval.
-- Production `main` with Windows Rainmeter skin remains unchanged.
+- `website-preview` → HostCreators `preview.mpca86.sk` → `/mpca86.sk/sub/preview/current/site`; required GitHub Actions check `website-preview-preflight`.
+- `website-production` → HostCreators `rainmeter.mpca86.sk` → `/mpca86.sk/sub/rainmeter/current/site`; required check `website-production-preflight`.
+- `hostcreators-test` → `testgit.mpca86.sk` remains an isolated T10 Git deployment test. The former feature `feature/t11-site-mvp` is not tracked by HostCreators anymore; its original Draft PR #14 to `hostcreators-test` remains unmerged.
+- Both website branches have active GitHub Rulesets: PR required, approvals 0, required CI, deletion/force-push protection. HostCreators runs `bash deploy/preflight.sh` before deploy. Always check deployed commit SHA separately.
+- The production website sources were introduced by merged PR #17 (commit `5f34916`); isolation test PR #18 succeeded across SK/EN preview vs production; PR #19 removed the test marker from preview Git sources (commit `518def3`). **Live post-cleanup preview deployment confirmation is pending.**
+- SK and EN web pages retain `robots: noindex, nofollow`; review before a separate public launch. Production changes require separate approval and a release PR; do not merge ordinary preview-only changes to production automatically.
+- `main`, holding the Windows Rainmeter project, remains separate. See [T11-C1 deployment record](T11-C1-DEPLOYMENT.md) for runbook, test evidence and rollback.
 
 ## Local review (without HostCreators deployment)
 
