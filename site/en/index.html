@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#08111d">
+  <meta name="description" content="Ecowitt Rainmeter is a developing Windows Rainmeter skin displaying measurements from an Ecowitt gateway via its local API.">
+  <title>Ecowitt Rainmeter – live weather on your Windows desktop</title>
+  <link rel="stylesheet" href="../assets/css/site.css">
+  <link rel="alternate" hreflang="sk" href="../">
+  <link rel="alternate" hreflang="en" href="./">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="#top" aria-label="Ecowitt Rainmeter"><span class="brand-mark" aria-hidden="true">ER</span><span>Ecowitt Rainmeter</span></a>
+      <nav class="site-nav" aria-label="Main navigation">
+        <a href="#features">Features</a>
+        <a href="#sources">Connectivity</a>
+        <a href="#getting-started">Get started</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <nav class="locale" aria-label="Language">
+        <a href="../" lang="sk" hreflang="sk">SK</a>
+        <a href="./" lang="en" hreflang="en" aria-current="page">EN</a>
+      </nav>
+    </div>
+  </header>
+  <main id="main">
+    <div class="container">
+      <section class="hero" id="top" aria-labelledby="hero-title">
+        <div>
+          <div class="eyebrow">Weather on your Windows desktop</div>
+          <h1 id="hero-title">Ecowitt data.<span>On your desktop.</span></h1>
+          <p class="lead">Bring measurements from your Ecowitt gateway into Rainmeter. Temperature, humidity, wind, rainfall and weather trends at a glance — without opening a browser.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="https://github.com/mpca86/ecowitt-rainmeter" rel="noopener noreferrer">Explore on GitHub <span aria-hidden="true">↗</span></a>
+            <a class="btn btn-secondary" href="#features">Explore features <span aria-hidden="true">↓</span></a>
+          </div>
+          <p class="hero-note">Development baseline v1.10.0-alpha · a verified .rmskin installer is still being prepared.</p>
+          <div class="quick-facts">
+            <span><i class="fact-dot" aria-hidden="true"></i>Windows + Rainmeter</span>
+            <span><i class="fact-dot" aria-hidden="true"></i>Local API</span>
+            <span><i class="fact-dot" aria-hidden="true"></i>Open source</span>
+          </div>
+        </div>
+        <aside class="hero-panel" aria-label="Screenshot status">
+          <div class="panel-top"><span class="pill">IN DEVELOPMENT</span><span class="pill pill-muted">v1.10.0-alpha</span></div>
+          <div class="placeholder">
+            <div class="placeholder-symbol" aria-hidden="true">☁</div>
+            <span class="eyebrow">REAL SCREENSHOT PLACEHOLDER</span>
+            <strong>Real screenshots coming</strong>
+            <p>Verified screenshots of the actual skin will appear here. This is not an application mockup.</p>
+          </div>
+          <div class="panel-foot"><span>No fictional measurements</span><span>Actual Rainmeter skin</span></div>
+        </aside>
+      </section>
+    </div>
+    <section class="section section-alt" id="features" aria-labelledby="features-title">
+      <div class="container">
+        <div class="section-head">
+          <div class="eyebrow">FEATURES</div>
+          <h2 id="features-title">Measurements that matter.</h2>
+          <p>The current development baseline reads the gateway's local API. Available values depend on connected sensors.</p>
+        </div>
+        <div class="feature-grid">
+        <article class="feature-card"><span class="feature-icon" aria-hidden="true">◉</span><h3>Temperature and humidity</h3><p>Outdoor and indoor conditions, plus dynamic CH1–CH8 sensors.</p></article>
+        <article class="feature-card"><span class="feature-icon" aria-hidden="true">↗</span><h3>Wind</h3><p>Current speed, gusts and wind direction.</p></article>
+        <article class="feature-card"><span class="feature-icon" aria-hidden="true">◌</span><h3>Rainfall</h3><p>Rain measurements including daily totals.</p></article>
+        <article class="feature-card"><span class="feature-icon" aria-hidden="true">☼</span><h3>Solar and UV</h3><p>Solar radiation, UV index and UV categories.</p></article>
+        <article class="feature-card"><span class="feature-icon" aria-hidden="true">≋</span><h3>Pressure and trends</h3><p>Absolute and relative pressure, 15-minute temperature trends and 3-hour pressure tendency.</p></article>
+        <article class="feature-card"><span class="feature-icon" aria-hidden="true">▤</span><h3>History and diagnostics</h3><p>Local CSV history, settings and diagnostics views.</p></article>
+        </div>
+      </div>
+    </section>
+    <section class="section" id="sources" aria-labelledby="sources-title">
+      <div class="container">
+        <div class="section-head">
+          <div class="eyebrow">DATA SOURCES</div>
+          <h2 id="sources-title">Local today. Cloud in progress.</h2>
+          <p>We distinguish the available development baseline from the separately developed cloud adapter.</p>
+        </div>
+        <div class="duo">
+          <article class="info-card">
+            <span class="pill">DEVELOPMENT BASELINE</span>
+            <h3>Ecowitt Local API</h3>
+            <p>Rainmeter reads live data from an Ecowitt gateway reachable on the local network. The current baseline uses the endpoint: <code>/get_livedata_info</code></p>
+            <ul><li>Direct LAN connectivity</li><li>No cloud credentials needed on this project website</li><li>Application settings and diagnostics</li></ul>
+          </article>
+          <article class="info-card info-card--muted">
+            <span class="pill pill-muted">WORK IN PROGRESS</span>
+            <h3>Ecowitt Cloud API v3</h3>
+            <p>A separate development branch targets the Ecowitt Web API v3. It is not advertised as a completed stable-release feature.</p>
+            <ul><li>Separate cloud-api branch</li><li>No confirmed release yet</li><li>Never expose API secrets in a public website</li></ul>
+          </article>
+        </div>
+      </div>
+    </section>
+    <section class="section section-alt" id="getting-started" aria-labelledby="started-title">
+      <div class="container">
+        <div class="section-head">
+          <div class="eyebrow">GETTING STARTED</div>
+          <h2 id="started-title">Getting started</h2>
+          <p>These are high-level steps for the development version, not a final installation guide.</p>
+        </div>
+        <div class="steps">
+          <article class="step"><span class="step-num" aria-hidden="true">1</span><h3>Install Rainmeter</h3><p>You will need Rainmeter on Windows first. Download it from the official website.</p></article>
+        <article class="step"><span class="step-num" aria-hidden="true">2</span><h3>Explore the source project</h3><p>Source files and development status are on GitHub. An .rmskin distribution package is still being prepared.</p></article>
+        <article class="step"><span class="step-num" aria-hidden="true">3</span><h3>Connect your gateway</h3><p>For Local API mode, your Ecowitt gateway must be reachable from the PC on the local network. Detailed steps will follow.</p></article>
+        </div>
+        <p class="note">A verified installer download is not available here yet. No release date is being promised.</p>
+        <div class="hero-actions">
+          <a class="doc-link" href="https://www.rainmeter.net/" rel="noopener noreferrer">Official Rainmeter website ↗</a>
+          <a class="doc-link" href="https://github.com/mpca86/ecowitt-rainmeter#readme" rel="noopener noreferrer">Open repository and README ↗</a>
+        </div>
+      </div>
+    </section>
+    <section class="section" id="faq" aria-labelledby="faq-title">
+      <div class="container">
+        <div class="section-head">
+          <div class="eyebrow">QUESTIONS</div>
+          <h2 id="faq-title">Frequently asked questions</h2>
+        </div>
+        <div class="faq">
+          <details><summary>Do I need the internet to read a local gateway?</summary><p>Local API relies on network connectivity between your Windows PC and gateway. Internet access itself is not required for LAN communication.</p></details>
+        <details><summary>Is cloud integration ready?</summary><p>Not as a completed release. An Ecowitt Web API v3 adapter is under development in a separate branch.</p></details>
+        <details><summary>Why isn't there a Download button?</summary><p>The project is at the alpha stage, and according to the current documentation the .rmskin package is still being prepared. We don't link to an unverified release.</p></details>
+        <details><summary>Will every Ecowitt sensor work?</summary><p>The project includes a generic sensor registry and CH1–CH8 channel support. Actual measurements depend on your gateway, connected sensors and development status.</p></details>
+        </div>
+      </div>
+    </section>
+    <section class="section section-alt" aria-labelledby="follow-title">
+      <div class="container">
+        <div class="section-head">
+          <div class="eyebrow">OPEN PROJECT</div>
+          <h2 id="follow-title">Follow development.</h2>
+          <p>Explore the source, open issues and development branches. This site does not require a login or Ecowitt credentials.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="https://github.com/mpca86/ecowitt-rainmeter" rel="noopener noreferrer">Source code <span aria-hidden="true">↗</span></a>
+            <a class="btn btn-secondary" href="https://github.com/mpca86/ecowitt-rainmeter/issues" rel="noopener noreferrer">GitHub Issues <span aria-hidden="true">↗</span></a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div>
+        <p><strong>Ecowitt Rainmeter</strong> · Created by Martin Šturcel</p>
+        <p>Static website · no tracking scripts</p>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/mpca86/ecowitt-rainmeter/blob/main/LICENSE.md" rel="noopener noreferrer">Code license: CC BY-NC-SA 3.0</a>
+        <a href="https://github.com/mpca86/ecowitt-rainmeter" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
