@@ -14,6 +14,8 @@
 | Public/document root, relatívne ku koreňu repozitára | `site` |
 | Stránka | `site/index.html` |
 | Build krok – overený stabilný príkaz | `bash deploy/preflight.sh` |
+| GitHub CI | `.github/workflows/hostcreators-preflight.yml`, job `static-site-preflight` |
+| Ochrana vetvy | Ruleset `Protect hostcreators-test` (Active), Pull Request povinný, 0 schválení, required check `static-site-preflight` |
 | Nasadenie | štandardný krok `Deploy` v HostCreators, po úspešnom BASH kroku |
 | Upozornenia | e-mailové výstupy zapnuté v HostCreators; adresu a tajomstvá neukladať do Git repozitára |
 
@@ -26,16 +28,20 @@
 3. V časti **Build & deploy** musí byť **jediný BASH** krok `bash deploy/preflight.sh` medzi `Spustenie` a `Deploy`. Starý testovací skript bol z repozitára odstránený; nesmie byť nakonfigurovaný ako build krok.
 4. Ulož nastavenia a urob jeden kontrolný manuálny deploy (iba pri migrácii konfigurácie).
 5. V logu musí byť `[PREFLIGHT] PASS: static site is ready for deployment` a následne úspešné nasadenie.
-6. Skontroluj, že stránka vracia obsah `Testovacia verzia 1` a dorazí úspešný e-mail.
+6. Skontroluj, že stránka zodpovedá poslednému schválenému PR (po T10 má text `Testovacia verzia T10`) a dorazí úspešný e-mail.
 
-Po overení funguje automatický deploy po commite do `hostcreators-test`. **Neprepínaj na `main`** a nenastavuj root repozitára ako public adresár.
+Po overení funguje automatický deploy po commite do `hostcreators-test`. Táto vetva je od T10 chránená GitHub Rulesetom: nové zmeny posielaj cez Pull Request s úspešným `static-site-preflight`. **Neprepínaj na `main`** a nenastavuj root repozitára ako public adresár.
 
 ## 3. Bežný vývoj a publikovanie
 
-- Pracuj v samostatnej vývojovej vetve. Test `test-branch-isolation` potvrdil, že jej commit sa na web nenasadí.
-- Skontroluj diff (žiadne tajomstvá, nesprávne súbory či nedokončené zmeny), až potom zmeny začleň do `hostcreators-test`.
-- GitHub push do `hostcreators-test` aktivuje HostCreators webhook a nový build.
-- Over: (a) commit SHA v Histórii HostCreators, (b) `[PREFLIGHT] PASS` v logu, (c) úspešné nasadenie, (d) obsah webu, (e) e-mailové hlásenie.
+1. Z vetvy `hostcreators-test` vytvor `feature/*` alebo `docs/*` vetvu. Test T05 potvrdil, že jej samostatné commity nenasadzujú web.
+2. Urob a skontroluj zmeny v tejto vetve. Priprav Pull Request s **base `hostcreators-test`**, nie `main`.
+3. Na PR musí prebehnúť GitHub Actions workflow **HostCreators preflight** s úspešným jobom **`static-site-preflight`**. Pri zlyhaní oprav zdroj a počkaj na nové CI PASS. Workflow je v `.github/workflows/hostcreators-preflight.yml` a volá `bash deploy/preflight.sh`.
+4. Skontroluj `Files changed`, nepovoľ prenos tajomstiev ani nežiaduce zmeny konfigurácie. Ruleset `Protect hostcreators-test` je aktívny: vyžaduje PR a CI, nevyžaduje druhého schvaľovateľa (`Required approvals = 0`); blokuje force push aj odstránenie vetvy.
+5. Merge vykonaj vedome až po CI PASS; pre samostatné textové zmeny preferuj **Squash and merge**. Test T10 použil PR #11 a squash commit `47ae8c7`.
+6. Merge do `hostcreators-test` aktivuje HostCreators webhook a nový build. Over: (a) commit SHA v Histórii HostCreators, (b) `[PREFLIGHT] PASS` v logu, (c) úspešné nasadenie, (d) obsah webu, (e) e-mailové hlásenie.
+
+Poznámka: T10 experimentom preukázal zlyhanie CI a následný úspešný run; individuálne kliknutie na blokované tlačidlo **Merge** počas FAIL nebolo samostatne zaznamenané. Nezamieňaj overené zlyhanie CI s priamym testom blokovania UI.
 - Na test webu použi URL s jednorazovým query parametrom, aby sa znížil vplyv cache. Parametrizácia URL **nezaručuje** vymazanie všetkých vrstiev cache.
 
 ## 4. Rollback (bez prepisovania histórie)
@@ -90,7 +96,24 @@ Pri naliehavom incidente nemeň naraz viac vecí. Najprv identifikuj posledný f
 | T06 – kontrolovaný neúspešný build | PASS | `ae8ccd3`, `exit 42`, starý web zostal dostupný |
 | T07 – zotavenie | PASS | `086587e`, automatický úspešný deploy |
 | T08 – e-mailové hlásenia | PASS (doručenie) | úspech aj chyba, obnovenie cez `54ebf62`; detail chybového e-mailu nebol úplne skontrolovaný |
-| T09 – stabilizácia | PASS (kontrolný build) | `3283f40`: `[PREFLIGHT] PASS`, nastavenie `current` OK, deploy OK (2,55 s); následné upratanie: odstránený testovací skript (`274bdb6`), upravená dokumentácia. Po úpravách over posledný automatický deploy. |
+| T09 – stabilizácia | PASS | `3283f40`: `[PREFLIGHT] PASS`, 2,55 s; následne odstránený testovací skript `274bdb6` a finalizovaná dokumentácia `4fa5ba3` (potvrdený automatický deploy v HostCreators). |
+
+| T10 – Pull Request + CI/CD | PASS | PR [#11](https://github.com/mpca86/ecowitt-rainmeter/pull/11): feature vetva, povinné CI, úmyselný CI FAIL a následný PASS; squash merge `47ae8c7`. HostCreators, webová verzia T10 aj e-mail potvrdené (10. 10. 2026). |
+
+## 8. T10 – výsledky GitHub Pull Request workflow
+
+- **GitHub Ruleset:** `Protect hostcreators-test`, stav Active, cieľová vetva `hostcreators-test`. Nastavené `Require a pull request before merging`, `Required approvals: 0`, `Require conversation resolution`, `Restrict deletions`, `Block force pushes` a `Require status checks to pass: static-site-preflight` (GitHub Actions). Bez povinného externého review.
+- **CI workflow:** `.github/workflows/hostcreators-preflight.yml`, `pull_request` do `hostcreators-test` a `push` do tejto vetvy, oprávnenia iba `contents: read`, GitHub Actions checkout s pripnutým SHA, `bash deploy/preflight.sh`.
+- **Pozitívny CI test:** run [38082743079](https://github.com/mpca86/ecowitt-rainmeter/actions/runs/38082743079) ukončený úspešne.
+- **Negatívny CI test:** commit `8f77a10` zámerne upravil doctype iba na feature vetve; run [38083245628](https://github.com/mpca86/ecowitt-rainmeter/actions/runs/38083245628) skončil očakávaným FAIL. Cieľová vetva ani web sa nezmenili.
+- **Obnova CI:** commit `068b5f5` vrátil správny doctype; run [38083289706](https://github.com/mpca86/ecowitt-rainmeter/actions/runs/38083289706) skončil PASS.
+- **Schválený merge:** PR [#11](https://github.com/mpca86/ecowitt-rainmeter/pull/11) zlúčený metódou squash, výsledný commit `47ae8c72142f3d6b5b5446b43a449eb1c302ef49`. Cieľová vetva obsahuje web `Testovacia verzia T10` a CI workflow.
+- **Deploy po merge:** podľa manuálne potvrdeného výsledku z HostCreators bol commit úspešne nasadený, na https://testgit.mpca86.sk/ sa zobrazila verzia T10 a e-mailové hlásenie dorazilo.
+- **Nevykonané testy:** samostatné overenie neaktivovaného Merge tlačidla pri CI FAIL, bezpečnosť GitHub Ruleset bypass pravidiel pod inými aktérmi, PHP build, databázy a súbežné deploye.
+
+## 9. Nasledujúca etapa
+
+T11 – projektový web **Ecowitt Rainmeter**. Web bude dokumentačná a produktová prezentácia Windows Rainmeter skinu, nie samotná aplikácia ani serverový Ecowitt API proxy. Dizajn a obsah sa pripravia najprv v samostatnej feature vetve, potom PR + preflight, nakoniec staging deploy. Rozsah funkcií a právny text uvádza projektový plán T11; overiť ich pred publikovaním.
 
 ## Dokumentácia HostCreators
 
