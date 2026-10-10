@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#08111d">
-  <meta name="description" content="Ecowitt Rainmeter je vyvíjaný skin pre Windows Rainmeter zobrazujúci údaje z Ecowitt gateway cez lokálne API.">
+  <meta name="description" content="Ecowitt Rainmeter pre Windows: verejná Cloud API beta v1.11.0-beta.6 s .rmskin balíkom, samostatný Local API základ a Desktop Edition bez Rainmetera.">
   <title>Ecowitt Rainmeter – počasie priamo na ploche Windows</title>
   <link rel="stylesheet" href="assets/css/site.css?v=t11-b2">
   <link rel="alternate" hreflang="sk" href="./">
@@ -34,15 +34,15 @@
         <div>
           <div class="eyebrow">Počasie na ploche Windows</div>
           <h1 id="hero-title">Ecowitt dáta.<span>Priamo na ploche.</span></h1>
-          <p class="lead">Premeňte merania z Ecowitt gateway na prehľadné informácie v Rainmeteri. Teplota, vlhkosť, vietor, zrážky aj vývoj počasia — bez potreby otvárať prehliadač.</p>
+          <p class="lead">Teplota, vlhkosť, vietor, zrážky a tlak z Ecowitt stanice priamo na ploche Windows. Rainmeter Edition má dostupnú Cloud API beta verziu; Local API zostáva samostatným vývojovým základom.</p>
           <div class="hero-actions">
-            <a class="btn btn-primary" href="https://github.com/mpca86/ecowitt-rainmeter" rel="noopener noreferrer">Preskúmať na GitHube <span aria-hidden="true">↗</span></a>
+            <a class="btn btn-primary" href="https://github.com/mpca86/ecowitt-rainmeter/releases/tag/v1.11.0-beta.6" rel="noopener noreferrer">Stiahnuť Rainmeter beta <span aria-hidden="true">↗</span></a>
             <a class="btn btn-secondary" href="#features">Objaviť funkcie <span aria-hidden="true">↓</span></a>
           </div>
-          <p class="hero-note">Vývojová verzia v1.10.0-alpha · skutočný inštalátor .rmskin sa ešte pripravuje.</p>
+          <p class="hero-note">Rainmeter Edition v1.11.0-beta.6 · verejná beta s .rmskin inštalátorom · stabilné vydanie zatiaľ nie je.</p>
           <div class="quick-facts">
             <span><i class="fact-dot" aria-hidden="true"></i>Windows + Rainmeter</span>
-            <span><i class="fact-dot" aria-hidden="true"></i>Local API</span>
+            <span><i class="fact-dot" aria-hidden="true"></i>Cloud API beta</span>
             <span><i class="fact-dot" aria-hidden="true"></i>Zdroj na GitHube</span>
           </div>
         </div>
@@ -50,7 +50,7 @@
           <div class="panel-top"><span class="pill">CLOUD API BETA</span><span class="pill pill-muted">v1.11.0-beta.6</span></div>
           <figure class="real-preview">
             <img class="real-preview-image" src="assets/ecowitt-meteo-cloud-screenshot.webp" width="265" height="335" alt="Skutočný panel METEO CLOUD v Rainmeteri: teplota, vlhkosť, vietor, UV index, senzory CH1 až CH4 a tlak." decoding="async" fetchpriority="high">
-            <figcaption>Skutočný screenshot vývojovej vetvy Cloud API. Nejde o stabilné vydanie.</figcaption>
+            <figcaption>Skutočný screenshot verejnej Cloud API beta.6. Nejde o stabilné vydanie.</figcaption>
           </figure>
           <div class="panel-foot"><span>Autentický Rainmeter skin</span><span>Cloud API · beta</span></div>
         </aside>
@@ -61,7 +61,7 @@
         <div class="section-head">
           <div class="eyebrow">MOŽNOSTI</div>
           <h2 id="features-title">Dáta, ktoré majú zmysel.</h2>
-          <p>Základ vývoja pracuje s lokálnym API gateway. Dostupné položky závisia od pripojených senzorov.</p>
+          <p>Funkcie Rainmeter implementácií Local API a Cloud API beta. Dostupné hodnoty závisia od gateway a pripojených senzorov.</p>
         </div>
         <div class="feature-grid">
         <article class="feature-card"><span class="feature-icon" aria-hidden="true">◉</span><h3>Teplota a vlhkosť</h3><p>Vonkajšie aj vnútorné podmienky a dynamické senzory CH1–CH8.</p></article>
@@ -77,21 +77,23 @@
       <div class="container">
         <div class="section-head">
           <div class="eyebrow">ZDROJE ÚDAJOV</div>
-          <h2 id="sources-title">Lokálne dnes. Cloud vo vývoji.</h2>
-          <p>Jasne oddeľujeme fungujúci vývojový základ a samostatne pripravovanú cloudovú vetvu.</p>
+          <h2 id="sources-title">Local API základ. Cloud API vo verejnej bete.</h2>
+          <p>Rainmeter Edition má dva samostatné implementačné smery. Dostupný beta balík používa Cloud API; samostatný Local API základ je v zdrojovom kóde.</p>
         </div>
         <div class="duo">
           <article class="info-card">
-            <span class="pill">ZÁKLAD NA TESTOVANIE</span>
+            <span class="pill">VÝVOJOVÝ ZÁKLAD · v1.10.0-alpha</span>
             <h3>Ecowitt Local API</h3>
-            <p>Rainmeter číta živé dáta z Ecowitt gateway dostupnej v lokálnej sieti. Aktuálny základ používa endpoint: <code>/get_livedata_info</code></p>
-            <ul><li>Priamy prístup v LAN</li><li>Bez potreby cloudového kľúča na tomto projektovom webe</li><li>Nastavenia a diagnostika v aplikácii</li></ul>
+            <p>Zdrojový základ vetvy <code>main</code> číta údaje priamo z gateway cez <code>/get_livedata_info</code>. Počítač a gateway musia byť navzájom dostupné v LAN alebo cez vhodnú VPN.</p>
+            <ul><li>Na lokálne merania netreba Ecowitt API kľúče</li><li>Merania senzorov, trendy, CSV história a diagnostika</li><li>Nie je totožný s nižšie ponúkaným Cloud API beta inštalátorom</li></ul>
+            <a class="doc-link" href="https://github.com/mpca86/ecowitt-rainmeter/tree/main/src/EcowittWeather" rel="noopener noreferrer">Zdrojový kód Local API ↗</a>
           </article>
           <article class="info-card info-card--muted">
-            <span class="pill pill-muted">ROZPRACOVANÉ</span>
+            <span class="pill pill-muted">VEREJNÁ BETA · v1.11.0-beta.6</span>
             <h3>Ecowitt Cloud API v3</h3>
-            <p>Samostatná vývojová vetva pre prístup cez Ecowitt Web API v3. Nie je prezentovaná ako hotová funkcia stabilného vydania.</p>
-            <ul><li>Samostatná vetva cloud-api</li><li>Zatiaľ bez potvrdeného vydania</li><li>API tajomstvá nepatria do verejného webu</li></ul>
+            <p>Aktuálne vydaná Rainmeter beta používa Ecowitt Web API v3. Pri nastavovaní potrebuje <strong>Application Key, API Key a MAC adresu stanice</strong>; údaje sa zadávajú priamo v Rainmeter skinu, nie na tomto webe.</p>
+            <ul><li>Oficiálny beta <code>.rmskin</code> a ZIP na GitHube</li><li>Aktualizácie, diagnostika a export/import konfigurácie</li><li>Táto Rainmeter beta nesľubuje automatické prepínanie medzi Local a Cloud</li></ul>
+            <a class="doc-link" href="https://github.com/mpca86/ecowitt-rainmeter/releases/tag/v1.11.0-beta.6" rel="noopener noreferrer">Vydanie Cloud API beta.6 ↗</a>
           </article>
         </div>
       </div>
@@ -99,37 +101,65 @@
     <section class="section section-alt" id="getting-started" aria-labelledby="started-title">
       <div class="container">
         <div class="section-head">
-          <div class="eyebrow">PRVÉ KROKY</div>
-          <h2 id="started-title">Ako začať</h2>
-          <p>Táto stránka zatiaľ ponúka orientačný postup pre vývojovú verziu, nie finálny inštalačný návod.</p>
+          <div class="eyebrow">RAINMETER EDITION</div>
+          <h2 id="started-title">Ako nainštalovať Cloud API beta</h2>
+          <p>Pre vydanie v1.11.0-beta.6 je dostupný skutočný inštalátor. Ide o testovaciu beta verziu, nie o stabilnú aplikáciu.</p>
         </div>
         <div class="steps">
-          <article class="step"><span class="step-num" aria-hidden="true">1</span><h3>Nainštalujte Rainmeter</h3><p>Na Windows najprv potrebujete aplikáciu Rainmeter. Stiahnite ju z oficiálneho webu.</p></article>
-        <article class="step"><span class="step-num" aria-hidden="true">2</span><h3>Pozrite si zdrojový projekt</h3><p>Zdrojové súbory a stav vývoja sú na GitHube. Distribučný balík .rmskin sa ešte pripravuje.</p></article>
-        <article class="step"><span class="step-num" aria-hidden="true">3</span><h3>Pripojte gateway</h3><p>Pri Local API musí byť Ecowitt gateway dostupná z počítača v lokálnej sieti. Podrobné kroky ešte doplníme.</p></article>
+          <article class="step"><span class="step-num" aria-hidden="true">1</span><h3>Nainštalujte Rainmeter</h3><p>Na Windows najprv nainštalujte aplikáciu <a href="https://www.rainmeter.net/" rel="noopener noreferrer">Rainmeter</a>.</p></article>
+          <article class="step"><span class="step-num" aria-hidden="true">2</span><h3>Stiahnite beta .rmskin</h3><p>Na stránke <a href="https://github.com/mpca86/ecowitt-rainmeter/releases/tag/v1.11.0-beta.6" rel="noopener noreferrer">GitHub Release beta.6</a> stiahnite súbor <code>EcowittWeather-v1.11.0-beta.6.rmskin</code>, otvorte ho v Rainmeteri a potvrďte inštaláciu.</p></article>
+          <article class="step"><span class="step-num" aria-hidden="true">3</span><h3>Nastavte Cloud API</h3><p>V paneli Nastavenia zadajte Ecowitt Application Key, API Key a MAC adresu svojej stanice. Prihlasovacie heslo účtu sa do skinu nezadáva.</p></article>
         </div>
-        <p class="note">Nie je tu zatiaľ overený odkaz na hotový inštalátor. Neuvádzame ani odhad termínu jeho vydania.</p>
+        <p class="note"><strong>Bezpečnosť:</strong> Rainmeter beta umožňuje export konfigurácie do súboru <code>.ecowittconfig</code>. Tento súbor obsahuje API kľúče a <strong>nie je šifrovaný</strong> – nezverejňujte ho. Local API základ z vetvy <code>main</code> má odlišný postup nastavenia.</p>
         <div class="hero-actions">
-          <a class="doc-link" href="https://www.rainmeter.net/" rel="noopener noreferrer">Oficiálny web Rainmeter ↗</a>
-          <a class="doc-link" href="https://github.com/mpca86/ecowitt-rainmeter#readme" rel="noopener noreferrer">Zobraziť repozitár a README ↗</a>
+          <a class="doc-link" href="https://github.com/mpca86/ecowitt-rainmeter/releases/tag/v1.11.0-beta.6" rel="noopener noreferrer">Stiahnuť z GitHub Releases ↗</a>
+          <a class="doc-link" href="https://github.com/mpca86/ecowitt-rainmeter/blob/cloud-api/README.md" rel="noopener noreferrer">Návod k Cloud API beta ↗</a>
+          <a class="doc-link" href="https://www.rainmeter.net/" rel="noopener noreferrer">Oficiálny Rainmeter ↗</a>
         </div>
       </div>
     </section>
-    <section class="section" id="faq" aria-labelledby="faq-title">
+    <section class="section" id="desktop" aria-labelledby="desktop-title">
+      <div class="container">
+        <div class="section-head">
+          <div class="eyebrow">SAMOSTATNÁ APLIKÁCIA</div>
+          <h2 id="desktop-title">Ecowitt Weather Desktop Edition</h2>
+          <p>Alternatíva pre Windows 10/11 (x64), ktorá <strong>nepotrebuje Rainmeter</strong>. Aktuálne verejné vydanie <strong>v0.2.0-alpha.3</strong> je prenosný ZIP, nie klasický inštalátor.</p>
+        </div>
+        <div class="duo">
+          <article class="info-card">
+            <span class="pill">DESKTOP · VEREJNÁ ALPHA</span>
+            <h3>Viac staníc a viac widgetov</h3>
+            <p>Samostatná aplikácia podporuje pripojenie cez Web API, Local API a režim Auto s prechodom na Web API pri výpadku lokálneho zdroja. Rôznym widgetom možno priradiť odlišné stanice.</p>
+            <ul><li>Vlastné nastavenia a test pripojenia</li><li>Viacero okien a systémová lišta Windows</li><li>Samostatný alpha aktualizačný kanál</li></ul>
+            <a class="doc-link" href="https://github.com/mpca86/ecowitt-rainmeter/releases/tag/desktop-v0.2.0-alpha.3" rel="noopener noreferrer">Stiahnuť Desktop alpha.3 (ZIP) ↗</a>
+          </article>
+          <article class="info-card info-card--muted">
+            <span class="pill pill-muted">ODLIŠNÁ EDÍCIA</span>
+            <h3>Rainmeter alebo Desktop?</h3>
+            <p><strong>Rainmeter Edition</strong> je skin pre Rainmeter s Cloud API beta balíkom <code>.rmskin</code>. <strong>Desktop Edition</strong> je samostatná aplikácia bez Rainmetera.</p>
+            <p>Desktop chráni uložené API kľúče pomocou Windows DPAPI. História v SQLite, grafy, export/import Desktop nastavení a samostatný inštalátor ešte nie sú súčasťou alpha.3.</p>
+            <a class="doc-link" href="https://github.com/mpca86/ecowitt-rainmeter/blob/cloud-api/src/Desktop/README.md" rel="noopener noreferrer">Informácie o Desktop Edition ↗</a>
+          </article>
+        </div>
+      </div>
+    </section>
+    <section class="section section-alt" id="faq" aria-labelledby="faq-title">
       <div class="container">
         <div class="section-head">
           <div class="eyebrow">OTÁZKY A ODPOVEDE</div>
           <h2 id="faq-title">Často kladené otázky</h2>
         </div>
         <div class="faq">
-          <details><summary>Potrebujem internet na čítanie lokálnej gateway?</summary><p>Lokálne API používa sieťové spojenie medzi Windows počítačom a gateway. Internetové pripojenie samo osebe nie je podmienkou pre komunikáciu v LAN.</p></details>
-        <details><summary>Je cloudová integrácia už pripravená?</summary><p>Nie ako dokončené vydanie. Vyvíja sa samostatná vetva pre Ecowitt Web API v3.</p></details>
-        <details><summary>Prečo tu nie je tlačidlo Stiahnuť?</summary><p>Projekt je v alpha fáze a inštalačný balík .rmskin je podľa aktuálnej dokumentácie v príprave. Nechceme odkazovať na neoverené vydanie.</p></details>
-        <details><summary>Budú fungovať všetky Ecowitt senzory?</summary><p>Projekt obsahuje generický register senzorov a podporu kanálov CH1–CH8. Konkrétne dostupné údaje závisia od gateway, senzorov a stavu vývoja.</p></details>
+          <details><summary>Potrebujem internet na čítanie lokálnej gateway?</summary><p>Local API používa sieťové spojenie medzi Windows počítačom a gateway; internet pri komunikácii v LAN nie je potrebný. Cloud API internetové pripojenie potrebuje.</p></details>
+          <details><summary>Je Cloud API už dostupné na stiahnutie?</summary><p>Áno. Rainmeter Cloud API <a href="https://github.com/mpca86/ecowitt-rainmeter/releases/tag/v1.11.0-beta.6" rel="noopener noreferrer">v1.11.0-beta.6</a> je verejne dostupná beta s inštalátorom <code>.rmskin</code>. Nie je označená ako stabilné vydanie.</p></details>
+          <details><summary>Aký je rozdiel medzi Local API a Cloud beta?</summary><p>Local API základ vo vetve <code>main</code> komunikuje priamo s gateway. Verejná Rainmeter beta.6 používa Ecowitt Web API v3. Automatický režim Local/Web patrí do samostatnej Desktop Edition.</p></details>
+          <details><summary>Kam mám vložiť Ecowitt API kľúče?</summary><p>Application Key a API Key získate vo svojom profile na oficiálnej stránke ecowitt.net. Pre Cloud API ich zadávajte len do lokálnych nastavení aplikácie. Na tomto projektovom webe sa žiadne kľúče nevypĺňajú.</p></details>
+          <details><summary>Je export konfigurácie bezpečný na zdieľanie?</summary><p>Nie. Súbor <code>.ecowittconfig</code> z Rainmeter beta obsahuje citlivé API kľúče a nie je šifrovaný. Neprikladajte ho do verejných issue ani e-mailov neznámym príjemcom.</p></details>
+          <details><summary>Budú fungovať všetky Ecowitt senzory?</summary><p>Projekt používa generický register senzorov a podporu CH1–CH8. Skutočne dostupné údaje závisia od gateway, senzorov a konkrétnej edície.</p></details>
         </div>
       </div>
     </section>
-    <section class="section section-alt" aria-labelledby="follow-title">
+    <section class="section" aria-labelledby="follow-title">
       <div class="container">
         <div class="section-head">
           <div class="eyebrow">VÝVOJ NA GITHUBE</div>
