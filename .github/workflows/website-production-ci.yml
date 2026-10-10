@@ -1,0 +1,28 @@
+# T11-C1.3: proposed CI only; no deployment credentials or deploy action.
+name: Website production CI
+
+on:
+  pull_request:
+    branches:
+      - website-production
+  push:
+    branches:
+      - website-production
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    name: website-production-preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout proposed code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Run static-site preflight
+        shell: bash
+        run: bash deploy/preflight.sh
