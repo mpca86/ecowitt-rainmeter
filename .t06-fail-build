@@ -1,3 +1,0 @@
-T08-B intentional failed build for notification test.
-The BASH build check will exit 42; last functioning release should remain online.
-Remove this marker after notification receipt is verified.
