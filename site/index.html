@@ -4,37 +4,158 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <meta name="theme-color" content="#101b2b">
-  <title>Ecowitt Rainmeter · Git Deploy Test</title>
-  <style>
-    :root { color-scheme: dark; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
-    * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 2rem; background: radial-gradient(circle at 70% 10%, #24465a 0%, #101b2b 44%, #0b1220 100%); color: #eaf2f8; }
-    main { width: min(100%, 650px); padding: clamp(1.5rem, 5vw, 3rem); border: 1px solid #476072; border-radius: 22px; background: #142438e8; box-shadow: 0 22px 80px #0006; }
-    .eyebrow { color: #86e4cd; font-size: .82rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
-    h1 { font-size: clamp(2rem, 7vw, 3.2rem); letter-spacing: -.045em; line-height: 1.08; margin: 1rem 0; }
-    p { line-height: 1.7; color: #b9cbd8; }
-    .status { display: inline-flex; align-items: center; gap: .55rem; padding: .65rem .85rem; border: 1px solid #406a5e; border-radius: 99px; color: #a8f3d8; font-size: .9rem; background: #1b3936; }
-    .dot { width: 9px; height: 9px; border-radius: 50%; background: #6df0ba; }
-    dl { display: grid; grid-template-columns: auto 1fr; gap: .6rem 1rem; padding-top: 1.25rem; margin-top: 2rem; border-top: 1px solid #32485c; font-size: .94rem; }
-    dt { color: #97adbe; } dd { margin: 0; overflow-wrap: anywhere; }
-    a { color: #9de4fb; }
-    footer { margin-top: 1.5rem; color: #839bad; font-size: .8rem; }
-  </style>
+  <meta name="theme-color" content="#08111d">
+  <meta name="description" content="Ecowitt Rainmeter je vyvíjaný skin pre Windows Rainmeter zobrazujúci údaje z Ecowitt gateway cez lokálne API.">
+  <title>Ecowitt Rainmeter – počasie priamo na ploche Windows</title>
+  <link rel="stylesheet" href="assets/css/site.css">
+  <link rel="alternate" hreflang="sk" href="./">
+  <link rel="alternate" hreflang="en" href="./en/">
 </head>
 <body>
-  <main>
-    <div class="eyebrow">HostCreators · Git Build &amp; Deploy</div>
-    <h1>Ecowitt Rainmeter</h1>
-    <p>Toto je izolovaná testovacia stránka automatického nasadzovania z GitHubu na HostCreators. Samotná aplikácia Rainmeter je určená pre Windows a na tomto webe sa nespúšťa.</p>
-    <div class="status"><span class="dot" aria-hidden="true"></span> Testovacia verzia T10 · demonštrácia GitHub Pull Request</div>
-    <dl>
-      <dt>Repozitár</dt><dd><a href="https://github.com/mpca86/ecowitt-rainmeter">mpca86/ecowitt-rainmeter</a></dd>
-      <dt>Vetva</dt><dd><code>hostcreators-test</code></dd>
-      <dt>Web adresár</dt><dd><code>site/</code></dd>
-      <dt>Cieľ</dt><dd><code>testgit.mpca86.sk</code></dd>
-    </dl>
-    <footer>T10 · demonštrácia kontrolovaného nasadenia cez Pull Request · 10. októbra 2026</footer>
+  <a class="skip-link" href="#main">Prejsť na obsah</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="#top" aria-label="Ecowitt Rainmeter"><span class="brand-mark" aria-hidden="true">ER</span><span>Ecowitt Rainmeter</span></a>
+      <nav class="site-nav" aria-label="Hlavná navigácia">
+        <a href="#features">Funkcie</a>
+        <a href="#sources">Pripojenie</a>
+        <a href="#getting-started">Začíname</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <nav class="locale" aria-label="Jazyk">
+        <a href="./" lang="sk" hreflang="sk" aria-current="page">SK</a>
+        <a href="./en/" lang="en" hreflang="en">EN</a>
+      </nav>
+    </div>
+  </header>
+  <main id="main">
+    <div class="container">
+      <section class="hero" id="top" aria-labelledby="hero-title">
+        <div>
+          <div class="eyebrow">Počasie na ploche Windows</div>
+          <h1 id="hero-title">Ecowitt dáta.<span>Priamo na ploche.</span></h1>
+          <p class="lead">Premeňte merania z Ecowitt gateway na prehľadné informácie v Rainmeteri. Teplota, vlhkosť, vietor, zrážky aj vývoj počasia — bez potreby otvárať prehliadač.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="https://github.com/mpca86/ecowitt-rainmeter" rel="noopener noreferrer">Preskúmať na GitHube <span aria-hidden="true">↗</span></a>
+            <a class="btn btn-secondary" href="#features">Objaviť funkcie <span aria-hidden="true">↓</span></a>
+          </div>
+          <p class="hero-note">Vývojová verzia v1.10.0-alpha · skutočný inštalátor .rmskin sa ešte pripravuje.</p>
+          <div class="quick-facts">
+            <span><i class="fact-dot" aria-hidden="true"></i>Windows + Rainmeter</span>
+            <span><i class="fact-dot" aria-hidden="true"></i>Local API</span>
+            <span><i class="fact-dot" aria-hidden="true"></i>Open source</span>
+          </div>
+        </div>
+        <aside class="hero-panel" aria-label="Stav snímok obrazovky">
+          <div class="panel-top"><span class="pill">VÝVOJOVÁ VERZIA</span><span class="pill pill-muted">v1.10.0-alpha</span></div>
+          <div class="placeholder">
+            <div class="placeholder-symbol" aria-hidden="true">☁</div>
+            <span class="eyebrow">MIESTO PRE REÁLNY SCREENSHOT</span>
+            <strong>Skutočný vzhľad čoskoro</strong>
+            <p>Keď pripravíme overené ukážky skinu, zobrazia sa tu. Toto nie je simulácia aplikácie.</p>
+          </div>
+          <div class="panel-foot"><span>Bez falošných meraní</span><span>Skutočný Rainmeter skin</span></div>
+        </aside>
+      </section>
+    </div>
+    <section class="section section-alt" id="features" aria-labelledby="features-title">
+      <div class="container">
+        <div class="section-head">
+          <div class="eyebrow">MOŽNOSTI</div>
+          <h2 id="features-title">Dáta, ktoré majú zmysel.</h2>
+          <p>Základ vývoja pracuje s lokálnym API gateway. Dostupné položky závisia od pripojených senzorov.</p>
+        </div>
+        <div class="feature-grid">
+        <article class="feature-card"><span class="feature-icon" aria-hidden="true">◉</span><h3>Teplota a vlhkosť</h3><p>Vonkajšie aj vnútorné podmienky a dynamické senzory CH1–CH8.</p></article>
+        <article class="feature-card"><span class="feature-icon" aria-hidden="true">↗</span><h3>Vietor</h3><p>Aktuálna rýchlosť, nárazy a smer vetra.</p></article>
+        <article class="feature-card"><span class="feature-icon" aria-hidden="true">◌</span><h3>Zrážky</h3><p>Údaje o daždi vrátane denného úhrnu.</p></article>
+        <article class="feature-card"><span class="feature-icon" aria-hidden="true">☼</span><h3>Slnko a UV</h3><p>Slnečné žiarenie, UV index a jeho kategória.</p></article>
+        <article class="feature-card"><span class="feature-icon" aria-hidden="true">≋</span><h3>Tlak a trendy</h3><p>Absolútny aj relatívny tlak, 15-minútové trendy teploty a 3-hodinová tendencia tlaku.</p></article>
+        <article class="feature-card"><span class="feature-icon" aria-hidden="true">▤</span><h3>História a diagnostika</h3><p>Lokálna CSV história, nastavenia a diagnostické pohľady.</p></article>
+        </div>
+      </div>
+    </section>
+    <section class="section" id="sources" aria-labelledby="sources-title">
+      <div class="container">
+        <div class="section-head">
+          <div class="eyebrow">ZDROJE ÚDAJOV</div>
+          <h2 id="sources-title">Lokálne dnes. Cloud vo vývoji.</h2>
+          <p>Jasne oddeľujeme fungujúci vývojový základ a samostatne pripravovanú cloudovú vetvu.</p>
+        </div>
+        <div class="duo">
+          <article class="info-card">
+            <span class="pill">ZÁKLAD NA TESTOVANIE</span>
+            <h3>Ecowitt Local API</h3>
+            <p>Rainmeter číta živé dáta z Ecowitt gateway dostupnej v lokálnej sieti. Aktuálny základ používa endpoint: <code>/get_livedata_info</code></p>
+            <ul><li>Priamy prístup v LAN</li><li>Bez potreby cloudového kľúča na tomto projektovom webe</li><li>Nastavenia a diagnostika v aplikácii</li></ul>
+          </article>
+          <article class="info-card info-card--muted">
+            <span class="pill pill-muted">ROZPRACOVANÉ</span>
+            <h3>Ecowitt Cloud API v3</h3>
+            <p>Samostatná vývojová vetva pre prístup cez Ecowitt Web API v3. Nie je prezentovaná ako hotová funkcia stabilného vydania.</p>
+            <ul><li>Samostatná vetva cloud-api</li><li>Zatiaľ bez potvrdeného vydania</li><li>API tajomstvá nepatria do verejného webu</li></ul>
+          </article>
+        </div>
+      </div>
+    </section>
+    <section class="section section-alt" id="getting-started" aria-labelledby="started-title">
+      <div class="container">
+        <div class="section-head">
+          <div class="eyebrow">PRVÉ KROKY</div>
+          <h2 id="started-title">Ako začať</h2>
+          <p>Táto stránka zatiaľ ponúka orientačný postup pre vývojovú verziu, nie finálny inštalačný návod.</p>
+        </div>
+        <div class="steps">
+          <article class="step"><span class="step-num" aria-hidden="true">1</span><h3>Nainštalujte Rainmeter</h3><p>Na Windows najprv potrebujete aplikáciu Rainmeter. Stiahnite ju z oficiálneho webu.</p></article>
+        <article class="step"><span class="step-num" aria-hidden="true">2</span><h3>Pozrite si zdrojový projekt</h3><p>Zdrojové súbory a stav vývoja sú na GitHube. Distribučný balík .rmskin sa ešte pripravuje.</p></article>
+        <article class="step"><span class="step-num" aria-hidden="true">3</span><h3>Pripojte gateway</h3><p>Pri Local API musí byť Ecowitt gateway dostupná z počítača v lokálnej sieti. Podrobné kroky ešte doplníme.</p></article>
+        </div>
+        <p class="note">Nie je tu zatiaľ overený odkaz na hotový inštalátor. Neuvádzame ani odhad termínu jeho vydania.</p>
+        <div class="hero-actions">
+          <a class="doc-link" href="https://www.rainmeter.net/" rel="noopener noreferrer">Oficiálny web Rainmeter ↗</a>
+          <a class="doc-link" href="https://github.com/mpca86/ecowitt-rainmeter#readme" rel="noopener noreferrer">Zobraziť repozitár a README ↗</a>
+        </div>
+      </div>
+    </section>
+    <section class="section" id="faq" aria-labelledby="faq-title">
+      <div class="container">
+        <div class="section-head">
+          <div class="eyebrow">OTÁZKY A ODPOVEDE</div>
+          <h2 id="faq-title">Často kladené otázky</h2>
+        </div>
+        <div class="faq">
+          <details><summary>Potrebujem internet na čítanie lokálnej gateway?</summary><p>Lokálne API používa sieťové spojenie medzi Windows počítačom a gateway. Internetové pripojenie samo osebe nie je podmienkou pre komunikáciu v LAN.</p></details>
+        <details><summary>Je cloudová integrácia už pripravená?</summary><p>Nie ako dokončené vydanie. Vyvíja sa samostatná vetva pre Ecowitt Web API v3.</p></details>
+        <details><summary>Prečo tu nie je tlačidlo Stiahnuť?</summary><p>Projekt je v alpha fáze a inštalačný balík .rmskin je podľa aktuálnej dokumentácie v príprave. Nechceme odkazovať na neoverené vydanie.</p></details>
+        <details><summary>Budú fungovať všetky Ecowitt senzory?</summary><p>Projekt obsahuje generický register senzorov a podporu kanálov CH1–CH8. Konkrétne dostupné údaje závisia od gateway, senzorov a stavu vývoja.</p></details>
+        </div>
+      </div>
+    </section>
+    <section class="section section-alt" aria-labelledby="follow-title">
+      <div class="container">
+        <div class="section-head">
+          <div class="eyebrow">OTVORENÝ PROJEKT</div>
+          <h2 id="follow-title">Sledujte vývoj.</h2>
+          <p>Pozrite si zdrojový kód, otvorené úlohy a vývojové vetvy. Prihlásenie ani zadanie Ecowitt údajov na tejto stránke nie sú potrebné.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="https://github.com/mpca86/ecowitt-rainmeter" rel="noopener noreferrer">Zdrojový kód <span aria-hidden="true">↗</span></a>
+            <a class="btn btn-secondary" href="https://github.com/mpca86/ecowitt-rainmeter/issues" rel="noopener noreferrer">GitHub Issues <span aria-hidden="true">↗</span></a>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div>
+        <p><strong>Ecowitt Rainmeter</strong> · Autor: Martin Šturcel</p>
+        <p>Statická prezentácia · bez sledovacích skriptov</p>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/mpca86/ecowitt-rainmeter/blob/main/LICENSE.md" rel="noopener noreferrer">Licencia kódu: CC BY-NC-SA 3.0</a>
+        <a href="https://github.com/mpca86/ecowitt-rainmeter" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </div>
+  </footer>
 </body>
 </html>
