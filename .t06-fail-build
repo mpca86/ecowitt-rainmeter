@@ -1,0 +1,3 @@
+T06 controlled failure marker.
+This file is used exclusively by deploy/t06-build-check.sh to return exit code 42.
+Remove this marker to restore successful deployments.
