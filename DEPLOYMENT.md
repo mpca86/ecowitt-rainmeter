@@ -13,18 +13,17 @@
 | Automaticky nasadzovaná vetva | `hostcreators-test` |
 | Public/document root, relatívne ku koreňu repozitára | `site` |
 | Stránka | `site/index.html` |
-| Build krok – cieľový stabilný príkaz | `bash deploy/preflight.sh` |
+| Build krok – overený stabilný príkaz | `bash deploy/preflight.sh` |
 | Nasadenie | štandardný krok `Deploy` v HostCreators, po úspešnom BASH kroku |
 | Upozornenia | e-mailové výstupy zapnuté v HostCreators; adresu a tajomstvá neukladať do Git repozitára |
 
-**Prechodný stav T09:** Pred zmenou v HostCreators je v Build & Deploy nastavený starý príkaz
-`bash deploy/t06-build-check.sh`. Nový skript `deploy/preflight.sh` sa má najprv otestovať a až potom možno starý T06 skript odstrániť.
+**T09 stabilizácia (10. 10. 2026):** Build krok HostCreators bol zmenený na `bash deploy/preflight.sh` a manuálne overený: commit `3283f40`, `[PREFLIGHT] PASS`, úspešné dokončenie za 2,55 s. Starý testovací súbor `deploy/t06-build-check.sh` bol následne odstránený commitom `274bdb6`. Aktuálne zmeny pri údržbe dokumentácie sa automaticky publikujú cez webhook; stav posledného deployu vždy over v Histórii HostCreators.
 
 ## 2. Prvé nasadenie alebo kontrola nastavení
 
 1. Vo WebAdmine otvor GIT aplikáciu pre `testgit.mpca86.sk`.
 2. Over repozitár `mpca86/ecowitt-rainmeter`, vetvu `hostcreators-test` a relatívnu public cestu `site`.
-3. V časti **Build & deploy** nastav **BASH** krok `bash deploy/preflight.sh` medzi `Spustenie` a `Deploy`; starý T06 BASH krok nahraď, nepridávaj oba.
+3. V časti **Build & deploy** musí byť **jediný BASH** krok `bash deploy/preflight.sh` medzi `Spustenie` a `Deploy`. Starý testovací skript bol z repozitára odstránený; nesmie byť nakonfigurovaný ako build krok.
 4. Ulož nastavenia a urob jeden kontrolný manuálny deploy (iba pri migrácii konfigurácie).
 5. V logu musí byť `[PREFLIGHT] PASS: static site is ready for deployment` a následne úspešné nasadenie.
 6. Skontroluj, že stránka vracia obsah `Testovacia verzia 1` a dorazí úspešný e-mail.
@@ -91,7 +90,7 @@ Pri naliehavom incidente nemeň naraz viac vecí. Najprv identifikuj posledný f
 | T06 – kontrolovaný neúspešný build | PASS | `ae8ccd3`, `exit 42`, starý web zostal dostupný |
 | T07 – zotavenie | PASS | `086587e`, automatický úspešný deploy |
 | T08 – e-mailové hlásenia | PASS (doručenie) | úspech aj chyba, obnovenie cez `54ebf62`; detail chybového e-mailu nebol úplne skontrolovaný |
-| T09 – stabilizácia | IN PROGRESS | nový `deploy/preflight.sh`, dokumentácia; treba dokončiť zmenu BASH príkazu v HostCreators a overiť |
+| T09 – stabilizácia | PASS (kontrolný build) | `3283f40`: `[PREFLIGHT] PASS`, nastavenie `current` OK, deploy OK (2,55 s); následné upratanie: odstránený testovací skript (`274bdb6`), upravená dokumentácia. Po úpravách over posledný automatický deploy. |
 
 ## Dokumentácia HostCreators
 
