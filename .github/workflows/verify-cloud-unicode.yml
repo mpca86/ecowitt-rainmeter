@@ -1,0 +1,95 @@
+name: Verify Cloud API Unicode fix
+
+on:
+  push:
+    branches:
+      - fix/cloud-api-unicode
+  pull_request:
+    branches:
+      - cloud-api
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-unicode-patch:
+    name: verify-unicode-patch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify UTF-8 Git sources
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          source = Path("src/EcowittWeather/@Resources/Scripts/main_cloud.lua")
+          original = source.read_bytes()
+          assert not original.startswith((b"\xff\xfe", b"\xfe\xff")), "Git source must remain UTF-8"
+          text = original.decode("utf-8-sig", errors="strict")
+          assert "function Initialize()" in text and "function Update()" in text
+          assert "dáta pred " in text and "Zrážky dnes" in text
+          print("PASS: source is readable UTF-8; Unicode string canaries verified")
+          PY
+
+      - name: Build test-only Unicode Lua patch
+        shell: bash
+        run: |
+          mkdir -p "build/EcowittWeather/@Resources/Scripts" dist
+          cp src/EcowittWeather/@Resources/Scripts/main_cloud.lua "build/EcowittWeather/@Resources/Scripts/main_cloud.lua"
+          python3 packaging/prepare-rainmeter-lua.py build/EcowittWeather
+          cp "build/EcowittWeather/@Resources/Scripts/main_cloud.lua" dist/main_cloud.lua
+          (cd dist && sha256sum main_cloud.lua > main_cloud.lua.sha256)
+          cat > dist/README.txt <<'EOF'
+          ECOWITT WEATHER CLOUD API - UNICODE TEST PATCH
+          -----------------------------------------------
+          TEST ONLY. Not a release, not a complete Rainmeter installer.
+          Designed for Cloud API v1.11.0-beta.6.
+
+          Back up your existing skin before testing.
+          1. In Rainmeter Manage, unload EcowittWeather\\Meteo (Meteo.ini).
+          2. Locate the existing EcowittWeather\\@Resources\\Scripts folder
+             under Rainmeter's actual Skins folder.
+          3. Back up its existing main_cloud.lua outside the Skins folder.
+          4. Copy this test main_cloud.lua over that one file only.
+          5. Re-load EcowittWeather\\Meteo (Meteo.ini).
+          6. Verify Slovak diacritics in the tooltip and rainfall label,
+             plus a non-ASCII user sensor name, if configured.
+          7. Check data refresh and other Cloud beta functionality.
+          8. To roll back, unload Meteo, restore your backed-up main_cloud.lua,
+             and re-load Meteo.
+
+          This archive contains no CloudSecrets.inc or API credentials.
+          Do not edit CloudSecrets.inc or UserVariables.inc for this test.
+          EOF
+
+      - name: Validate staged Unicode file and SHA-256
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          source = Path("src/EcowittWeather/@Resources/Scripts/main_cloud.lua").read_text(encoding="utf-8-sig")
+          data = Path("dist/main_cloud.lua").read_bytes()
+          assert data.startswith(b"\xff\xfe"), "UTF-16 LE BOM missing"
+          assert data[2:].decode("utf-16-le") == source, "Round-trip content differs"
+          actual_hash = hashlib.sha256(data).hexdigest()
+          checksum_file = Path("dist/main_cloud.lua.sha256").read_text("ascii")
+          assert checksum_file.split()[0] == actual_hash, "Checksum mismatch"
+          assert Path("dist/README.txt").exists()
+          print("PASS: UTF-16 LE BOM, all original strings, SHA-256 and patch README")
+          PY
+          test "$(find dist -type f | wc -l)" -eq 3
+
+      - name: Upload test patch (no GitHub Release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ecowitt-CloudAPI-UnicodeFix-test
+          path: |
+            dist/main_cloud.lua
+            dist/main_cloud.lua.sha256
+            dist/README.txt
+          if-no-files-found: error
+          retention-days: 14
