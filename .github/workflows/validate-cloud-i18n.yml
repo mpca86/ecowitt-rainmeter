@@ -47,6 +47,23 @@ jobs:
               print(f"PASS: {lang} UTF-16 includes, all {len(catalog)} strings")
           PY
 
+      - name: Validate safe automatic-language defaults
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          variables = Path("src/EcowittWeather/@Resources/Includes/Variables.inc")
+          content = variables.read_bytes()
+          assert content.startswith(b"\xff\xfe"), "Variables.inc lost UTF-16 LE BOM"
+          text = content.decode("utf-16")
+          assert "\nUiLanguage=auto\n" in text
+          template = Path("src/EcowittWeather/@Resources/Includes/UserVariables.inc.example").read_text("utf-8")
+          bootstrap = Path("src/EcowittWeather/@Resources/Scripts/bootstrap.lua").read_text("utf-8")
+          assert "UiLanguage=auto" in template
+          assert "'UiLanguage=auto\\r\\n'" in bootstrap
+          print("PASS: defaults and new-user template select automatic Rainmeter language")
+          PY
+
       - name: Resolve Rainmeter LCIDs with English fallback and manual override
         shell: pwsh
         run: ./packaging/i18n/tests/test-resolve-language.ps1
