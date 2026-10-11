@@ -42,6 +42,7 @@
   "settings.export_warning": "Exportovaný .ecowittconfig obsahuje API klíče. Uchovávejte jej bezpečně.",
   "settings.import": "Import",
   "settings.import_tooltip": "Importuje konfiguraci a před přepsáním vytvoří zálohu",
+  "settings.lang_auto": "Automaticky podle Rainmeteru",
   "settings.lang_cs": "Čeština",
   "settings.lang_en": "Angličtina",
   "settings.lang_pl": "Polština",
