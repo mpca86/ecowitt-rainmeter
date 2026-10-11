@@ -70,7 +70,9 @@ jobs:
               )
               ini = z.read("RMSKIN.ini").decode("utf-8-sig")
               compact_ini = ini.replace(" ", "").lower()
-              assert "load=ecowittweatherlocalalpha\\settings\\settings.ini" in compact_ini, repr(ini)
+              normalized_load = compact_ini.replace(chr(92) * 2, chr(92))
+              expected_load = "load=ecowittweatherlocalalpha" + chr(92) + "settings" + chr(92) + "settings.ini"
+              assert expected_load in normalized_load, repr(ini)
               assert "version=1.10.0-alpha" in compact_ini, repr(ini)
               for n in names:
                   if n.endswith("/@Resources/Includes/Variables.inc"):
