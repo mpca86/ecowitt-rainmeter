@@ -1,0 +1,92 @@
+name: Build Local API Legacy Alpha RMSKIN (test artifact only)
+
+on:
+  push:
+    branches:
+      - build/t11-local-alpha-package
+
+permissions:
+  contents: read
+
+jobs:
+  local-alpha-package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out isolated main-derived source branch
+        uses: actions/checkout@v4
+
+      - name: Prepare sanitized legacy Local API alpha
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 packaging/local-alpha/stage.py
+          mkdir -p dist
+
+      - name: Build genuine Rainmeter RMSKIN
+        id: rmskin
+        uses: 2bndy5/rmskin-action@v2.0.4
+        with:
+          path: build/local-rmskin
+          dir-out: dist
+          version: 1.10.0-alpha
+          title: Ecowitt Weather Local API Alpha
+          author: Martin Sturcel (mpca86)
+
+      - name: Validate packaged archive, metadata and SHA-256
+        shell: bash
+        env:
+          GENERATED: ${{ steps.rmskin.outputs.arc-name }}
+        run: |
+          set -euo pipefail
+          if [[ -f "$GENERATED" ]]; then
+            SOURCE="$GENERATED"
+          else
+            SOURCE="dist/$GENERATED"
+          fi
+          test -s "$SOURCE"
+          DEST="dist/EcowittWeather-LocalAPI-v1.10.0-alpha.rmskin"
+          if [[ "$SOURCE" != "$DEST" ]]; then mv "$SOURCE" "$DEST"; fi
+          python3 - <<'PY'
+          from pathlib import Path
+          import struct, zipfile
+          p = Path("dist/EcowittWeather-LocalAPI-v1.10.0-alpha.rmskin")
+          b = p.read_bytes()
+          assert b.endswith(b"RMSKIN"), "Missing Rainmeter package footer"
+          with zipfile.ZipFile(p) as z:
+              names = z.namelist()
+              assert "RMSKIN.ini" in names, "Missing Rainmeter installer manifest"
+              assert "Skins/EcowittWeatherLocalAlpha/Settings/Settings.ini" in names
+              assert "Skins/EcowittWeatherLocalAlpha/Meteo/Meteo.ini" in names
+              assert "Skins/EcowittWeatherLocalAlpha/Diagnostics/Diagnostics.ini" in names
+              assert "Skins/EcowittWeatherLocalAlpha/@Resources/Includes/Variables.inc" in names
+              assert not any(s.startswith("Skins/EcowittWeather/") for s in names), "Cloud beta skin would be overwritten"
+              assert not any(
+                  any(word in n.lower() for word in (
+                      "cloudsecrets", "uservariables", "meteo_history", "ecowitt_debug.txt",
+                      "sample_gw3000", ".ecowittconfig", "password"
+                  )) for n in names
+              )
+              ini = z.read("RMSKIN.ini").decode("utf-8-sig")
+              assert "Load=EcowittWeatherLocalAlpha\\Settings\\Settings.ini" in ini
+              assert "Version=1.10.0-alpha" in ini
+              for n in names:
+                  if n.endswith("/@Resources/Includes/Variables.inc"):
+                      content = z.read(n)
+                      for marker in (b"Kancel", b"Predaj", b"Diel"):
+                          assert marker not in content, "Private developer label leaked"
+              assert z.testzip() is None, "Archive corruption"
+          print("RMSKIN archive, installer manifest, isolated root and sanitized files: PASS")
+          PY
+          (cd dist && sha256sum "EcowittWeather-LocalAPI-v1.10.0-alpha.rmskin" > "EcowittWeather-LocalAPI-v1.10.0-alpha.rmskin.sha256")
+          (cd dist && sha256sum -c "EcowittWeather-LocalAPI-v1.10.0-alpha.rmskin.sha256")
+          ls -lah dist
+
+      - name: Upload private test build artifact (not a GitHub release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: EcowittWeather-LocalAPI-v1.10.0-alpha-rmskin
+          path: |
+            dist/EcowittWeather-LocalAPI-v1.10.0-alpha.rmskin
+            dist/EcowittWeather-LocalAPI-v1.10.0-alpha.rmskin.sha256
+          if-no-files-found: error
+          retention-days: 30
