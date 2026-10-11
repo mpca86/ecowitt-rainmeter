@@ -93,3 +93,65 @@ jobs:
             dist/README.txt
           if-no-files-found: error
           retention-days: 14
+
+  verify-rmskin-package:
+    name: verify-rmskin-package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Stage Cloud beta (no publish)
+        shell: bash
+        run: |
+          mkdir -p build/rmskin/Skins/EcowittWeather dist-package-check
+          rsync -a src/EcowittWeather/ build/rmskin/Skins/EcowittWeather/ \
+            --exclude 'CloudSecrets.inc' \
+            --exclude 'UserVariables.inc' \
+            --exclude 'meteo_history.csv' \
+            --exclude 'ecowitt_cloud_debug.txt' \
+            --exclude 'UpdateState.inc' \
+            --exclude 'Changelog.txt'
+          cp packaging/RMSKIN.ini build/rmskin/RMSKIN.ini
+          python3 packaging/prepare-rainmeter-lua.py build/rmskin/Skins/EcowittWeather
+
+      - name: Build test RMSKIN archive without a GitHub Release
+        uses: 2bndy5/rmskin-action@v2.0.4
+        with:
+          path: build/rmskin
+          dir-out: dist-package-check
+          version: 1.11.0-beta.6
+          title: Ecowitt Weather Unicode Test
+          author: Ecowitt Rainmeter CI
+
+      - name: Verify encoded Lua inside generated RMSKIN
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from io import BytesIO
+          import zipfile
+
+          packages = list(Path("dist-package-check").rglob("*.rmskin"))
+          assert len(packages) == 1, f"Expected one RMSKIN; got {packages!r}"
+          packaged = packages[0].read_bytes()
+          assert packaged[-8:] == b"\x00RMSKIN\x00", "Rainmeter custom footer missing"
+          zip_length = int.from_bytes(packaged[-16:-8], "little")
+          assert zip_length == len(packaged) - 16, "Rainmeter ZIP length mismatch"
+          with zipfile.ZipFile(BytesIO(packaged[:-16])) as archive:
+              file_names = archive.namelist()
+              assert archive.testzip() is None, "RMSKIN ZIP CRC error"
+              target = [name for name in file_names if
+                        name.replace("\\", "/").endswith(
+                            "Skins/EcowittWeather/@Resources/Scripts/main_cloud.lua")]
+              assert len(target) == 1, f"Unicode Lua missing from RMSKIN: {target!r}"
+              data = archive.read(target[0])
+              assert data.startswith(b"\xff\xfe"), "Lua missing UTF-16 LE BOM"
+              expected = Path("src/EcowittWeather/@Resources/Scripts/main_cloud.lua").read_text("utf-8-sig")
+              assert data[2:].decode("utf-16-le") == expected, "Lua content changed while staging"
+              banned = ("CloudSecrets.inc", "UserVariables.inc", "meteo_history.csv",
+                        "ecowitt_cloud_debug.txt", "UpdateState.inc", "Changelog.txt")
+              assert not any(name.replace("\\", "/").endswith(item)
+                             for name in file_names for item in banned)
+          print("PASS: complete non-published RMSKIN contains valid UTF-16 LE Lua, no user files")
+          PY
