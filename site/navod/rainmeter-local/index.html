@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#08111d">
+  <meta name="description" content="Návod na manuálnu inštaláciu Ecowitt Rainmeter Local API v1.10.0-alpha: gateway IP, port 80, JSON endpoint /get_livedata_info, METEO a diagnostika.">
+  <title>Rainmeter Local API – manuálna inštalácia a nastavenie | Ecowitt Rainmeter</title>
+  <link rel="stylesheet" href="../../assets/css/site.css?v=t11-d2">
+  <link rel="alternate" hreflang="sk" href="./">
+  <link rel="alternate" hreflang="en" href="../../en/guide/rainmeter-local/">
+</head>
+<body>
+  <a class="skip-link" href="#main">Preskočiť na obsah</a>
+  <header class="site-header"><div class="container header-inner">
+    <a class="brand" href="../../" aria-label="Ecowitt Rainmeter – Späť na úvod"><span class="brand-mark" aria-hidden="true">ER</span><span>Ecowitt Rainmeter</span></a>
+    <nav class="site-nav" aria-label="Navigácia návodu"><a href="#install">Inštalácia</a><a href="#network">Sieť a JSON</a><a href="#settings">Nastavenia</a><a href="#help">Pomoc</a></nav>
+    <nav class="locale" aria-label="Jazyk"><a href="./" lang="sk" hreflang="sk" aria-current="page">SK</a><a href="../../en/guide/rainmeter-local/" lang="en" hreflang="en">EN</a></nav>
+  </div></header>
+  <main id="main">
+    <div class="container"><section class="hero" id="top" aria-labelledby="hero-title">
+      <div><div class="eyebrow">NÁVOD · RAINMETER EDITION · LOCAL API</div><h1 id="hero-title">Počasie z vašej siete.<span>Bez Cloud API kľúčov.</span></h1><p class="lead">Prepojte <strong>Rainmeter na Windows</strong> priamo s podporovaným Ecowitt gatewayom cez lokálnu sieť. Postup vychádza zo zdrojového vývojového základu <strong>v1.10.0-alpha</strong> vo vetve <code>main</code>.</p>
+        <div class="hero-actions"><a class="btn btn-primary" href="https://github.com/mpca86/ecowitt-rainmeter/tree/main/src/EcowittWeather" rel="noopener noreferrer">Otvoriť Local API zdroj ↗</a><a class="btn btn-secondary" href="#install">Začať manuálnu inštaláciu ↓</a></div>
+        <p class="hero-note">Local API je zatiaľ zdrojový vývojový základ, nie samostatne overený verejný .rmskin inštalátor. Tento postup nebol overený na čistej inštalácii Windows.</p>
+        <div class="quick-facts"><span><i class="fact-dot" aria-hidden="true"></i>LAN alebo vhodná VPN</span><span><i class="fact-dot" aria-hidden="true"></i>Host + port, štandardne 80</span><span><i class="fact-dot" aria-hidden="true"></i>Bez Application Key / API Key</span></div>
+      </div>
+      <aside class="hero-panel" aria-label="Ecowitt Local API">
+        <div class="panel-top"><span class="pill">LOCAL API</span><span class="pill pill-muted">v1.10.0-alpha</span></div>
+        <div class="placeholder"><div class="placeholder-symbol" aria-hidden="true">⌁</div><strong>Ecowitt Local API</strong><p>Priame čítanie z gatewaya pomocou lokálnej HTTP odpovede.</p></div>
+        <div class="panel-foot"><span>Zdrojový základ · v1.10.0-alpha</span><span>HTTP · LAN</span></div>
+      </aside>
+    </section></div>
+    <section class="section section-alt" id="install" aria-labelledby="install-title"><div class="container">
+  <div class="section-head"><div class="eyebrow">KROK 1</div><h2 id="install-title">Nainštalujte zdrojový Local skin</h2><p>Najprv nainštalujte Rainmeter. Local API vo vetve main sa momentálne distribuuje ako zdrojový kód, nie ako potvrdený samostatný .rmskin balík.</p></div>
+  <div class="steps"><article class="step"><span class="step-num" aria-hidden="true">1</span><h3>Pripravte Rainmeter</h3><p>Nainštalujte <a href="https://www.rainmeter.net/" rel="noopener noreferrer">Rainmeter z oficiálneho webu ↗</a> na Windows a spustite jeho správu skinov.</p></article>
+<article class="step"><span class="step-num" aria-hidden="true">2</span><h3>Stiahnite vetvu main</h3><p>Otvorte <a href="https://github.com/mpca86/ecowitt-rainmeter/archive/refs/heads/main.zip" rel="noopener noreferrer">GitHub ZIP vetvy main ↗</a> a rozbaľte archív. V ňom nájdite <code>src/EcowittWeather/</code> s priečinkami <code>Meteo</code>, <code>Settings</code>, <code>Diagnostics</code> a <code>@Resources</code>.</p></article>
+<article class="step"><span class="step-num" aria-hidden="true">3</span><h3>Skopírujte celý priečinok</h3><p>Celý priečinok <code>EcowittWeather</code> preneste do priečinka Rainmeter <code>Skins</code> (často <code>Dokumenty&#92;Rainmeter&#92;Skins</code>; presnú cestu zistite v nastavení Rainmetera). Zachovajte štruktúru vrátane <code>@Resources</code>.</p></article></div><p class="note"><strong>Nie Cloud inštalátor:</strong> verejný <code>v1.11.0-beta.6.rmskin</code> používa Web API v3. Na Local postup nepreberajte Cloud balík ani Cloud nastavenia; tento návod používa zdrojové súbory <code>main</code>.</p>
+</div></section>
+<section class="section" id="network" aria-labelledby="network-title"><div class="container">
+  <div class="section-head"><div class="eyebrow">KROK 2</div><h2 id="network-title">Nájdite gateway a otestujte JSON</h2><p>Vyžaduje sa podporovaný Ecowitt gateway s lokálnym HTTP endpointom. Samotný bezdrôtový senzor bez gatewaya nestačí.</p></div>
+  <div class="duo"><article class="info-card"><span class="pill">PRÍPRAVA</span><h3>IP adresa a prístup</h3><p>Zistite IP adresu gatewaya napríklad v DHCP zozname routera. Počítač a gateway musia byť navzájom dostupné v LAN alebo cez vhodnú VPN. Skontrolujte klientsku izoláciu Wi-Fi, VLAN smerovanie a firewall.</p><ul><li>Príklad IP: <code>192.168.1.50</code> – len ilustračná</li><li>Štandardný port podľa <code>Variables.inc</code>: <code>80</code></li><li>IP a port patria gatewayu, nie účtu ecowitt.net</li></ul></article>
+<article class="info-card info-card--muted"><span class="pill pill-muted">ODPOVEĎ API</span><h3>Kontrola z prehliadača</h3><p>V prehliadači na tom istom PC otvorte:</p><p><code>http://192.168.1.50:80/<wbr>get_livedata_info</code></p><p>Nahraďte IP a port skutočnými údajmi. Očakávajte JSON odpoveď kompatibilného zariadenia. Súčasný test v Rainmeteri hľadá v odpovedi položky <code>common_list</code> a <code>debug</code>.</p></article></div><p class="note"><strong>Bezpečnosť:</strong> ide o nezabezpečené <code>http://</code> na súkromnej sieti. Endpoint nevystavujte port forwardingom na internet; pri vzdialenom používaní uprednostnite bezpečnú VPN.</p>
+</div></section>
+<section class="section section-alt" id="settings" aria-labelledby="settings-title"><div class="container">
+  <div class="section-head"><div class="eyebrow">KROK 3</div><h2 id="settings-title">Nastavte Rainmeter a otestujte pripojenie</h2><p>Pri konfigurácii Local skinu nezadávate Application Key, API Key ani MAC stanice. Zadáva sa IP alebo hostname a port.</p></div>
+  <div class="steps"><article class="step"><span class="step-num" aria-hidden="true">1</span><h3>Otvorte Nastavenia</h3><p>V Rainmeteri obnovte zoznam skinov a načítajte <code>EcowittWeather&#92;Settings&#92;Settings.ini</code>. Panel nesie názov <strong>ECOWITT WEATHER – NASTAVENIA</strong>.</p></article>
+<article class="step"><span class="step-num" aria-hidden="true">2</span><h3>Vyplňte Gateway address a Port</h3><p>Do <strong>Gateway address</strong> zadajte len IP/hostname <em>bez</em> <code>http://</code> a bez portu. Do samostatného poľa <strong>Port</strong> zadajte <code>80</code> alebo port vášho gatewaya. Po každom zadaní potvrďte <strong>Enter</strong>.</p></article>
+<article class="step"><span class="step-num" aria-hidden="true">3</span><h3>Spustite test</h3><p>Kliknite <strong>TEST PRIPOJENIA</strong>. Pri očakávanej odpovedi sa zobrazí <strong>Pripojené – Local API odpovedá</strong>. Pri zlyhaní sa objaví hlásenie o adrese, porte a routingu/firewalle. Potom kliknite <strong>OTVORIŤ METEO SKIN</strong>.</p></article></div><p class="note"><strong>Poznámka k verzii:</strong> panel zapisuje hodnoty do <code>@Resources/Includes/Variables.inc</code>. Pred prepísaním zdrojového priečinka si urobte zálohu vlastného nastavenia.</p>
+</div></section>
+<section class="section" id="meteo" aria-labelledby="meteo-title"><div class="container">
+  <div class="section-head"><div class="eyebrow">KROK 4</div><h2 id="meteo-title">Zobrazovanie meraní a história</h2><p>Local skin používa Rainmeter WebParser, JSON dekodér a generický Ecowitt parser. Zobrazí iba polia, ktoré dostupná odpoveď gatewaya poskytuje.</p></div>
+  <div class="duo"><article class="info-card"><span class="pill">METEO</span><h3>Dostupné údaje</h3><p>Outdoor/indoor teplota a vlhkosť, vietor, UV, slnečné žiarenie, zrážky a tlak. Podporované senzory <strong>CH1–CH8</strong> sa spracúvajú dynamicky a neexistujúce kanály sa skrývajú.</p><p>Aliasy kanálov <code>Channel1Label</code> až <code>Channel8Label</code> a <code>GatewayLabel</code> možno upravovať v <code>Variables.inc</code>.</p></article>
+<article class="info-card info-card--muted"><span class="pill pill-muted">HISTÓRIA</span><h3>Lokálne CSV a trendy</h3><p>Pri behu METEO skinu sa vzorky ukladajú do <code>Meteo/meteo_history.csv</code>. Implementované sú napríklad 15-minútové teplotné trendy a 3-hodinová tendencia tlaku.</p><p>Po prvom spustení nemusí byť dostatok historických vzoriek na výpočet trendov. Ide o lokálny CSV súbor, nie Cloud export.</p></article></div>
+</div></section>
+<section class="section section-alt" id="diagnostics" aria-labelledby="diagnostics-title"><div class="container">
+  <div class="section-head"><div class="eyebrow">KROK 5</div><h2 id="diagnostics-title">Diagnostika a riešenie chýb</h2><p>Ak browser nevie načítať endpoint, najprv riešte sieť alebo kompatibilitu gatewaya. Ak JSON funguje a METEO nie, pokračujte kontrolou Rainmetera.</p></div>
+  <div class="duo"><article class="info-card"><span class="pill">KONTROLA SPOJENIA</span><h3>Najčastejšie problémy</h3><ul><li><strong>Žiadna odpoveď:</strong> správna IP, port, zapnutý gateway a dostupnosť PC → gateway.</li><li><strong>HTTP chyba/timeout:</strong> VLAN, Wi-Fi izolácia, firewall, VPN trasa alebo nepodporovaný endpoint.</li><li><strong>JSON je dostupný, test zlyháva:</strong> overte, či odpoveď obsahuje očakávané položky <code>common_list</code> a <code>debug</code>.</li><li><strong>Prázdny METEO skin:</strong> skontrolujte, či je načítaný <code>Meteo.ini</code>, či parser dostáva platné merania a či sú pripojené senzory.</li></ul></article>
+<article class="info-card info-card--muted"><span class="pill pill-muted">PARSER DEBUG</span><h3>Diagnostický súbor</h3><p>V súbore <code>@Resources/Includes/Variables.inc</code> dočasne zmeňte <code>DebugParser=0</code> na <code>DebugParser=1</code>, obnovte METEO a počkajte na platnú vzorku.</p><p>Potom cez správu Rainmetera otvorte <code>Diagnostics/Diagnostics.ini</code> alebo prezrite <code>@Resources/Diagnostics/ecowitt_debug.txt</code>. Po diagnostike vráťte <code>DebugParser=0</code>.</p></article></div><p class="note">Vo verzii main nie je v paneli Nastavenia tlačidlo <strong>DIAGNOSTIKA</strong> z Cloud beta. Diagnostický panel sa načítava samostatne. Pred poskytnutím logu skontrolujte údaje o sieti, miestnych názvoch a stanici.</p>
+</div></section>
+<section class="section" id="security" aria-labelledby="security-title"><div class="container">
+  <div class="section-head"><div class="eyebrow">SPRÁVNE POUŽITIE</div><h2 id="security-title">Local, Cloud a Desktop sú odlišné postupy</h2><p>Zamedzíme zámene inštalácie alebo prístupu ku gatewayu s inou edíciou.</p></div>
+  <div class="duo"><article class="info-card"><span class="pill">RAINMETER LOCAL</span><h3>Zdrojový základ main</h3><p>Manuálna inštalácia, LAN/VPN, <code>EcowittHost</code> a <code>EcowittPort</code>; bez Application Key, API Key či MAC. Netreba spojenie na Ecowitt Web API.</p><p><a class="doc-link" href="https://github.com/mpca86/ecowitt-rainmeter/tree/main/src/EcowittWeather" rel="noopener noreferrer">Local API zdrojové súbory ↗</a></p></article>
+<article class="info-card info-card--muted"><span class="pill pill-muted">RAINMETER CLOUD</span><h3>Verejná beta .rmskin</h3><p>Samostatná Cloud API beta.6 potrebuje kľúče a MAC stanice; má vlastný inštalátor, aktualizátor a export konfigurácie. <strong>Automatické prepínanie Local/Web</strong> je funkcia samostatnej Desktop Edition, nie tohto Rainmeter Local zdroja.</p><p><a class="doc-link" href="../rainmeter/">Prejsť na Cloud API návod ↗</a></p></article></div><p class="note">Pozor: existujúce používateľské názvy kanálov a lokálna CSV história môžu obsahovať súkromné údaje. Pred zdieľaním logov či konfigurácie ich skontrolujte a znecitlivite.</p>
+</div></section>
+<section class="section section-alt" id="help" aria-labelledby="help-title"><div class="container">
+  <div class="section-head"><div class="eyebrow">OTÁZKY</div><h2 id="help-title">Najčastejšie otázky</h2><p>Najprv skúste lokálny endpoint a TEST PRIPOJENIA, až následne upravujte parser.</p></div>
+  <div class="faq"><details><summary>Potrebujem ecowitt.net účet alebo API kľúče?</summary><p>Na tomto lokálnom Rainmeter zdrojovom základe nie. Používa priame HTTP volanie na gateway v LAN/VPN; kľúče a MAC pre Cloud API sem nepatria.</p></details>
+<details><summary>Kde stiahnem .rmskin pre Local API?</summary><p>V aktuálnych podkladoch vetvy main nie je potvrdený samostatný verejný Local API .rmskin release. Použite manuálnu inštaláciu zdrojového priečinka EcowittWeather podľa tohto návodu.</p></details>
+<details><summary>Prečo TEST PRIPOJENIA hlási Bez odpovede, hoci vidím JSON?</summary><p>Test v main kontroluje textový tvar odpovede s položkami common_list a debug. Ak gateway vracia inú JSON schému, test nemusí prejsť a parser tiež nemusí údaje správne interpretovať.</p></details>
+<details><summary>Je potrebný internet?</summary><p>Pre lokálne merania medzi Rainmeter PC a gatewayom internet nie je potrebný, ak je sieťové spojenie a lokálne HTTP rozhranie funkčné. Na stiahnutie Rainmetera a zdrojového kódu internet potrebujete.</p></details>
+<details><summary>Kde sa ukladajú nastavenia a história?</summary><p>Nastavenia v @Resources/Includes/Variables.inc; lokálna história v Meteo/meteo_history.csv. Pred ručnou aktualizáciou zdroja si ich zálohujte.</p></details>
+<details><summary>Čo keď gateway a PC sú v rôznych VLAN?</summary><p>Potrebujete routing medzi podsieťami, pravidlá firewallu povoľujúce potrebný port a neblokujúce klientsku izoláciu. Neotvárajte endpoint port forwardingom na internet.</p></details></div>
+</div></section>
+<section class="section" id="references" aria-labelledby="references-title"><div class="container">
+  <div class="section-head"><div class="eyebrow">PODKLADY</div><h2 id="references-title">Zdrojový kód a dokumentácia</h2><p>Všetky kľúčové nastavenia a názvy tlačidiel sú odvodené z implementácie na vetve main.</p></div>
+  <div class="duo"><article class="info-card"><span class="pill">REFERENCIE</span><h3>Local API v1.10.0-alpha</h3><p><a class="doc-link" href="https://github.com/mpca86/ecowitt-rainmeter/blob/main/README.md" rel="noopener noreferrer">README main ↗</a></p><p><a class="doc-link" href="https://github.com/mpca86/ecowitt-rainmeter/blob/main/src/EcowittWeather/Settings/Settings.ini" rel="noopener noreferrer">Settings.ini ↗</a></p><p><a class="doc-link" href="https://github.com/mpca86/ecowitt-rainmeter/blob/main/src/EcowittWeather/Meteo/Meteo.ini" rel="noopener noreferrer">Meteo.ini ↗</a></p></article>
+<article class="info-card info-card--muted"><span class="pill pill-muted">ARCHITEKTÚRA</span><h3>Parser, dáta a diagnostika</h3><p><a class="doc-link" href="https://github.com/mpca86/ecowitt-rainmeter/blob/main/src/EcowittWeather/%40Resources/Includes/Variables.inc" rel="noopener noreferrer">Variables.inc ↗</a></p><p><a class="doc-link" href="https://github.com/mpca86/ecowitt-rainmeter/blob/main/docs/ARCHITECTURE.md" rel="noopener noreferrer">ARCHITECTURE.md ↗</a></p><p><a class="doc-link" href="https://github.com/mpca86/ecowitt-rainmeter/blob/main/src/EcowittWeather/Diagnostics/Diagnostics.ini" rel="noopener noreferrer">Diagnostics.ini ↗</a></p></article></div>
+</div></section>
+    <section class="section section-alt" aria-labelledby="next-title"><div class="container"><div class="section-head">
+      <div class="eyebrow">ĎALŠIE INFORMÁCIE</div><h2 id="next-title">Chcete iný spôsob pripojenia?</h2><p>Cloud beta vyžaduje API kľúče a internet; Local API využíva sieť vášho gatewaya.</p>
+    </div><div class="hero-actions"><a class="btn btn-primary" href="../rainmeter/">Cloud API návod ↗</a><a class="btn btn-secondary" href="../../">Späť na úvod ↗</a></div></div></section>
+  </main>
+  <footer class="site-footer"><div class="container footer-inner"><div><p><strong>Ecowitt Rainmeter</strong> · Autor: Martin Šturcel</p><p>Zdrojový Local API návod · bez externých skriptov</p></div>
+    <div class="footer-links"><a href="https://github.com/mpca86/ecowitt-rainmeter/blob/main/LICENSE.md" rel="noopener noreferrer">Licencia kódu: CC BY-NC-SA 3.0</a><a href="https://github.com/mpca86/ecowitt-rainmeter" rel="noopener noreferrer">GitHub</a><a href="../../">Späť na úvod</a></div>
+  </div></footer>
+</body>
+</html>
