@@ -52,7 +52,7 @@ jobs:
           p = Path("dist/EcowittWeather-LocalAPI-v1.10.0-alpha.rmskin")
           b = p.read_bytes()
           assert len(b) > 16, "Invalid Rainmeter archive size"
-          assert b[-8:] == b"\\x00RMSKIN\\x00", "Missing Rainmeter package footer"
+          assert b[-8:] == b"\x00RMSKIN\x00", "Missing Rainmeter package footer"
           assert int.from_bytes(b[-16:-8], "little") == len(b) - 16, "Incorrect Rainmeter footer archive size"
           with zipfile.ZipFile(p) as z:
               names = z.namelist()
