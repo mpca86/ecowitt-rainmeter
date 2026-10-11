@@ -69,8 +69,9 @@ jobs:
                   )) for n in names
               )
               ini = z.read("RMSKIN.ini").decode("utf-8-sig")
-              assert "Load=EcowittWeatherLocalAlpha\\Settings\\Settings.ini" in ini
-              assert "Version=1.10.0-alpha" in ini
+              compact_ini = ini.replace(" ", "").lower()
+              assert "load=ecowittweatherlocalalpha\\settings\\settings.ini" in compact_ini, repr(ini)
+              assert "version=1.10.0-alpha" in compact_ini, repr(ini)
               for n in names:
                   if n.endswith("/@Resources/Includes/Variables.inc"):
                       content = z.read(n)
