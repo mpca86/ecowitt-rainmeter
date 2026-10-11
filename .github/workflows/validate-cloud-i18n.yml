@@ -47,6 +47,10 @@ jobs:
               print(f"PASS: {lang} UTF-16 includes, all {len(catalog)} strings")
           PY
 
+      - name: Resolve Rainmeter LCIDs with English fallback and manual override
+        shell: pwsh
+        run: ./packaging/i18n/tests/test-resolve-language.ps1
+
       - name: Negative tests for missing translations and placeholders
         shell: bash
         run: |
