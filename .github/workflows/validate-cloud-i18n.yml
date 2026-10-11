@@ -54,7 +54,11 @@ jobs:
           import json
           import tempfile
           from pathlib import Path
-          from packaging.i18n.compile import load_catalogs
+          import importlib.util
+          spec = importlib.util.spec_from_file_location("ecowitt_i18n", "packaging/i18n/compile.py")
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          load_catalogs = module.load_catalogs
 
           with tempfile.TemporaryDirectory() as d:
               target = Path(d)
