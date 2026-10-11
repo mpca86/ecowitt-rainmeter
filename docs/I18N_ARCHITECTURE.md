@@ -9,16 +9,21 @@ No merge or release is authorized by this document.
 
 | Code | End-user name | Initial fallback |
 | --- | --- | --- |
-| `sk` | Slovenčina | default |
-| `en` | English | `sk` |
-| `cs` | Čeština | `sk` |
-| `pl` | Polski | `sk` |
+| `sk` | Slovenčina | as selected |
+| `en` | English | **default fallback** |
+| `cs` | Čeština | as selected |
+| `pl` | Polski | as selected |
 
-Existing beta.6 installs should continue using Slovak until the user explicitly
-changes the language. Store the selected code in an **allowlisted**
-`UiLanguage` value in the existing `@Resources/Includes/UserVariables.inc`;
-the default will be `sk` in `Variables.inc`. Never store it in
-`CloudSecrets.inc` and never discard aliases, API keys or CSV history.
+Until i18n is deployed, beta.6 continues using Slovak. In the new version,
+**`UiLanguage=auto` is the default**; it reads the `Language` LCID from
+`[Rainmeter]` in the user's `#SETTINGSPATH#Rainmeter.ini` (not the Windows
+system display language). LCIDs are 1051 SK, 1033 EN, 1029 CS, 1045 PL;
+regional variants are mapped by Windows primary-language bits. Missing,
+unreadable or unsupported LCIDs resolve to **`en`**, not `sk`.
+A manually chosen `sk`, `en`, `cs`, or `pl` always overrides automatic
+detection. Store only the `UiLanguage` preference in the existing
+`@Resources/Includes/UserVariables.inc`; never modify Rainmeter.ini or
+`CloudSecrets.inc`, and retain aliases, API keys and CSV history.
 
 ## Localization inventory — source audit
 
@@ -38,7 +43,7 @@ the default will be `sk` in `Variables.inc`. Never store it in
 - External GitHub release notes/changelog and raw Ecowitt API error messages are
   external data, not translated by this initial catalog.
 
-The initial catalog inventories **71 interface concepts** in each locale.
+The evolving catalog inventories **85 interface concepts** in each locale, including the automatic-language option.
 The catalog coverage is **NOT yet a guarantee that all user-visible text is
 wired to translations**; remaining runtime strings will be migrated in P2.
 Fields with `{count}`, `{channel}`, `{time}`, `{version}`, and
@@ -53,11 +58,17 @@ Fields with `{count}`, `{channel}`, `{time}`, `{version}`, and
    root>/@Resources/Languages` emits `sk.inc`, `en.inc`, `cs.inc`,
    `pl.inc` as **UTF-16 LE with BOM**, leaving Git sources untouched.
 2. **P2: Rainmeter runtime wiring (not done yet).** Add a language setting in
-   Settings, using only allowlisted values and saving to
-   `UserVariables.inc`. After `Variables.inc` and `UserVariables.inc`
-   have loaded, each panel may include a language file in
-   `@Resources/Languages`; confirm dynamic path resolution and refresh
-   behavior in Rainmeter 4.5 before shipping. Replace static labels with
+   Settings with five choices `auto`, `sk`, `en`, `cs`, `pl`, saving only the
+   preference to `UserVariables.inc`. The initial automatic resolver
+   `packaging/i18n/resolve-rainmeter-language.ps1` is read-only: it parses
+   `Rainmeter.ini` and the user override without editing either file.
+   Wire it to the actual Rainmeter startup/refresh flow and store a safe,
+   **allowlisted effective language** separate from the `auto` preference;
+   never interpolate unchecked strings into an include path. After
+   `Variables.inc` and `UserVariables.inc` have loaded, each panel may
+   include a language file in `@Resources/Languages`; confirm the
+   resolution timing and refresh behavior in Rainmeter 4.5 before shipping.
+   Replace static labels with
    `#L_...#`, map UV/wind enums to translated labels, and translate
    Lua-generated status and rainfall using the selected catalog. Refresh
    all five panels when switching language, retaining user input.
@@ -94,3 +105,18 @@ python3 packaging/i18n/compile.py --output /tmp/ecowitt-i18n/Languages
 
 These outputs do not yet enable the language selector or localize installed
 beta.6. That requires the explicit P2 runtime work and a Windows test.
+
+## Automatic language resolution test (added after P1)
+
+The read-only PowerShell resolver accepts Rainmeter's settings file and the
+existing user settings file, then emits one token: `sk`, `en`, `cs`, or
+`pl`. It never modifies either INI. Regional LCIDs are supported;
+unsupported settings default to English. Tests exercise these invariants:
+
+```powershell
+pwsh -NoProfile -File packaging/i18n/tests/test-resolve-language.ps1
+```
+
+The resolver is a separately tested foundation **not yet connected** to the
+runtime Settings controls or packaged language .inc files. Integration and
+Windows acceptance testing remain P2/P3 work.
