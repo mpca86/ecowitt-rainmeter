@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#08111d">
+  <meta name="description" content="Ecowitt Rainmeter Local API v1.10.0-alpha manual setup guide: gateway IP, port 80, JSON endpoint /get_livedata_info, METEO panel and diagnostics.">
+  <title>Rainmeter Local API – manual installation guide | Ecowitt Rainmeter</title>
+  <link rel="stylesheet" href="../../../assets/css/site.css?v=t11-d2">
+  <link rel="alternate" hreflang="sk" href="../../../navod/rainmeter-local/">
+  <link rel="alternate" hreflang="en" href="./">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header"><div class="container header-inner">
+    <a class="brand" href="../../" aria-label="Ecowitt Rainmeter – Back to home"><span class="brand-mark" aria-hidden="true">ER</span><span>Ecowitt Rainmeter</span></a>
+    <nav class="site-nav" aria-label="Guide navigation"><a href="#install">Install</a><a href="#network">Network & JSON</a><a href="#settings">Settings</a><a href="#help">Help</a></nav>
+    <nav class="locale" aria-label="Language"><a href="../../../navod/rainmeter-local/" lang="sk" hreflang="sk">SK</a><a href="./" lang="en" hreflang="en" aria-current="page">EN</a></nav>
+  </div></header>
+  <main id="main">
+    <div class="container"><section class="hero" id="top" aria-labelledby="hero-title">
+      <div><div class="eyebrow">GUIDE · RAINMETER EDITION · LOCAL API</div><h1 id="hero-title">Weather from your LAN.<span>No Cloud API keys.</span></h1><p class="lead">Connect <strong>Rainmeter on Windows</strong> directly to a compatible Ecowitt gateway over your local network. This guide covers the <strong>v1.10.0-alpha</strong> source development baseline on the <code>main</code> branch.</p>
+        <div class="hero-actions"><a class="btn btn-primary" href="https://github.com/mpca86/ecowitt-rainmeter/tree/main/src/EcowittWeather" rel="noopener noreferrer">View Local API source ↗</a><a class="btn btn-secondary" href="#install">Start manual installation ↓</a></div>
+        <p class="hero-note">Local API is currently a source development baseline, not a separately verified public .rmskin installer. This procedure has not been independently tested on a clean Windows installation.</p>
+        <div class="quick-facts"><span><i class="fact-dot" aria-hidden="true"></i>LAN or suitable VPN</span><span><i class="fact-dot" aria-hidden="true"></i>Host + port, default 80</span><span><i class="fact-dot" aria-hidden="true"></i>No Application Key / API Key</span></div>
+      </div>
+      <aside class="hero-panel" aria-label="Ecowitt Local API">
+        <div class="panel-top"><span class="pill">LOCAL API</span><span class="pill pill-muted">v1.10.0-alpha</span></div>
+        <div class="placeholder"><div class="placeholder-symbol" aria-hidden="true">⌁</div><strong>Ecowitt Local API</strong><p>Direct gateway measurements from its local HTTP interface.</p></div>
+        <div class="panel-foot"><span>Source baseline · v1.10.0-alpha</span><span>HTTP · LAN</span></div>
+      </aside>
+    </section></div>
+    <section class="section section-alt" id="install" aria-labelledby="install-title"><div class="container">
+  <div class="section-head"><div class="eyebrow">STEP 1</div><h2 id="install-title">Install the Local source skin</h2><p>First install Rainmeter. The main-branch Local API is provided as source code; the current documentation does not establish a public standalone Local .rmskin release.</p></div>
+  <div class="steps"><article class="step"><span class="step-num" aria-hidden="true">1</span><h3>Prepare Rainmeter</h3><p>Install <a href="https://www.rainmeter.net/" rel="noopener noreferrer">Rainmeter from its official website ↗</a> on Windows and open its skin manager.</p></article>
+<article class="step"><span class="step-num" aria-hidden="true">2</span><h3>Download the main branch</h3><p>Download the <a href="https://github.com/mpca86/ecowitt-rainmeter/archive/refs/heads/main.zip" rel="noopener noreferrer">main branch ZIP ↗</a> from GitHub and extract it. Locate <code>src/EcowittWeather/</code>, which includes <code>Meteo</code>, <code>Settings</code>, <code>Diagnostics</code> and <code>@Resources</code>.</p></article>
+<article class="step"><span class="step-num" aria-hidden="true">3</span><h3>Copy the complete folder</h3><p>Copy the entire <code>EcowittWeather</code> folder to Rainmeter's <code>Skins</code> directory (often <code>Documents&#92;Rainmeter&#92;Skins</code>; check your actual configured location). Preserve the full tree, including <code>@Resources</code>.</p></article></div><p class="note"><strong>Not the Cloud installer:</strong> the public <code>v1.11.0-beta.6.rmskin</code> uses Ecowitt Web API v3. Do not install that package for this Local procedure; follow the <code>main</code> branch source instructions instead.</p>
+</div></section>
+<section class="section" id="network" aria-labelledby="network-title"><div class="container">
+  <div class="section-head"><div class="eyebrow">STEP 2</div><h2 id="network-title">Find your gateway and test JSON</h2><p>You need a compatible Ecowitt gateway exposing the local HTTP endpoint. A wireless sensor on its own is not a gateway.</p></div>
+  <div class="duo"><article class="info-card"><span class="pill">NETWORK</span><h3>IP address and reachability</h3><p>Find your gateway's IP in your router's DHCP device list. Your PC must be able to reach it over the LAN or an appropriate VPN. Check Wi-Fi client isolation, VLAN routing and firewall policies.</p><ul><li>Example IP: <code>192.168.1.50</code> – illustrative only</li><li>Default port in <code>Variables.inc</code>: <code>80</code></li><li>This is the gateway IP/port, not your ecowitt.net account</li></ul></article>
+<article class="info-card info-card--muted"><span class="pill pill-muted">JSON ENDPOINT</span><h3>Test from your browser</h3><p>On the same Windows PC, open:</p><p><code>http://192.168.1.50:80/<wbr>get_livedata_info</code></p><p>Replace IP and port with the actual gateway details. A compatible gateway should return JSON. The existing Rainmeter connection test searches the response for <code>common_list</code> and <code>debug</code>.</p></article></div><p class="note"><strong>Security:</strong> this uses unencrypted <code>http://</code> within a private network. Do not expose the endpoint using internet port forwarding; use a secure VPN if remote access is required.</p>
+</div></section>
+<section class="section section-alt" id="settings" aria-labelledby="settings-title"><div class="container">
+  <div class="section-head"><div class="eyebrow">STEP 3</div><h2 id="settings-title">Configure Rainmeter and test the gateway</h2><p>The Local skin does not need Application Key, API Key or station MAC. It uses a gateway IP/hostname and a separate port.</p></div>
+  <div class="steps"><article class="step"><span class="step-num" aria-hidden="true">1</span><h3>Open the Settings skin</h3><p>Refresh the Rainmeter skin list and load <code>EcowittWeather&#92;Settings&#92;Settings.ini</code>. The panel is titled <strong>ECOWITT WEATHER – NASTAVENIA</strong> (Settings).</p></article>
+<article class="step"><span class="step-num" aria-hidden="true">2</span><h3>Enter Gateway address and Port</h3><p>Enter only the IP address or hostname in <strong>Gateway address</strong>, <em>without</em> <code>http://</code> or the port. Enter <code>80</code> (or your gateway's port) in the separate <strong>Port</strong> field. Press <strong>Enter</strong> after each field.</p></article>
+<article class="step"><span class="step-num" aria-hidden="true">3</span><h3>Test and open METEO</h3><p>Click <strong>TEST PRIPOJENIA</strong> (test connection). If the expected response matches, Settings displays <strong>Pripojené – Local API odpovedá</strong>. Otherwise it warns about host, port or routing/firewall. Then click <strong>OTVORIŤ METEO SKIN</strong> (open weather).</p></article></div><p class="note"><strong>Version-specific storage:</strong> this Settings skin writes into <code>@Resources/Includes/Variables.inc</code>. Back up your personal configuration before replacing source files.</p>
+</div></section>
+<section class="section" id="meteo" aria-labelledby="meteo-title"><div class="container">
+  <div class="section-head"><div class="eyebrow">STEP 4</div><h2 id="meteo-title">Readings, channels and history</h2><p>The Local skin uses Rainmeter WebParser, a JSON decoder and a generic Ecowitt parser. Only fields returned by the gateway can be shown.</p></div>
+  <div class="duo"><article class="info-card"><span class="pill">METEO</span><h3>Available measurements</h3><p>Outdoor/indoor temperature and humidity, wind, UV, solar irradiation, rainfall and pressure. Available <strong>CH1–CH8</strong> sensors are handled dynamically; absent channels are hidden.</p><p>Aliases <code>Channel1Label</code> to <code>Channel8Label</code> and <code>GatewayLabel</code> can be edited in <code>Variables.inc</code>.</p></article>
+<article class="info-card info-card--muted"><span class="pill pill-muted">HISTORY</span><h3>Local CSV and trends</h3><p>While METEO runs, sample history is stored in <code>Meteo/meteo_history.csv</code>. Implemented calculations include 15-minute temperature trends and 3-hour pressure tendency.</p><p>Initially there may be too few history samples to calculate trends. This is a local CSV file, not a Cloud export.</p></article></div>
+</div></section>
+<section class="section section-alt" id="diagnostics" aria-labelledby="diagnostics-title"><div class="container">
+  <div class="section-head"><div class="eyebrow">STEP 5</div><h2 id="diagnostics-title">Diagnostics and troubleshooting</h2><p>If the endpoint fails in your browser, troubleshoot network or gateway compatibility first. If JSON works but METEO does not, inspect Rainmeter.</p></div>
+  <div class="duo"><article class="info-card"><span class="pill">CONNECTIVITY</span><h3>Common failures</h3><ul><li><strong>No response:</strong> verify the IP, port, gateway power and connectivity from PC to gateway.</li><li><strong>HTTP error/timeout:</strong> check VLAN routing, Wi-Fi isolation, firewall, VPN path or endpoint support.</li><li><strong>JSON loads but test fails:</strong> verify whether the response has the expected <code>common_list</code> and <code>debug</code> fields.</li><li><strong>Empty METEO panel:</strong> check that <code>Meteo.ini</code> is loaded, the parser receives valid values and sensors are connected.</li></ul></article>
+<article class="info-card info-card--muted"><span class="pill pill-muted">PARSER DEBUG</span><h3>Diagnostic file</h3><p>In <code>@Resources/Includes/Variables.inc</code>, temporarily change <code>DebugParser=0</code> to <code>DebugParser=1</code>, refresh METEO and wait for a valid sample.</p><p>Then load <code>Diagnostics/Diagnostics.ini</code> using the Rainmeter manager or open <code>@Resources/Diagnostics/ecowitt_debug.txt</code>. Set <code>DebugParser=0</code> again afterwards.</p></article></div><p class="note">Unlike the Cloud beta, the main-branch Settings panel has no <strong>DIAGNOSTIKA</strong> button. Load the Diagnostics skin separately. Check logs for private local network, station and sensor names before sharing.</p>
+</div></section>
+<section class="section" id="security" aria-labelledby="security-title"><div class="container">
+  <div class="section-head"><div class="eyebrow">EDITION CHOICE</div><h2 id="security-title">Local, Cloud and Desktop are different</h2><p>Avoid mixing the installation instructions or connecting to the wrong data source.</p></div>
+  <div class="duo"><article class="info-card"><span class="pill">RAINMETER LOCAL</span><h3>Main-branch source baseline</h3><p>Manual installation, LAN/VPN, <code>EcowittHost</code> and <code>EcowittPort</code>; no Ecowitt Application Key, API Key or station MAC. No Ecowitt Web API request is needed to retrieve local measurements.</p><p><a class="doc-link" href="https://github.com/mpca86/ecowitt-rainmeter/tree/main/src/EcowittWeather" rel="noopener noreferrer">Local API source tree ↗</a></p></article>
+<article class="info-card info-card--muted"><span class="pill pill-muted">RAINMETER CLOUD</span><h3>Public .rmskin beta</h3><p>The separate Cloud beta.6 needs API keys and MAC. It has a released installer, updater and configuration export/import. <strong>Local/Web automatic fallback</strong> belongs to the standalone Desktop Edition, not this Rainmeter Local source baseline.</p><p><a class="doc-link" href="../rainmeter/">Open Cloud API guide ↗</a></p></article></div><p class="note">Channel aliases and local CSV history may contain sensitive location or personal details. Review and redact configuration and diagnostic files before sharing them.</p>
+</div></section>
+<section class="section section-alt" id="help" aria-labelledby="help-title"><div class="container">
+  <div class="section-head"><div class="eyebrow">FAQ</div><h2 id="help-title">Frequently asked questions</h2><p>Check your local endpoint and connection-test result before making parser changes.</p></div>
+  <div class="faq"><details><summary>Do I need an ecowitt.net account or API credentials?</summary><p>Not for this Local Rainmeter source baseline. It makes direct HTTP requests to the gateway over LAN/VPN; Cloud API keys and station MAC do not belong in these Settings.</p></details>
+<details><summary>Where can I download a Local .rmskin installer?</summary><p>The current main branch documentation does not confirm a separate public Local .rmskin release. Use manual source folder installation as described here.</p></details>
+<details><summary>Why does TEST PRIPOJENIA report no response even when JSON loads?</summary><p>The current main test looks for common_list and debug in the response text. A gateway returning a different JSON schema might not pass the test; the parser may also be incompatible.</p></details>
+<details><summary>Do I need internet access?</summary><p>Internet is not required for measurements if the Rainmeter PC and gateway can communicate over LAN/VPN. Internet is needed initially to download Rainmeter and the source code.</p></details>
+<details><summary>Where are settings and history saved?</summary><p>Configuration is in @Resources/Includes/Variables.inc and local history in Meteo/meteo_history.csv. Back them up before manually replacing files.</p></details>
+<details><summary>My PC and gateway are on different VLANs. What now?</summary><p>Enable necessary routing and firewall permissions for the gateway's port and remove client isolation where appropriate. Do not forward the local HTTP endpoint directly to the internet.</p></details></div>
+</div></section>
+<section class="section" id="references" aria-labelledby="references-title"><div class="container">
+  <div class="section-head"><div class="eyebrow">SOURCES</div><h2 id="references-title">Versioned source and documentation</h2><p>The UI labels, config keys and technical behavior come from the current main-branch source files.</p></div>
+  <div class="duo"><article class="info-card"><span class="pill">REFERENCES</span><h3>Local API v1.10.0-alpha</h3><p><a class="doc-link" href="https://github.com/mpca86/ecowitt-rainmeter/blob/main/README.md" rel="noopener noreferrer">Main README ↗</a></p><p><a class="doc-link" href="https://github.com/mpca86/ecowitt-rainmeter/blob/main/src/EcowittWeather/Settings/Settings.ini" rel="noopener noreferrer">Settings.ini ↗</a></p><p><a class="doc-link" href="https://github.com/mpca86/ecowitt-rainmeter/blob/main/src/EcowittWeather/Meteo/Meteo.ini" rel="noopener noreferrer">Meteo.ini ↗</a></p></article>
+<article class="info-card info-card--muted"><span class="pill pill-muted">ARCHITECTURE</span><h3>Parser, data and diagnostics</h3><p><a class="doc-link" href="https://github.com/mpca86/ecowitt-rainmeter/blob/main/src/EcowittWeather/%40Resources/Includes/Variables.inc" rel="noopener noreferrer">Variables.inc ↗</a></p><p><a class="doc-link" href="https://github.com/mpca86/ecowitt-rainmeter/blob/main/docs/ARCHITECTURE.md" rel="noopener noreferrer">ARCHITECTURE.md ↗</a></p><p><a class="doc-link" href="https://github.com/mpca86/ecowitt-rainmeter/blob/main/src/EcowittWeather/Diagnostics/Diagnostics.ini" rel="noopener noreferrer">Diagnostics.ini ↗</a></p></article></div>
+</div></section>
+    <section class="section section-alt" aria-labelledby="next-title"><div class="container"><div class="section-head">
+      <div class="eyebrow">NEXT STEPS</div><h2 id="next-title">Need a different connection method?</h2><p>Cloud beta requires API credentials and internet; Local API communicates with your gateway on your network.</p>
+    </div><div class="hero-actions"><a class="btn btn-primary" href="../rainmeter/">Cloud API guide ↗</a><a class="btn btn-secondary" href="../../">Back to home ↗</a></div></div></section>
+  </main>
+  <footer class="site-footer"><div class="container footer-inner"><div><p><strong>Ecowitt Rainmeter</strong> · Created by: Martin Šturcel</p><p>Source-based Local API guide · no external scripts</p></div>
+    <div class="footer-links"><a href="https://github.com/mpca86/ecowitt-rainmeter/blob/main/LICENSE.md" rel="noopener noreferrer">Code license: CC BY-NC-SA 3.0</a><a href="https://github.com/mpca86/ecowitt-rainmeter" rel="noopener noreferrer">GitHub</a><a href="../../">Back to home</a></div>
+  </div></footer>
+</body>
+</html>
