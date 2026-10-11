@@ -42,6 +42,7 @@
   "settings.export_warning": "Exported .ecowittconfig contains API keys. Store it securely.",
   "settings.import": "Import",
   "settings.import_tooltip": "Imports configuration and creates a backup before overwriting",
+  "settings.lang_auto": "Automatic (Rainmeter language)",
   "settings.lang_cs": "Czech",
   "settings.lang_en": "English",
   "settings.lang_pl": "Polish",
