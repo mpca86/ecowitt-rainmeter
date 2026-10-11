@@ -34,7 +34,7 @@
         <div>
           <div class="eyebrow">Počasie na ploche Windows</div>
           <h1 id="hero-title">Ecowitt dáta.<span>Priamo na ploche.</span></h1>
-          <p class="lead">Teplota, vlhkosť, vietor, zrážky a tlak z Ecowitt stanice priamo na ploche Windows. Rainmeter Edition má dostupnú Cloud API beta verziu; Local API zostáva samostatným vývojovým základom.</p>
+          <p class="lead">Teplota, vlhkosť, vietor, zrážky a tlak z Ecowitt stanice priamo na ploche Windows. Rainmeter Edition má dostupnú Cloud API beta verziu. Staršia Local API alpha už nie je aktívne vyvíjaná; vývoj sa presunul na novšiu beta líniu.</p>
           <div class="hero-actions">
             <a class="btn btn-primary" href="https://github.com/mpca86/ecowitt-rainmeter/releases/tag/v1.11.0-beta.6" rel="noopener noreferrer">Stiahnuť Rainmeter beta <span aria-hidden="true">↗</span></a>
             <a class="btn btn-secondary" href="#features">Objaviť funkcie <span aria-hidden="true">↓</span></a>
@@ -77,14 +77,14 @@
       <div class="container">
         <div class="section-head">
           <div class="eyebrow">ZDROJE ÚDAJOV</div>
-          <h2 id="sources-title">Local API základ. Cloud API vo verejnej bete.</h2>
-          <p>Rainmeter Edition má dva samostatné implementačné smery. Dostupný beta balík používa Cloud API; samostatný Local API základ je v zdrojovom kóde.</p>
+          <h2 id="sources-title">Archívna Local API alpha. Cloud API vo verejnej bete.</h2>
+          <p>Rainmeter Edition má aktívne vyvíjanú Cloud API beta. Staršia Local API alpha zostáva dostupná v zdrojovom kóde a ako dočasný testovací .rmskin artefakt.</p>
         </div>
         <div class="duo">
           <article class="info-card">
-            <span class="pill">VÝVOJOVÝ ZÁKLAD · v1.10.0-alpha</span>
+            <span class="pill">ARCHÍVNA ALPHA · v1.10.0-alpha</span>
             <h3>Ecowitt Local API</h3>
-            <p>Zdrojový základ vetvy <code>main</code> číta údaje priamo z gateway cez <code>/get_livedata_info</code>. Počítač a gateway musia byť navzájom dostupné v LAN alebo cez vhodnú VPN.</p>
+            <p>Staršia Local API alpha z vetvy <code>main</code> číta merania priamo z gateway cez <code>/get_livedata_info</code>. Jej aktívny vývoj sa skončil presunom na Cloud API beta. Počítač a gateway musia byť dostupné v LAN alebo cez vhodnú VPN.</p>
             <ul><li>Na lokálne merania netreba Ecowitt API kľúče</li><li>Merania senzorov, trendy, CSV história a diagnostika</li><li>Nie je totožný s nižšie ponúkaným Cloud API beta inštalátorom</li></ul>
             <a class="doc-link" href="https://github.com/mpca86/ecowitt-rainmeter/tree/main/src/EcowittWeather" rel="noopener noreferrer">Zdrojový kód Local API ↗</a>
             <a class="doc-link" href="navod/rainmeter-local/">Podrobný návod Local API ↗</a>
