@@ -45,7 +45,8 @@ for skin in ("Meteo","Settings","Sensors","Diagnostics","Update"):
     assert "#UiLanguage#.inc" not in src, f"{skin}: unchecked locale path"
     used.update(re.findall(r"#(L_[a-z0-9_]+)#",src))
 lua=(root/"@Resources"/"Scripts"/"main_cloud.lua").read_text("utf-8")
-used.update(re.findall(r"'(L_[a-z0-9_]+)'",lua))
+used.update(name for name in re.findall(r"'(L_[a-z0-9_]+)'",lua) if name != "L_wind_")
+assert all("L_wind_" + direction in {"L_" + k.replace(".", "_") for k in reference} for direction in ("n", "ne", "e", "se", "s", "sw", "w", "nw"))
 known={"L_"+key.replace(".","_") for key in reference}
 assert used<=known, f"Unknown runtime translations: {sorted(used-known)}"
 
