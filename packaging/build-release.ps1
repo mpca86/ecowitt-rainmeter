@@ -36,6 +36,19 @@ Get-ChildItem -LiteralPath $Source -File -Recurse | ForEach-Object {
     Copy-Item -LiteralPath $_.FullName -Destination $dest -Force
 }
 
+# Rainmeter must read a Unicode-capable Lua ScriptFile as UTF-16 LE.
+# Source control keeps Lua in UTF-8; change only the staged copy.
+$luaPath = Join-Path $package "@Resources\Scripts\main_cloud.lua"
+if (-not (Test-Path -LiteralPath $luaPath -PathType Leaf)) {
+    throw "Cloud Lua script not found in staged package: $luaPath"
+}
+$luaText = [System.IO.File]::ReadAllText($luaPath, [System.Text.Encoding]::UTF8)
+[System.IO.File]::WriteAllText($luaPath, $luaText, [System.Text.Encoding]::Unicode)
+$luaBytes = [System.IO.File]::ReadAllBytes($luaPath)
+if ($luaBytes.Length -lt 2 -or $luaBytes[0] -ne 255 -or $luaBytes[1] -ne 254) {
+    throw "Staged main_cloud.lua must have UTF-16 LE BOM."
+}
+
 $zipName = "EcowittWeather-v$Version.zip"
 $zipPath = Join-Path $OutDir $zipName
 if (Test-Path -LiteralPath $zipPath) { Remove-Item -LiteralPath $zipPath -Force }
