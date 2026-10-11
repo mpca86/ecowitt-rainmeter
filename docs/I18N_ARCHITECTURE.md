@@ -106,6 +106,32 @@ python3 packaging/i18n/compile.py --output /tmp/ecowitt-i18n/Languages
 These outputs do not yet enable the language selector or localize installed
 beta.6. That requires the explicit P2 runtime work and a Windows test.
 
+## P2 runtime implementation (prepared; Windows QA pending)
+
+- All five Rainmeter panels now load `@Resources/Includes/LanguageState.inc`
+  (UTF-16 LE), English fallback, and selected language include using
+  `#ResolvedUiLanguage#`, which is **allowlisted** by
+  `@Resources/Scripts/language_bootstrap.lua`.
+- Startup reads Rainmeter's `#SETTINGSPATH#Rainmeter.ini` (`[Rainmeter]`
+  `Language` LCID) without modifying it; the automatically selected locale
+  refreshes active panels only after writing the locale state, with no refresh
+  when the locale is unchanged. Unsupported/missing LCID => `en`.
+- Settings has an `AUTO / SK / EN / CS / PL` row. Clicking a choice writes
+  `UiLanguage` to `UserVariables.inc`, reloads Settings, and the bootstrap
+  refreshes the remaining panels if the **effective** locale changes.
+- METEO, Sensors, Settings, Diagnostics and Update use translated catalog
+  variables, including UV severity, rain labels, status age and wind direction.
+- `src/EcowittWeather/@Resources/Languages/{sk,en,cs,pl}.inc` are checked-in
+  UTF-16 LE compiled includes. The source JSON remains editable UTF-8.
+- A test-only ZIP overlay in Actions copies only public files and stages
+  `main_cloud.lua` to UTF-16 LE (the behavior required by separate PR #27).
+  The ZIP is **not** a beta release and must not be used without backups.
+- **Pending:** real Windows Rainmeter tests of first-load auto detection,
+  manual switching, unsupported locales, Polish / Czech clipping,
+  diagnostics/update controls, alias persistence, portable settings,
+  and actual installer upgrade / rollback. Full human-language translation
+  of raw PowerShell / external API diagnostics is not yet implemented.
+
 ## Automatic language resolution test (added after P1)
 
 The read-only PowerShell resolver accepts Rainmeter's settings file and the
