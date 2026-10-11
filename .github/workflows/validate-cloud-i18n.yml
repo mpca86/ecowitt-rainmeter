@@ -68,6 +68,19 @@ jobs:
         shell: pwsh
         run: ./packaging/i18n/tests/test-resolve-language.ps1
 
+      - name: Verify localized Rainmeter panels and include paths
+        shell: bash
+        run: python3 packaging/i18n/tests/test-runtime-static.py
+
+      - name: Validate Lua syntax and locale bootstrap transitions
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq lua5.1
+          luac5.1 -p src/EcowittWeather/@Resources/Scripts/language_bootstrap.lua
+          luac5.1 -p src/EcowittWeather/@Resources/Scripts/main_cloud.lua
+          lua5.1 packaging/i18n/tests/test-language-bootstrap.lua
+
       - name: Negative tests for missing translations and placeholders
         shell: bash
         run: |
