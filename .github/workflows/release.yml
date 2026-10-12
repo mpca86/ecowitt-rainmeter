@@ -65,6 +65,12 @@ jobs:
           variables.write_text(text, encoding="utf-16")
           PY
 
+      - name: Encode staged Unicode Lua for Rainmeter
+        shell: bash
+        run: |
+          # Keep Git sources reviewable in UTF-8; Rainmeter ScriptFile needs UTF-16 LE.
+          python3 packaging/prepare-rainmeter-lua.py build/rmskin/Skins/EcowittWeather
+
       - name: Build manual ZIP
         shell: bash
         env:
