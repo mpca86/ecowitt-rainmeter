@@ -95,9 +95,10 @@ local function windDirectionText(value)
     local deg = num(value)
     if not deg then return '--' end
     deg = deg % 360
-    local dirs = {'S','SV','V','JV','J','JZ','Z','SZ'}
+    local dirs = {'n','ne','e','se','s','sw','w','nw'}
+    local fallbacks = {'S','SV','V','JV','J','JZ','Z','SZ'}
     local i = math.floor((deg + 22.5) / 45) % 8 + 1
-    return dirs[i]
+    return skinVar('L_wind_' .. dirs[i], fallbacks[i])
 end
 
 local function uvTextState(value)
@@ -202,7 +203,7 @@ end
 
 local function updateCloudStatus(p, now)
     if not p:is_ok() then
-        setVar('V_TitleText', 'Meteo Cloud')
+        setVar('V_TitleText', skinVar('L_meteo_title', 'Meteo Cloud'))
         setVar('V_TitleColor', skinVar('ColorAlert', '255,100,100,255'))
         setVar('V_CloudStatus', p:error_message() or 'API error')
         setVar('V_RuntimeHuman', p:error_message() or 'API error')
@@ -222,9 +223,9 @@ local function updateCloudStatus(p, now)
         local stale = skinNum('CloudStaleSeconds', 900)
 
         if age < 60 then
-            status = 'dáta pred ' .. tostring(age) .. ' s'
+            status = (skinVar('L_meteo_status_seconds', 'dáta pred {count} s'):gsub('{count}', tostring(age)))
         else
-            status = 'dáta pred ' .. tostring(math.floor(age / 60)) .. ' min'
+            status = (skinVar('L_meteo_status_minutes', 'dáta pred {count} min'):gsub('{count}', tostring(math.floor(age / 60))))
         end
 
         if age > stale * 2 then
@@ -234,7 +235,7 @@ local function updateCloudStatus(p, now)
         end
     end
 
-    setVar('V_TitleText', 'Meteo Cloud')
+    setVar('V_TitleText', skinVar('L_meteo_title', 'Meteo Cloud'))
     setVar('V_TitleColor', color)
     setVar('V_CloudStatus', status)
     setVar('V_RuntimeHuman', status)
@@ -385,11 +386,11 @@ function Update()
     local rainLabel, rainValue, showRain = '', '', false
 
     if rainRateNum > 0 then
-        rainLabel = 'Zrážky'
+        rainLabel = skinVar('L_meteo_rain', 'Zrážky')
         rainValue = string.format('%.1f mm/h / %.1f mm', rainRateNum, rainTodayNum)
         showRain = true
     elseif rainTodayNum > 0 then
-        rainLabel = 'Zrážky dnes'
+        rainLabel = skinVar('L_meteo_rain_today', 'Zrážky dnes')
         rainValue = string.format('%.1f mm', rainTodayNum)
         showRain = true
     end

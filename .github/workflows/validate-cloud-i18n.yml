@@ -1,0 +1,121 @@
+name: Validate Cloud API i18n catalogs
+
+on:
+  push:
+    branches:
+      - feature/cloud-api-i18n-sk-en-cs-pl
+  pull_request:
+    branches:
+      - cloud-api
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-i18n:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate four language catalogs
+        run: python3 packaging/i18n/compile.py
+
+      - name: Compile Rainmeter UTF-16 LE includes (staging only)
+        shell: bash
+        run: |
+          python3 packaging/i18n/compile.py --output "$RUNNER_TEMP/EcowittWeather/@Resources/Languages"
+          TEST_DEST="$RUNNER_TEMP/EcowittWeather/@Resources/Languages" python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["TEST_DEST"])
+          catalogs = Path("packaging/i18n/catalogs")
+          locales = ("sk", "en", "cs", "pl")
+          assert sorted(x.name for x in root.iterdir()) == [f"{lang}.inc" for lang in sorted(locales)]
+          for lang in locales:
+              data = (root / f"{lang}.inc").read_bytes()
+              assert data.startswith(b"\xff\xfe"), f"{lang}: UTF-16 LE BOM absent"
+              text = data[2:].decode("utf-16-le")
+              assert text.startswith("; Generated") and "\r\n[Variables]\r\n" in text
+              catalog = json.loads((catalogs / f"{lang}.json").read_text("utf-8"))
+              for key, value in catalog.items():
+                  variable = "L_" + key.replace(".", "_")
+                  assert f"{variable}={value}\r\n" in text, f"{lang}:{key} missing"
+              assert len(text.splitlines()) == len(catalog) + 3, f"{lang}: wrong line count"
+              print(f"PASS: {lang} UTF-16 includes, all {len(catalog)} strings")
+          PY
+
+      - name: Validate safe automatic-language defaults
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          variables = Path("src/EcowittWeather/@Resources/Includes/Variables.inc")
+          content = variables.read_bytes()
+          assert content.startswith(b"\xff\xfe"), "Variables.inc lost UTF-16 LE BOM"
+          text = content.decode("utf-16")
+          assert "\nUiLanguage=auto\n" in text
+          template = Path("src/EcowittWeather/@Resources/Includes/UserVariables.inc.example").read_text("utf-8")
+          bootstrap = Path("src/EcowittWeather/@Resources/Scripts/bootstrap.lua").read_text("utf-8")
+          assert "UiLanguage=auto" in template
+          assert "'UiLanguage=auto\\r\\n'" in bootstrap
+          print("PASS: defaults and new-user template select automatic Rainmeter language")
+          PY
+
+      - name: Resolve Rainmeter LCIDs with English fallback and manual override
+        shell: pwsh
+        run: ./packaging/i18n/tests/test-resolve-language.ps1
+
+      - name: Verify localized Rainmeter panels and include paths
+        shell: bash
+        run: python3 packaging/i18n/tests/test-runtime-static.py
+
+      - name: Validate Lua syntax and locale bootstrap transitions
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq lua5.1
+          luac5.1 -p src/EcowittWeather/@Resources/Scripts/language_bootstrap.lua
+          luac5.1 -p src/EcowittWeather/@Resources/Scripts/main_cloud.lua
+          lua5.1 packaging/i18n/tests/test-language-bootstrap.lua
+
+      - name: Negative tests for missing translations and placeholders
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          import tempfile
+          from pathlib import Path
+          import importlib.util
+          spec = importlib.util.spec_from_file_location("ecowitt_i18n", "packaging/i18n/compile.py")
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          load_catalogs = module.load_catalogs
+
+          with tempfile.TemporaryDirectory() as d:
+              target = Path(d)
+              src = Path("packaging/i18n/catalogs")
+              for locale in ("sk", "en", "cs", "pl"):
+                  (target / f"{locale}.json").write_bytes(
+                      (src / f"{locale}.json").read_bytes())
+              en_path = target / "en.json"
+              en = json.loads(en_path.read_text("utf-8"))
+              del en["meteo.rain"]
+              en_path.write_text(json.dumps(en, ensure_ascii=False), "utf-8")
+              try:
+                  load_catalogs(target)
+                  raise AssertionError("Missing key not caught")
+              except ValueError as exc:
+                  assert "missing keys" in str(exc)
+              en["meteo.rain"] = "Rainfall"
+              en["meteo.status_seconds"] = "data {wrong} ago"
+              en_path.write_text(json.dumps(en, ensure_ascii=False), "utf-8")
+              try:
+                  load_catalogs(target)
+                  raise AssertionError("Placeholder mismatch not caught")
+              except ValueError as exc:
+                  assert "placeholders" in str(exc)
+          print("PASS: missing translation and variable placeholder errors detected")
+          PY

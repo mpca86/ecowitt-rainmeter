@@ -50,7 +50,8 @@ function Initialize()
         'Channel8Label=\r\n' ..
         'GatewayLabel=Gateway\r\n' ..
         'CloudRefreshSeconds=60\r\n' ..
-        'UpdateChannel=beta\r\n'
+        'UpdateChannel=beta\r\n' ..
+        'UiLanguage=auto\r\n'
     )
 
     create_file(

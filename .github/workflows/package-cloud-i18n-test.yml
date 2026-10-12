@@ -1,0 +1,109 @@
+name: Package Rainmeter i18n Windows test overlay
+
+on:
+  push:
+    branches:
+      - feature/cloud-api-i18n-sk-en-cs-pl
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package-i18n-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build isolated test-only skin overlay
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="build/i18n-overlay/EcowittWeather"
+          mkdir -p "$ROOT/@Resources/Includes" "$ROOT/@Resources/Languages" "$ROOT/@Resources/Scripts" dist-i18n
+          for skin in Meteo Settings Sensors Diagnostics Update; do
+            mkdir -p "$ROOT/$skin"
+            cp "src/EcowittWeather/$skin/$skin.ini" "$ROOT/$skin/$skin.ini"
+          done
+          cp src/EcowittWeather/@Resources/Includes/Variables.inc "$ROOT/@Resources/Includes/"
+          cp src/EcowittWeather/@Resources/Includes/LanguageState.inc "$ROOT/@Resources/Includes/"
+          cp src/EcowittWeather/@Resources/Scripts/language_bootstrap.lua "$ROOT/@Resources/Scripts/"
+          cp src/EcowittWeather/@Resources/Scripts/main_cloud.lua "$ROOT/@Resources/Scripts/"
+          python3 packaging/i18n/compile.py --output "$ROOT/@Resources/Languages"
+          # This is the same staged UTF-16 conversion as draft PR #27;
+          # UTF-8 Lua sources on GitHub are never changed.
+          python3 - <<'PY'
+          from pathlib import Path
+          lua=Path("build/i18n-overlay/EcowittWeather/@Resources/Scripts/main_cloud.lua")
+          text=lua.read_text("utf-8")
+          lua.write_bytes(text.encode("utf-16"))
+          assert lua.read_bytes().startswith(b"\xff\xfe")
+          PY
+          cat > dist-i18n/README.txt <<'EOF'
+          ECOWITT CLOUD API - SK / EN / CS / PL LANGUAGE TEST
+          --------------------------------------------------
+          TEST ONLY. NOT an official .rmskin, Release, or beta.7.
+          For an existing Cloud API v1.11.0-beta.6 Rainmeter skin.
+
+          SAFETY:
+          - Back up the complete existing EcowittWeather folder OUTSIDE Skins.
+          - Do NOT share or upload the backup: it may contain API credentials.
+          - Unload all five Cloud API panels before copying any files.
+          - Extract EcowittWeather-i18n-test.zip into Rainmeter's actual Skins
+            directory, merging folders and replacing only matching files.
+          - Do NOT delete the existing EcowittWeather folder.
+          - This overlay does NOT include CloudSecrets.inc, UserVariables.inc,
+            CSV history, logs, or any personal credentials.
+          - Re-load Settings.ini and METEO, then test AUTO, SK, EN, CS and PL.
+          - Change Rainmeter's language only if you wish to test AUTO mapping;
+            restart / refresh the Ecowitt skin after changing that setting.
+          - If anything fails, unload skins and restore your complete backup.
+
+          Draft PR #28 is NOT merged. Draft PR #27 is NOT merged.
+          The main_cloud.lua inside this overlay uses staged UTF-16 LE so
+          Rainmeter can display Slovak, Czech and Polish Unicode strings.
+          EOF
+          (cd build/i18n-overlay && zip -q -r "$GITHUB_WORKSPACE/dist-i18n/EcowittWeather-i18n-test.zip" EcowittWeather)
+          (cd dist-i18n && sha256sum EcowittWeather-i18n-test.zip > EcowittWeather-i18n-test.zip.sha256)
+
+      - name: Verify test overlay contents and text encoding
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile
+          path=Path("dist-i18n/EcowittWeather-i18n-test.zip")
+          with zipfile.ZipFile(path) as f:
+              files=set(f.namelist())
+              assert f.testzip() is None
+              prefix="EcowittWeather/"
+              for part in ("Meteo/Meteo.ini", "Settings/Settings.ini",
+                           "Sensors/Sensors.ini", "Diagnostics/Diagnostics.ini",
+                           "Update/Update.ini",
+                           "@Resources/Includes/LanguageState.inc",
+                           "@Resources/Includes/Variables.inc",
+                           "@Resources/Scripts/main_cloud.lua",
+                           "@Resources/Scripts/language_bootstrap.lua"):
+                  assert prefix+part in files, part
+              for lang in ("sk","en","cs","pl"):
+                  name=prefix+f"@Resources/Languages/{lang}.inc"
+                  assert f.read(name).startswith(b"\xff\xfe"), name
+              assert f.read(prefix+"@Resources/Scripts/main_cloud.lua").startswith(b"\xff\xfe")
+              banned=("CloudSecrets.inc","UserVariables.inc","meteo_history.csv",
+                      "ecowitt_cloud_debug.txt","UpdateState.inc","Changelog.txt")
+              assert not any(item.endswith(b) for item in files for b in banned)
+              assert not any(item.endswith(".ecowittconfig") for item in files)
+          print("PASS: all five panels, four UTF-16 locales, Cloud Lua, no secrets")
+          PY
+          (cd dist-i18n && sha256sum --check EcowittWeather-i18n-test.zip.sha256)
+
+      - name: Upload temporary Windows test package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ecowitt-Cloud-i18n-SK-EN-CS-PL-test
+          path: |
+            dist-i18n/EcowittWeather-i18n-test.zip
+            dist-i18n/EcowittWeather-i18n-test.zip.sha256
+            dist-i18n/README.txt
+          if-no-files-found: error
+          retention-days: 14
