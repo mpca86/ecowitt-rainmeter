@@ -1,0 +1,103 @@
+name: Verify beta7 integration RMSKIN (test only)
+
+on:
+  push:
+    branches:
+      - test/cloud-api-beta7-integration
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-integration-rmskin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate catalogs and stage complete skin
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 packaging/i18n/compile.py
+          mkdir -p build/rmskin/Skins/EcowittWeather dist-integration
+          rsync -a src/EcowittWeather/ build/rmskin/Skins/EcowittWeather/ \
+            --exclude 'CloudSecrets.inc' \
+            --exclude 'UserVariables.inc' \
+            --exclude 'meteo_history.csv' \
+            --exclude 'ecowitt_cloud_debug.txt' \
+            --exclude 'UpdateState.inc' \
+            --exclude 'Changelog.txt' \
+            --exclude '*.ecowittconfig'
+          cp packaging/RMSKIN.ini build/rmskin/RMSKIN.ini
+          python3 packaging/i18n/compile.py --output build/rmskin/Skins/EcowittWeather/@Resources/Languages
+          python3 packaging/prepare-rainmeter-lua.py build/rmskin/Skins/EcowittWeather
+      - name: Verify stage encodings and privacy
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          root=Path("build/rmskin/Skins/EcowittWeather")
+          banned={"CloudSecrets.inc","UserVariables.inc","meteo_history.csv","ecowitt_cloud_debug.txt","UpdateState.inc","Changelog.txt"}
+          for path in root.rglob("*"):
+              if path.is_file():
+                  assert path.name not in banned and path.suffix != ".ecowittconfig", path
+          for locale in ("sk","en","cs","pl"):
+              path=root/"@Resources"/"Languages"/f"{locale}.inc"
+              data=path.read_bytes()
+              assert data.startswith(b"\xff\xfe"), path
+              decoded=data[2:].decode("utf-16-le")
+              catalog=json.loads((Path("packaging/i18n/catalogs")/f"{locale}.json").read_text("utf-8"))
+              assert all(f"L_{key.replace('.', '_')}={value}" in decoded for key,value in catalog.items())
+          for panel in ("Meteo","Settings","Sensors","Diagnostics","Update"):
+              data=(root/panel/f"{panel}.ini").read_bytes()
+              assert data.startswith(b"\xff\xfe"),panel
+          assert (root/"@Resources"/"Scripts"/"main_cloud.lua").read_bytes().startswith(b"\xff\xfe")
+          print("PASS: 4 locale catalogs, 5 panels, Lua encodings and excluded private files")
+          PY
+      - name: Build unpublished RMSKIN
+        uses: 2bndy5/rmskin-action@v2.0.4
+        with:
+          path: build/rmskin
+          dir-out: dist-integration
+          version: 1.11.0-beta.7-test
+          title: Ecowitt Weather Integration Test Only
+          author: Ecowitt Rainmeter CI
+      - name: Verify RMSKIN payload and checksum
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from io import BytesIO
+          import zipfile, hashlib
+          files=list(Path("dist-integration").rglob("*.rmskin"))
+          assert len(files)==1,files
+          file=files[0]
+          data=file.read_bytes()
+          assert data[-8:]==b"\x00RMSKIN\x00"
+          assert int.from_bytes(data[-16:-8],"little")==len(data)-16
+          with zipfile.ZipFile(BytesIO(data[:-16])) as z:
+              assert z.testzip() is None
+              names=[n.replace("\\","/") for n in z.namelist()]
+              def entry(s):
+                  found=[n for n in names if n.endswith("Skins/EcowittWeather/"+s)]
+                  assert len(found)==1,(s,found)
+                  return z.read(z.namelist()[names.index(found[0])])
+              assert entry("@Resources/Scripts/main_cloud.lua").startswith(b"\xff\xfe")
+              for locale in ("sk","en","cs","pl"):
+                  assert entry("@Resources/Languages/"+locale+".inc").startswith(b"\xff\xfe")
+              for panel in ("Meteo","Settings","Sensors","Diagnostics","Update"):
+                  assert entry(panel+"/"+panel+".ini").startswith(b"\xff\xfe")
+              banned=("CloudSecrets.inc","UserVariables.inc","meteo_history.csv","ecowitt_cloud_debug.txt","UpdateState.inc","Changelog.txt",".ecowittconfig")
+              assert not any(n.endswith(b) for n in names for b in banned)
+          checksum=hashlib.sha256(data).hexdigest()
+          (Path("dist-integration")/(file.name+".sha256")).write_text(f"{checksum}  {file.name}\n",encoding="ascii")
+          print(f"PASS: verified test-only RMSKIN: {file.name}, sha256 {checksum}")
+          PY
+      - name: Upload temporary test artifact only
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ecowitt-beta7-integration-RMSKIN-TEST-ONLY
+          path: dist-integration/
+          if-no-files-found: error
+          retention-days: 7
