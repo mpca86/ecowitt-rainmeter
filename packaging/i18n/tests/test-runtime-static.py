@@ -15,7 +15,7 @@ for language in langs:
     ini=(root/"@Resources"/"Languages"/f"{language}.inc").read_bytes()
     assert ini.startswith(b"\xff\xfe"), f"{language}: no UTF-16 LE BOM"
     decoded=ini.decode("utf-16")
-    assert decoded.startswith("[Variables]"), f"{language}: not an INI variable include"
+    assert decoded.startswith("; Generated") and "\r\n[Variables]\r\n" in decoded, f"{language}: not a compiled INI variable include"
     for key, value in data.items():
         actual=f"L_{key.replace('.', '_')}={value}\r\n"
         assert actual in decoded, f"{language}:{key}: compiled content differs"
@@ -68,4 +68,29 @@ assert "alternateNumber and alternateNumber ~= 0 then return alternateValue" in 
 assert "if iniLanguage ~= nil then return locale_for_lcid(iniLanguage) or 'en' end" in bootstrap
 assert "PROCESSOR_ARCHITEW6432" in bootstrap
 assert "powershell" not in bootstrap.lower() and "os.execute" not in bootstrap.lower()
-print(f"PASS: 5 UTF-16 panels, 4 catalogs, {len(used)} wired translation names, allowlisted locale path")
+
+ps_scripts=("test-cloud-api.ps1", "config-transfer.ps1", "updater.ps1")
+for script in ps_scripts:
+    source=(root/"@Resources"/"Scripts"/script).read_text("utf-8")
+    assert "localization.ps1" in source and "Get-EcowittUiCatalog" in source, f"{script}: localization helper missing"
+    assert "Get-EcowittUiText" in source, f"{script}: user text is not localized"
+    keys=re.findall(r'Get-EcowittUiText\s+-Key\s+"([^"]+)"',source)
+    missing=[key for key in keys if key not in reference]
+    assert not missing, f"{script}: unknown localized keys {missing}"
+helper=(root/"@Resources"/"Scripts"/"localization.ps1").read_text("utf-8")
+assert '"sk", "en", "cs", "pl"' in helper
+assert "@Resources\\Languages\\" in helper and "[System.Text.Encoding]::Unicode" in helper
+for token in ("MISSING|", "OK|", "API_ERROR|", "HTTP_ERROR|"):
+    assert token in (root/"@Resources"/"Scripts"/"test-cloud-api.ps1").read_text("utf-8")
+for token in ("CANCEL|", "OK|", "ERROR|"):
+    assert token in (root/"@Resources"/"Scripts"/"config-transfer.ps1").read_text("utf-8")
+for token in ("UPDATE|", "CURRENT|", "ERROR|"):
+    assert token in (root/"@Resources"/"Scripts"/"updater.ps1").read_text("utf-8")
+for measure in ("test-cloud-api.ps1", "config-transfer.ps1"):
+    assert f'-File "#@#Scripts\\{measure}"' in settings
+    assert '-UiLanguage "#ResolvedUiLanguage#"' in settings
+updates=(root/"Update"/"Update.ini").read_text("utf-16")
+assert updates.count('-UiLanguage "#ResolvedUiLanguage#"') == 2
+assert 'localization.ps1' in (root/"@Resources"/"Scripts"/"updater.ps1").read_text("utf-8")
+assert "MeasureCloudTestText" in settings and "MeasureConfigStatusText" in settings
+print(f"PASS: 5 UTF-16 panels, 4 catalogs, {len(used)} Rainmeter translations, localized PowerShell entry points and stable status codes")

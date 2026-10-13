@@ -8,12 +8,16 @@ param(
     [string]$SkinPath,
     [string]$Repository = "mpca86/ecowitt-rainmeter",
     [string]$DevelopmentBranch = "cloud-api",
-    [string]$CurrentVersion = ""
+    [string]$CurrentVersion = "",
+    [ValidateSet("sk","en","cs","pl")]
+    [string]$UiLanguage = "en"
 )
 
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 $SkinPath = [System.IO.Path]::GetFullPath($SkinPath)
+. (Join-Path $PSScriptRoot "localization.ps1")
+$script:EcowittUiCatalog = Get-EcowittUiCatalog -SkinPath $SkinPath -UiLanguage $UiLanguage
 
 # RunCommand expects UTF-8. Windows PowerShell 5.1 otherwise may emit text
 # in the active OEM / legacy code page when stdout is redirected.
@@ -92,7 +96,7 @@ function Write-Changelog {
     Ensure-Directory $UpdateDir
 
     if ([string]::IsNullOrWhiteSpace($Text)) {
-        $Text = "Pre túto verziu nie je k dispozícii changelog."
+        $Text = Get-EcowittUiText -Key "updates.changelog_unavailable"
     }
 
     # Convert the Markdown subset used in GitHub release notes to plain text.
@@ -107,7 +111,8 @@ function Write-Changelog {
     $plain = $plain.Trim()
 
     if (-not [string]::IsNullOrWhiteSpace($Version)) {
-        $plain = "Changelog $Version`r`n`r`n" + $plain
+        $heading = Get-EcowittUiText -Key "updates.changelog_version" -Values @{ version = $Version }
+        $plain = $heading + "`r`n`r`n" + $plain
     }
 
     $utf8Bom = New-Object System.Text.UTF8Encoding($true)
@@ -258,7 +263,7 @@ function Find-PackageRoot([string]$ExtractPath, [bool]$Development) {
         return $ExtractPath
     }
 
-    throw "V stiahnutom balíku sa nenašiel koreň EcowittWeather."
+    throw (Get-EcowittUiText -Key "updates.package_root_missing")
 }
 
 function Preserve-UserFiles([string]$TempPreserve) {
@@ -313,7 +318,7 @@ function Refresh-Rainmeter {
 
 try {
     if (-not (Test-Path -LiteralPath $SkinPath -PathType Container)) {
-        throw "SkinPath neexistuje: $SkinPath"
+        throw (Get-EcowittUiText -Key "settings.transfer_skin_missing" -Values @{ path = $SkinPath })
     }
 
     if ($Action -eq "Check") {
@@ -329,15 +334,16 @@ try {
 
             $available = [int]($sha -ne $installed)
             if ($available) {
-                $status = "Dostupný development build $short"
+                $status = Get-EcowittUiText -Key "updates.status_development_available" -Values @{ version = $short }
                 $result = "UPDATE|dev-$short"
             }
             else {
-                $status = "Development build je aktuálny ($short)"
+                $status = Get-EcowittUiText -Key "updates.status_development_current" -Values @{ version = $short }
                 $result = "CURRENT|dev-$short"
             }
 
-            Write-Changelog -Version "dev-$short" -Text "Vývojový kanál cloud-api.`r`n`r`nTento kanál obsahuje najnovšie zmeny z vetvy cloud-api a nemusí byť stabilný."
+            $devNotes = Get-EcowittUiText -Key "updates.changelog_development" -Values @{ newline = [Environment]::NewLine }
+            Write-Changelog -Version "dev-$short" -Text $devNotes
             Write-State -Status $status -RemoteVersion "dev-$short" -Available $available -InstalledCommit $installed
             Write-Output $result
             exit 0
@@ -345,8 +351,14 @@ try {
 
         $release = Get-SelectedRelease
         if (-not $release) {
-            Write-Changelog -Text "Pre zvolený kanál zatiaľ nie je vydaná verzia."
-            Write-State -Status "Pre kanál $Channel zatiaľ nie je vydaná verzia." -Available 0
+            $channelName = switch ($Channel) {
+                "stable" { Get-EcowittUiText -Key "updates.channel_stable" }
+                "beta" { Get-EcowittUiText -Key "updates.channel_beta" }
+                default { Get-EcowittUiText -Key "updates.channel_development" }
+            }
+            $noRelease = Get-EcowittUiText -Key "updates.status_no_channel_release" -Values @{ channel = $channelName }
+            Write-Changelog -Text $noRelease
+            Write-State -Status $noRelease -Available 0
             Write-Output "CURRENT|--"
             exit 0
         }
@@ -359,11 +371,11 @@ try {
         $available = [int](($tag -ne $installedTag) -and ($normalizedCurrent -ne $normalizedTag))
 
         if ($available) {
-            $status = "Dostupná verzia $tag"
+            $status = Get-EcowittUiText -Key "updates.status_available" -Values @{ version = $tag }
             $result = "UPDATE|$tag"
         }
         else {
-            $status = "Používaš aktuálnu verziu $tag"
+            $status = Get-EcowittUiText -Key "updates.status_current" -Values @{ version = $tag }
             $result = "CURRENT|$tag"
         }
 
@@ -373,7 +385,7 @@ try {
     }
 
     if (Test-GitCheckout) {
-        Write-State -Status "Táto inštalácia je spravovaná Gitom. Použi update-ecowitt-cloud.ps1." -Available 0
+        Write-State -Status (Get-EcowittUiText -Key "updates.status_git_managed") -Available 0
         exit 2
     }
 
@@ -401,9 +413,16 @@ try {
     }
     else {
         $release = Get-SelectedRelease
-        if (-not $release) { throw "Pre kanál $Channel nie je dostupný release." }
+        if (-not $release) {
+            $channelName = switch ($Channel) {
+                "stable" { Get-EcowittUiText -Key "updates.channel_stable" }
+                "beta" { Get-EcowittUiText -Key "updates.channel_beta" }
+                default { Get-EcowittUiText -Key "updates.channel_development" }
+            }
+            throw (Get-EcowittUiText -Key "updates.release_unavailable" -Values @{ channel = $channelName })
+        }
         $asset = Get-ReleaseAsset $release
-        if (-not $asset) { throw "Release $($release.tag_name) neobsahuje EcowittWeather ZIP asset." }
+        if (-not $asset) { throw (Get-EcowittUiText -Key "updates.asset_missing" -Values @{ version = [string]$release.tag_name }) }
 
         $installedReleaseTag = [string]$release.tag_name
         $remoteVersion = $installedReleaseTag
@@ -413,7 +432,7 @@ try {
         $expectedHash = Get-ChecksumFromRelease $release $asset $downloadDir
         if ($expectedHash) {
             $actualHash = (Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash.ToLowerInvariant()
-            if ($actualHash -ne $expectedHash) { throw "SHA256 kontrola zlyhala. Balík nebude nainštalovaný." }
+            if ($actualHash -ne $expectedHash) { throw (Get-EcowittUiText -Key "updates.checksum_failed") }
         }
     }
 
@@ -425,7 +444,7 @@ try {
     Copy-Item -Path (Join-Path $packageRoot "*") -Destination $SkinPath -Recurse -Force
     Restore-UserFiles $preserveDir
 
-    $status = "Aktualizované na $remoteVersion. Backup: $backup"
+    $status = Get-EcowittUiText -Key "updates.status_installed" -Values @{ version = $remoteVersion; path = $backup }
     Write-State -Status $status -RemoteVersion $remoteVersion -Available 0 -InstalledReleaseTag $installedReleaseTag -InstalledCommit $installedCommit
 
     Remove-Item -LiteralPath $work -Recurse -Force -ErrorAction SilentlyContinue
@@ -434,7 +453,8 @@ try {
 }
 catch {
     $message = $_.Exception.Message
-    Write-State -Status "Aktualizácia zlyhala: $message" -Available 0 -LastError $message
+    $localizedFailure = Get-EcowittUiText -Key "updates.status_failed" -Values @{ message = $message }
+    Write-State -Status $localizedFailure -Available 0 -LastError $message
     Write-Output ("ERROR|" + $message)
     exit 1
 }

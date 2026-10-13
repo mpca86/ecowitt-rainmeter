@@ -1,6 +1,6 @@
 # Cloud API Rainmeter i18n plan — SK / EN / CS / PL
 
-Status: **P2 runtime wiring implemented / clean-install fallback Windows QA pending**.
+Status: **P2 runtime wiring and PowerShell UI localization implemented; primary clean-install AUTO test passed; extended Windows QA pending**.
 This test branch is based on `test/cloud-api-beta7-integration`. It is independent of the UTF-16 Lua
 packaging fix in draft PR #27; integrate that fix before a future beta release.
 No merge or release is authorized by this document.
@@ -70,12 +70,15 @@ Fields with `{count}`, `{channel}`, `{time}`, `{version}`, and
    `#L_...#`, map UV/wind enums to translated labels, and translate
    Lua-generated status and rainfall using the selected catalog. Refresh
    all five panels when switching language, retaining user input.
-3. **P3: full localization and QA.** Cover user-visible messages from
-   PowerShell update/check/import/test actions without changing their
-   protocol outputs (e.g., `UPDATE|version`). Verify clipping,
-   diacritics, Polish/Czech characters, changing a language mid-session,
-   missing/invalid locale fallback, Cloud beta update and rollback.
-   Preserve secret files and local history across a new RMSKIN install.
+3. **P3: PowerShell-facing localization (implemented on the test branch).**
+   Update/check/import/test scripts read the selected language from the
+   compiled catalog through a shared, allowlisted helper. Translate their
+   own status text, dialogs, and validation messages without changing stable
+   output codes such as `UPDATE|version`. Raw GitHub, Ecowitt API, and Windows
+   exception details remain source text, wrapped in localized explanations.
+   Verify these flows in Windows for all four locales, including clipping,
+   diacritics, language changes, fallback, update checks, and config transfer.
+   Preserve secret files and local history across RMSKIN installs.
 4. **P4: separate beta release approval.** Only after PR #27 and i18n are
    reviewed/merged and Windows QA passes, request approval for beta.7.
    Do not update `packaging/RELEASE_VERSION`, trigger
@@ -104,7 +107,7 @@ python3 packaging/i18n/compile.py --output /tmp/ecowitt-i18n/Languages
 These outputs do not yet enable the language selector or localize installed
 beta.6. That requires the explicit P2 runtime work and a Windows test.
 
-## P2 runtime implementation (prepared; Windows QA pending)
+## P2 runtime implementation (implemented; Windows QA in progress)
 
 - All five Rainmeter panels now load `@Resources/Includes/LanguageState.inc`
   (UTF-16 LE), English fallback, and selected language include using
@@ -130,11 +133,25 @@ beta.6. That requires the explicit P2 runtime work and a Windows test.
 - A test-only ZIP overlay in Actions copies only public files and stages
   `main_cloud.lua` to UTF-16 LE (the behavior required by separate PR #27).
   The ZIP is **not** a beta release and must not be used without backups.
-- **Pending:** real Windows Rainmeter tests of first-load auto detection,
-  manual switching, unsupported locales, Polish / Czech clipping,
-  diagnostics/update controls, alias persistence, portable settings,
-  and actual installer upgrade / rollback. Full human-language translation
-  of raw PowerShell / external API diagnostics is not yet implemented.
+- All three Rainmeter-launched PowerShell entry points (Cloud API test,
+  configuration transfer, and updater) receive the effective allowlisted
+  locale. A shared helper reads the compiled UTF-16 catalog and falls back
+  to English if a locale file cannot be loaded. Dialogs, validation text,
+  and status explanations use the selected locale while stable status codes
+  (`UPDATE|`, `CURRENT|`, `ERROR|`, `OK|`, `CANCEL|`) remain intact.
+- The first-load clean-install Sandbox case has passed: AUTO with no
+  `Rainmeter.ini` `Language` key and installer Registry `1051` resolved to
+  Slovak. Before the alternate Registry-view fallback, this case resolved
+  to English; the replacement test RMSKIN corrected it.
+- **Remaining Windows QA:** run the replacement RMSKIN through manual
+  SK/EN/CS/PL selection; stale Registry `1051` versus Rainmeter.ini `1033`
+  across a restart; present malformed/unsupported INI values; return to a
+  missing INI key and verify Registry fallback; and exercise the localized
+  Cloud test, config-transfer dialogs/results, and updater status in all four
+  locales. Also confirm Polish/Czech layout and Rainmeter log cleanliness.
+- Raw GitHub release notes, Ecowitt API messages, and operating-system
+  exception details are external data. Their surrounding explanatory text
+  is localized, but those source details are intentionally shown as returned.
 
 ## Automatic language resolution tests
 
@@ -149,5 +166,5 @@ pwsh -NoProfile -File packaging/i18n/tests/test-resolve-language.ps1
 ```
 
 The automated tests do not replace Windows Sandbox verification with the
-test-only RMSKIN; first-run AUTO behavior and the native / WOW6432Node registry
-views still require manual confirmation there.
+test-only RMSKIN. The primary first-run AUTO case is owner-confirmed; the
+remaining UI, PowerShell, and edge-case checks above still require manual QA.

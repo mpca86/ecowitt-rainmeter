@@ -8,12 +8,17 @@ param(
     [string]$Action,
 
     [Parameter(Mandatory=$true)]
-    [string]$SkinPath
+    [string]$SkinPath,
+
+    [ValidateSet("sk","en","cs","pl")]
+    [string]$UiLanguage = "en"
 )
 
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 $SkinPath = [System.IO.Path]::GetFullPath($SkinPath)
+. (Join-Path $PSScriptRoot "localization.ps1")
+$script:EcowittUiCatalog = Get-EcowittUiCatalog -SkinPath $SkinPath -UiLanguage $UiLanguage
 $nl = [Environment]::NewLine
 
 $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
@@ -125,27 +130,27 @@ function Copy-ZipEntryToFile {
 
 try {
     if (-not (Test-Path -LiteralPath $SkinPath -PathType Container)) {
-        throw "Priečinok skinu neexistuje: $SkinPath"
+        throw (Get-EcowittUiText -Key "settings.transfer_skin_missing" -Values @{ path = $SkinPath })
     }
 
     if ($Action -eq "Export") {
         if (-not (Test-Path -LiteralPath $SecretsPath -PathType Leaf)) {
-            throw "Nenašiel sa CloudSecrets.inc."
+            throw (Get-EcowittUiText -Key "settings.transfer_secrets_missing")
         }
         if (-not (Test-Path -LiteralPath $UserPath -PathType Leaf)) {
-            throw "Nenašiel sa UserVariables.inc."
+            throw (Get-EcowittUiText -Key "settings.transfer_variables_missing")
         }
 
         $dialog = New-Object System.Windows.Forms.SaveFileDialog
-        $dialog.Title = "Export konfigurácie Ecowitt Weather"
-        $dialog.Filter = "Ecowitt Weather konfigurácia (*.ecowittconfig)|*.ecowittconfig"
+        $dialog.Title = Get-EcowittUiText -Key "settings.transfer_export_title"
+        $dialog.Filter = Get-EcowittUiText -Key "settings.transfer_export_filter"
         $dialog.DefaultExt = "ecowittconfig"
         $dialog.AddExtension = $true
         $dialog.FileName = "EcowittWeather-config-" + [DateTime]::Now.ToString("yyyyMMdd-HHmm") + ".ecowittconfig"
         $dialog.InitialDirectory = [Environment]::GetFolderPath("Desktop")
 
         if ($dialog.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
-            Write-Output "CANCEL|Export zrušený"
+            Write-Output ("CANCEL|" + (Get-EcowittUiText -Key "settings.transfer_cancel_export"))
             exit 0
         }
 
@@ -184,19 +189,20 @@ try {
         Move-Item -LiteralPath $zipPath -Destination $dialog.FileName -Force
         Remove-Item -LiteralPath $work -Recurse -Force -ErrorAction SilentlyContinue
 
-        Show-Warning ("Export je hotový." + $nl + $nl + "Súbor obsahuje Application Key, API Key a ďalšie používateľské nastavenia. Uchovávaj ho ako citlivý súbor a neposielaj ho verejne.")
-        Write-Output "OK|Export dokončený"
+        $exportNotice = Get-EcowittUiText -Key "settings.transfer_export_notice" -Values @{ newline = $nl }
+        Show-Warning $exportNotice
+        Write-Output ("OK|" + (Get-EcowittUiText -Key "settings.transfer_export_complete"))
         exit 0
     }
 
     $dialog = New-Object System.Windows.Forms.OpenFileDialog
-    $dialog.Title = "Import konfigurácie Ecowitt Weather"
-    $dialog.Filter = "Ecowitt Weather konfigurácia (*.ecowittconfig)|*.ecowittconfig|ZIP archív (*.zip)|*.zip"
+    $dialog.Title = Get-EcowittUiText -Key "settings.transfer_import_title"
+    $dialog.Filter = Get-EcowittUiText -Key "settings.transfer_filter"
     $dialog.CheckFileExists = $true
     $dialog.Multiselect = $false
 
     if ($dialog.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
-        Write-Output "CANCEL|Import zrušený"
+        Write-Output ("CANCEL|" + (Get-EcowittUiText -Key "settings.transfer_cancel_import"))
         exit 0
     }
 
@@ -213,7 +219,7 @@ try {
             Select-Object -First 1
 
         if (-not $manifestEntry -or -not $secretsEntry -or -not $userEntry) {
-            throw "Balík nie je platná konfigurácia Ecowitt Weather."
+            throw (Get-EcowittUiText -Key "settings.transfer_invalid_archive")
         }
 
         $reader = New-Object System.IO.StreamReader($manifestEntry.Open(), [System.Text.Encoding]::UTF8)
@@ -225,11 +231,11 @@ try {
         }
 
         if ([string]$manifest.app -ne "EcowittWeather") {
-            throw "Konfiguračný balík patrí inej aplikácii."
+            throw (Get-EcowittUiText -Key "settings.transfer_wrong_app")
         }
 
         if ([int]$manifest.schemaVersion -ne 1) {
-            throw "Nepodporovaná verzia konfiguračného balíka: $($manifest.schemaVersion)"
+            throw (Get-EcowittUiText -Key "settings.transfer_unsupported_version" -Values @{ version = [string]$manifest.schemaVersion })
         }
 
         $backup = Backup-CurrentConfig
@@ -242,15 +248,17 @@ try {
         $archive.Dispose()
     }
 
-    Show-Info ("Import konfigurácie je hotový." + $nl + $nl + "Pôvodná konfigurácia bola zálohovaná do:" + $nl + $backup + $nl + $nl + "Rainmeter sa teraz obnoví.")
-    Write-Output "OK|Import dokončený"
+    $importNotice = Get-EcowittUiText -Key "settings.transfer_import_notice" -Values @{ newline = $nl; backup = $backup }
+    Show-Info $importNotice
+    Write-Output ("OK|" + (Get-EcowittUiText -Key "settings.transfer_import_complete"))
     Start-Sleep -Milliseconds 300
     Refresh-Rainmeter
     exit 0
 }
 catch {
     $message = $_.Exception.Message -replace "[\r\n]+"," "
-    Show-Warning ("Operácia zlyhala:" + $nl + $nl + $message)
-    Write-Output ("ERROR|" + $message)
+    $failure = Get-EcowittUiText -Key "settings.transfer_failure" -Values @{ newline = $nl; message = $message }
+    Show-Warning $failure
+    Write-Output ("ERROR|" + $failure)
     exit 1
 }

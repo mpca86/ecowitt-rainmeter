@@ -69,6 +69,10 @@ jobs:
         shell: pwsh
         run: ./packaging/i18n/tests/test-resolve-language.ps1
 
+      - name: Verify localized PowerShell messages and placeholders
+        shell: pwsh
+        run: ./packaging/i18n/tests/test-powershell-localization.ps1
+
       - name: Verify localized Rainmeter panels and include paths
         shell: bash
         run: python3 packaging/i18n/tests/test-runtime-static.py

@@ -4,12 +4,16 @@
 param(
     [Parameter(Mandatory=$true)]
     [string]$SkinPath,
-    [string]$ApiBase = "https://api.ecowitt.net/api/v3/device/real_time"
+    [string]$ApiBase = "https://api.ecowitt.net/api/v3/device/real_time",
+    [ValidateSet("sk","en","cs","pl")]
+    [string]$UiLanguage = "en"
 )
 
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 $SkinPath = [System.IO.Path]::GetFullPath($SkinPath)
+. (Join-Path $PSScriptRoot "localization.ps1")
+$script:EcowittUiCatalog = Get-EcowittUiCatalog -SkinPath $SkinPath -UiLanguage $UiLanguage
 $OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
@@ -36,12 +40,13 @@ try {
     $mac = [string]$secrets["EcowittMac"]
 
     $missing = @()
-    if ([string]::IsNullOrWhiteSpace($app)) { $missing += "Application Key" }
-    if ([string]::IsNullOrWhiteSpace($api)) { $missing += "API Key" }
-    if ([string]::IsNullOrWhiteSpace($mac)) { $missing += "MAC" }
+    if ([string]::IsNullOrWhiteSpace($app)) { $missing += Get-EcowittUiText -Key "settings.application_key" }
+    if ([string]::IsNullOrWhiteSpace($api)) { $missing += Get-EcowittUiText -Key "settings.api_key" }
+    if ([string]::IsNullOrWhiteSpace($mac)) { $missing += Get-EcowittUiText -Key "settings.mac" }
 
     if ($missing.Count -gt 0) {
-        Write-Output ("CHYBA | Chýba: " + ($missing -join ", "))
+        $missingText = Get-EcowittUiText -Key "settings.cloud_test_missing" -Values @{ items = ($missing -join ", ") }
+        Write-Output ("MISSING|" + $missingText)
         exit 0
     }
 
@@ -77,20 +82,23 @@ try {
     }
 
     if ([string]::IsNullOrWhiteSpace($code)) { $code = "?" }
-    if ([string]::IsNullOrWhiteSpace($msg)) { $msg = "bez správy" }
+    if ([string]::IsNullOrWhiteSpace($msg)) { $msg = "—" }
 
     if ($code -eq "0") {
         $sections = 0
         if ($response.data) {
             $sections = @($response.data.PSObject.Properties).Count
         }
-        Write-Output "OK | code=0 | $msg | sekcie=$sections"
+        $success = Get-EcowittUiText -Key "settings.cloud_test_success" -Values @{ code = $code; message = $msg; count = $sections }
+        Write-Output ("OK|" + $success)
     }
     else {
-        Write-Output "CHYBA API | code=$code | $msg"
+        $apiError = Get-EcowittUiText -Key "settings.cloud_test_api_error" -Values @{ code = $code; message = $msg }
+        Write-Output ("API_ERROR|" + $apiError)
     }
 }
 catch {
     $message = $_.Exception.Message -replace "[\r\n]+"," "
-    Write-Output "CHYBA HTTP | $message"
+    $httpError = Get-EcowittUiText -Key "settings.cloud_test_http_error" -Values @{ message = $message }
+    Write-Output ("HTTP_ERROR|" + $httpError)
 }

@@ -101,8 +101,8 @@ jobs:
           print(f"PASS: verified test-only RMSKIN: {file.name}, sha256 {checksum}")
           PY
           cat > dist-integration/WINDOWS-SANDBOX-TEST.txt <<'EOF'
-          ECOWITT WEATHER — T10-F8 AUTO LANGUAGE SANDBOX TEST
-          ====================================================
+          ECOWITT WEATHER — AUTO LANGUAGE AND POWERSHELL I18N SANDBOX TEST
+          ================================================================
           This is a temporary test-only RMSKIN. It is not a Release or beta.7.
           Use a fresh Windows Sandbox. Do not enter real API credentials.
 
@@ -124,6 +124,15 @@ jobs:
              AUTO must resolve to en and must not use the registry fallback.
           7. Remove the Language key in the isolated profile, leave registry
              at 1051, refresh Settings, and confirm AUTO resolves to sk again.
+          8. With CloudSecrets.inc still empty, click Test Cloud API once in
+             each language. The missing-fields explanation must be localized;
+             this check exits before sending a network request.
+          9. In each language, open Export and Import dialogs and cancel them.
+             Dialog titles and the resulting status text must be localized.
+             For success notices, use only empty/dummy Sandbox configuration.
+          10. Run updater Check (do not install) in each language. The status
+              explanation must be localized; version tags and stable output
+              codes must remain unchanged.
 
           The package excludes CloudSecrets.inc, UserVariables.inc, history,
           logs, and update state. For any failure, unload the skin and discard
