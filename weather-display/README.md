@@ -17,7 +17,7 @@ Graf má 577 vzoriek v päťminútových krokoch za 48 hodín. Denné extrémy s
 ## Overenie prvého behu
 
 - `node --check weather-display/display.js`: PASS.
-- `node --test weather-display/model.test.mjs`: 4 PASS (48 h, hranica dňa/zhody, výpadok/zotavenie, chýbajúce dáta).
+- `node --test weather-display/model.test.mjs`: 8 PASS (48 h, hranica dňa/zhody, výpadok/zotavenie, chýbajúce dáta, stabilná história, neplatné/budúce vzorky, polnoc pri výpadku).
 - Browser QA, fullscreen, reálny TV a dlhodobá prevádzka: NEOVERENÉ; podporované browser QA v pracovnom prostredí nebolo dostupné.
 - Rozloženie používa proporčné CSS a celé okno; referenčné 16:9. Treba ručne overiť 1366×768, 1920×1080, 2560×1440 a 3840×2160, zoom aj škálovanie OS. Pri 32" overiť čitateľnosť z 2–3 m, orezanie a viditeľnosť ovládania.
 
@@ -30,3 +30,9 @@ Graf má 577 vzoriek v päťminútových krokoch za 48 hodín. Denné extrémy s
 5. SK/EN/CS/PL, konfigurácia stanice, automatické spustenie, prípadné posúvanie obrazu.
 
 Žiadne produkčné nasadenie, merge ani release nie sú súčasťou tohto behu.
+
+## Úpravy prototypu 0.1
+
+Názov stanice možno nastaviť cez `?station=Poprad%20-%20Veľká`; vstup sa zobrazuje ako text. Počiatočný scenár nastaví `&scenario=night` (day/rain/night). Bez parametrov zostávajú pôvodné hodnoty.
+
+Pri výpadku cez polnoc sa dnešné extrémy vyprázdnia, kým nepríde dnešné meranie. Graf počas výpadku zostáva poslednou zachovanou demo históriou. Prekrývajúce sa vzorky sa pri aktualizácii nemenia; teplotný cyklus zohľadňuje aj minúty. Browser QA a TV test zostávajú neoverené.
