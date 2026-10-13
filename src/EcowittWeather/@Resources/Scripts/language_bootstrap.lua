@@ -50,26 +50,43 @@ local function get_ini(path, section, key)
     return found
 end
 
-local function resolve_language(preference)
-    local mode = tostring(preference or 'auto'):lower():match('^%s*(.-)%s*$')
-    if mode == 'sk' or mode == 'en' or mode == 'cs' or mode == 'pl' then
-        return mode
-    end
-    local settingsPath = SKIN:GetVariable('SETTINGSPATH') or ''
-    local lcid = tonumber(get_ini(settingsPath .. 'Rainmeter.ini', 'Rainmeter', 'Language'))
-    if not lcid or lcid % 1 ~= 0 or lcid < 1 or lcid > 65535 then return 'en' end
+local function locale_for_lcid(value)
+    local lcid = tonumber(value)
+    if not lcid or lcid % 1 ~= 0 or lcid < 1 or lcid > 65535 then return nil end
     local code = lcid % 1024
     if code == 27 then return 'sk' end
     if code == 9 then return 'en' end
     if code == 5 then return 'cs' end
     if code == 21 then return 'pl' end
-    return 'en'
+    return nil
 end
 
-function Initialize()
+local function registry_measure_name()
+    -- Rainmeter's process bitness determines the registry view it uses:
+    -- 32-bit builds use the redirected WOW6432Node key on 64-bit Windows;
+    -- 64-bit builds use the native SOFTWARE\Rainmeter key.
+    local arch = (os.getenv('PROCESSOR_ARCHITECTURE') or ''):lower()
+    local wowArch = (os.getenv('PROCESSOR_ARCHITEW6432') or ''):lower()
+    if (arch == 'x86' or arch == 'i386') and wowArch ~= '' then
+        return 'MeasureRainmeterLanguageWow6432'
+    end
+    return 'MeasureRainmeterLanguageNative'
+end
+
+local function resolve_language(preference, iniLanguage, registryLanguage)
+    local mode = tostring(preference or 'auto'):lower():match('^%s*(.-)%s*$')
+    if mode == 'sk' or mode == 'en' or mode == 'cs' or mode == 'pl' then
+        return mode
+    end
+    -- A present INI value is authoritative even when malformed or unsupported.
+    -- Only a genuinely missing key permits the installer registry fallback.
+    if iniLanguage ~= nil then return locale_for_lcid(iniLanguage) or 'en' end
+    return locale_for_lcid(registryLanguage) or 'en'
+end
+
+local function write_language(lang)
     local root = SKIN:GetVariable('ROOTCONFIGPATH') or ''
     local target = root .. '@Resources\\Includes\\LanguageState.inc'
-    local lang = resolve_language(SKIN:GetVariable('UiLanguage'))
     if get_ini(target, 'Variables', 'ResolvedUiLanguage') == lang then return end
     local f = io.open(target, 'wb')
     if not f then return end
@@ -82,6 +99,29 @@ function Initialize()
     end
 end
 
+function Initialize()
+    -- Registry measures may still be waiting for their first update here.
+    -- The regular Update callback retries after Rainmeter has sampled them.
+    local settingsPath = SKIN:GetVariable('SETTINGSPATH') or ''
+    local iniLanguage = get_ini(settingsPath .. 'Rainmeter.ini', 'Rainmeter', 'Language')
+    local mode = tostring(SKIN:GetVariable('UiLanguage') or 'auto'):lower():match('^%s*(.-)%s*$')
+    if mode == 'sk' or mode == 'en' or mode == 'cs' or mode == 'pl' or iniLanguage ~= nil then
+        write_language(resolve_language(mode, iniLanguage, nil))
+    end
+end
+
 function Update()
+    local settingsPath = SKIN:GetVariable('SETTINGSPATH') or ''
+    local iniLanguage = get_ini(settingsPath .. 'Rainmeter.ini', 'Rainmeter', 'Language')
+    local mode = tostring(SKIN:GetVariable('UiLanguage') or 'auto'):lower():match('^%s*(.-)%s*$')
+    local registryLanguage = nil
+    if iniLanguage == nil and mode ~= 'sk' and mode ~= 'en' and mode ~= 'cs' and mode ~= 'pl' then
+        local measure = SKIN:GetMeasure(registry_measure_name())
+        if measure then
+            registryLanguage = measure:GetValue()
+            if registryLanguage == nil then return 0 end
+        end
+    end
+    write_language(resolve_language(mode, iniLanguage, registryLanguage))
     return 0
 end

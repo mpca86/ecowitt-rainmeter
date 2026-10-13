@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - test/cloud-api-beta7-integration
+      - fix/cloud-api-auto-language-fallback
   workflow_dispatch:
 
 permissions:
@@ -53,6 +54,11 @@ jobs:
               data=(root/panel/f"{panel}.ini").read_bytes()
               assert data.startswith(b"\xff\xfe"),panel
           assert (root/"@Resources"/"Scripts"/"main_cloud.lua").read_bytes().startswith(b"\xff\xfe")
+          for panel in ("Meteo","Settings","Sensors","Diagnostics","Update"):
+              text=(root/panel/f"{panel}.ini").read_text("utf-16")
+              assert text.index("[MeasureRainmeterLanguageWow6432]") < text.index("[MeasureLanguageBootstrap]")
+              assert "RegKey=SOFTWARE\\WOW6432Node\\Rainmeter" in text
+              assert "RegKey=SOFTWARE\\Rainmeter" in text
           print("PASS: 4 locale catalogs, 5 panels, Lua encodings and excluded private files")
           PY
       - name: Build unpublished RMSKIN
@@ -94,10 +100,40 @@ jobs:
           (Path("dist-integration")/(file.name+".sha256")).write_text(f"{checksum}  {file.name}\n",encoding="ascii")
           print(f"PASS: verified test-only RMSKIN: {file.name}, sha256 {checksum}")
           PY
+          cat > dist-integration/WINDOWS-SANDBOX-TEST.txt <<'EOF'
+          ECOWITT WEATHER — T10-F8 AUTO LANGUAGE SANDBOX TEST
+          ====================================================
+          This is a temporary test-only RMSKIN. It is not a Release or beta.7.
+          Use a fresh Windows Sandbox. Do not enter real API credentials.
+
+          1. Install this RMSKIN in the Sandbox and load Settings.ini.
+             Confirm UserVariables.inc defaults UiLanguage=auto.
+          2. Before changing Rainmeter's language, confirm Rainmeter.ini has no
+             [Rainmeter] Language key and the test machine's installer registry
+             value is 1051. Select AUTO; ResolvedUiLanguage must become sk.
+          3. Select EN, SK, CS, and PL in Settings one by one. Each must remain
+             the selected language regardless of the Rainmeter LCID.
+          4. Set AUTO. In Rainmeter's own language settings, choose English.
+             Confirm Rainmeter.ini now has Language=1033 while the installer
+             registry value remains 1051. AUTO must resolve to en.
+          5. Restart Rainmeter with AUTO still selected. It must remain en.
+             Change Rainmeter back to Slovak (Language=1051); AUTO must resolve
+             to sk after refresh and after another restart.
+          6. In this isolated Sandbox only, test a present unsupported or
+             malformed Rainmeter.ini Language value with registry still 1051.
+             AUTO must resolve to en and must not use the registry fallback.
+          7. Remove the Language key in the isolated profile, leave registry
+             at 1051, refresh Settings, and confirm AUTO resolves to sk again.
+
+          The package excludes CloudSecrets.inc, UserVariables.inc, history,
+          logs, and update state. For any failure, unload the skin and discard
+          the Sandbox. Do not merge PR #27/#28 or publish beta.7 as part of this
+          test.
+          EOF
       - name: Upload temporary test artifact only
         uses: actions/upload-artifact@v4
         with:
-          name: Ecowitt-beta7-integration-RMSKIN-TEST-ONLY
+          name: Ecowitt-cloud-api-auto-language-fallback-RMSKIN-TEST-ONLY
           path: dist-integration/
           if-no-files-found: error
           retention-days: 7

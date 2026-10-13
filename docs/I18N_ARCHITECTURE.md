@@ -1,7 +1,7 @@
 # Cloud API Rainmeter i18n plan — SK / EN / CS / PL
 
-Status: **P1 foundation / not yet enabled in the user interface**.
-This branch is based on `cloud-api`. It is independent of the UTF-16 Lua
+Status: **P2 runtime wiring implemented / clean-install fallback Windows QA pending**.
+This test branch is based on `test/cloud-api-beta7-integration`. It is independent of the UTF-16 Lua
 packaging fix in draft PR #27; integrate that fix before a future beta release.
 No merge or release is authorized by this document.
 
@@ -17,11 +17,12 @@ No merge or release is authorized by this document.
 Until i18n is deployed, beta.6 continues using Slovak. In the new version,
 **`UiLanguage=auto` is the default**; it reads the `Language` LCID from
 `[Rainmeter]` in the user's `#SETTINGSPATH#Rainmeter.ini` (not the Windows
-system display language). LCIDs are 1051 SK, 1033 EN, 1029 CS, 1045 PL;
-regional variants are mapped by Windows primary-language bits. Missing,
-unreadable or unsupported LCIDs resolve to **`en`**, not `sk`.
-A manually chosen `sk`, `en`, `cs`, or `pl` always overrides automatic
-detection. Store only the `UiLanguage` preference in the existing
+system display language). Resolution priority is manual `sk`/`en`/`cs`/`pl`,
+then a present `Rainmeter.ini` LCID, then Rainmeter's installer registry value
+only when the INI key is absent, and finally **`en`**. LCIDs 1051 SK, 1033 EN,
+1029 CS, and 1045 PL are mapped by Windows primary-language bits. A present
+but invalid or unsupported INI value resolves to `en` and never falls through
+to a possibly stale registry value. Store only the `UiLanguage` preference in the existing
 `@Resources/Includes/UserVariables.inc`; never modify Rainmeter.ini or
 `CloudSecrets.inc`, and retain aliases, API keys and CSV history.
 
@@ -57,12 +58,9 @@ Fields with `{count}`, `{channel}`, `{time}`, `{version}`, and
    collisions. `packaging/i18n/compile.py --output <staged skin
    root>/@Resources/Languages` emits `sk.inc`, `en.inc`, `cs.inc`,
    `pl.inc` as **UTF-16 LE with BOM**, leaving Git sources untouched.
-2. **P2: Rainmeter runtime wiring (not done yet).** Add a language setting in
-   Settings with five choices `auto`, `sk`, `en`, `cs`, `pl`, saving only the
-   preference to `UserVariables.inc`. The initial automatic resolver
-   `packaging/i18n/resolve-rainmeter-language.ps1` is read-only: it parses
-   `Rainmeter.ini` and the user override without editing either file.
-   Wire it to the actual Rainmeter startup/refresh flow and store a safe,
+2. **P2: Rainmeter runtime wiring (implemented on the test branch).** Settings
+   offers `auto`, `sk`, `en`, `cs`, and `pl`, saving only the preference to
+   `UserVariables.inc`. The Lua bootstrap stores a safe,
    **allowlisted effective language** separate from the `auto` preference;
    never interpolate unchecked strings into an include path. After
    `Variables.inc` and `UserVariables.inc` have loaded, each panel may
@@ -113,9 +111,14 @@ beta.6. That requires the explicit P2 runtime work and a Windows test.
   `#ResolvedUiLanguage#`, which is **allowlisted** by
   `@Resources/Scripts/language_bootstrap.lua`.
 - Startup reads Rainmeter's `#SETTINGSPATH#Rainmeter.ini` (`[Rainmeter]`
-  `Language` LCID) without modifying it; the automatically selected locale
+  `Language` LCID) without modifying it. If that key is absent, built-in
+  Rainmeter Registry measures read `HKLM\SOFTWARE\WOW6432Node\Rainmeter` or
+  `HKLM\SOFTWARE\Rainmeter`, selected by the Rainmeter process architecture.
+  The Lua bootstrap waits for its selected measure before resolving. A present
+  malformed or unsupported INI value resolves to English without registry
+  fallback. The automatically selected locale
   refreshes active panels only after writing the locale state, with no refresh
-  when the locale is unchanged. Unsupported/missing LCID => `en`.
+  when the locale is unchanged. A missing registry value also resolves to `en`.
 - Settings has an `AUTO / SK / EN / CS / PL` row. Clicking a choice writes
   `UiLanguage` to `UserVariables.inc`, reloads Settings, and the bootstrap
   refreshes the remaining panels if the **effective** locale changes.
@@ -132,17 +135,18 @@ beta.6. That requires the explicit P2 runtime work and a Windows test.
   and actual installer upgrade / rollback. Full human-language translation
   of raw PowerShell / external API diagnostics is not yet implemented.
 
-## Automatic language resolution test (added after P1)
+## Automatic language resolution tests
 
-The read-only PowerShell resolver accepts Rainmeter's settings file and the
-existing user settings file, then emits one token: `sk`, `en`, `cs`, or
-`pl`. It never modifies either INI. Regional LCIDs are supported;
-unsupported settings default to English. Tests exercise these invariants:
+The Lua regression test mocks Rainmeter's `SKIN` API and covers manual
+overrides, SK/EN/CS/PL LCIDs, missing/invalid/unsupported INI values, stale
+registry values, deferred Registry measure startup, registry-view selection,
+restart behavior, and refresh idempotence. The read-only PowerShell resolver
+also retains its standalone regression test:
 
 ```powershell
 pwsh -NoProfile -File packaging/i18n/tests/test-resolve-language.ps1
 ```
 
-The resolver is a separately tested foundation **not yet connected** to the
-runtime Settings controls or packaged language .inc files. Integration and
-Windows acceptance testing remain P2/P3 work.
+The automated tests do not replace Windows Sandbox verification with the
+test-only RMSKIN; first-run AUTO behavior and the native / WOW6432Node registry
+views still require manual confirmation there.

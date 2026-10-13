@@ -43,6 +43,11 @@ for skin in ("Meteo","Settings","Sensors","Diagnostics","Update"):
     assert indices==sorted(indices), f"{skin}: language include order invalid"
     assert "ScriptFile=#@#Scripts\\language_bootstrap.lua" in src
     assert "#UiLanguage#.inc" not in src, f"{skin}: unchecked locale path"
+    assert "[MeasureRainmeterLanguageWow6432]" in src, f"{skin}: WOW6432Node fallback measure missing"
+    assert "RegKey=SOFTWARE\\WOW6432Node\\Rainmeter" in src, f"{skin}: WOW6432Node key missing"
+    assert "[MeasureRainmeterLanguageNative]" in src, f"{skin}: native fallback measure missing"
+    assert "RegKey=SOFTWARE\\Rainmeter" in src, f"{skin}: native key missing"
+    assert src.index("[MeasureRainmeterLanguageWow6432]") < src.index("[MeasureLanguageBootstrap]"), f"{skin}: Registry measures must precede Lua bootstrap"
     used.update(re.findall(r"#(L_[a-z0-9_]+)#",src))
 lua=(root/"@Resources"/"Scripts"/"main_cloud.lua").read_text("utf-8")
 used.update(name for name in re.findall(r"'(L_[a-z0-9_]+)'",lua) if name != "L_wind_")
@@ -55,5 +60,10 @@ for lang in ("auto",)+langs:
     assert f"[MeterLang{lang.upper()}]" in settings
     assert f'UiLanguage "{lang}"' in settings
 assert "LanguageState.inc" in (root/"@Resources"/"Scripts"/"language_bootstrap.lua").read_text("utf-8")
+bootstrap=(root/"@Resources"/"Scripts"/"language_bootstrap.lua").read_text("utf-8")
 assert (root/"@Resources"/"Scripts"/"language_bootstrap.lua").read_bytes().isascii()
+assert "GetMeasure(registry_measure_name())" in bootstrap
+assert "if iniLanguage ~= nil then return locale_for_lcid(iniLanguage) or 'en' end" in bootstrap
+assert "PROCESSOR_ARCHITEW6432" in bootstrap
+assert "powershell" not in bootstrap.lower() and "os.execute" not in bootstrap.lower()
 print(f"PASS: 5 UTF-16 panels, 4 catalogs, {len(used)} wired translation names, allowlisted locale path")

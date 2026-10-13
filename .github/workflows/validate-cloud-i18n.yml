@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/cloud-api-i18n-sk-en-cs-pl
+      - fix/cloud-api-auto-language-fallback
   pull_request:
     branches:
       - cloud-api
