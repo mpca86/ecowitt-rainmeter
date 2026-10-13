@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import{history,extremes,freshness,dayKey}from'./model.mjs';
+test('48-hour history includes both boundaries and finite values',()=>{const p=history(Date.parse('2026-10-13T21:00:00Z'));assert.equal(p.length,577);assert.equal(p.at(-1).ts-p[0].ts,48*3600000);assert.ok(p.every(v=>Number.isFinite(v.temp)))});
+test('daily extrema exclude previous Bratislava calendar day; earliest tie retained',()=>{const now=Date.parse('2026-10-13T22:10:00Z'),a={ts:Date.parse('2026-10-13T22:00:00Z'),temp:5},b={ts:now,temp:5};const e=extremes([{ts:Date.parse('2026-10-13T21:59:00Z'),temp:-20},a,b],now);assert.equal(dayKey(now),'2026-10-14');assert.equal(e.min,a);assert.equal(e.max,a)});
+test('freshness progresses without changing last measurement and recovers',()=>{assert.equal(freshness(0,45000),'fresh');assert.equal(freshness(0,45001),'stale');assert.equal(freshness(0,180001),'offline');assert.equal(freshness(180001,180001),'fresh')});
+test('no daily data returns null',()=>assert.equal(extremes([],Date.now()),null));
