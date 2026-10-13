@@ -113,8 +113,9 @@ beta.6. That requires the explicit P2 runtime work and a Windows test.
 - Startup reads Rainmeter's `#SETTINGSPATH#Rainmeter.ini` (`[Rainmeter]`
   `Language` LCID) without modifying it. If that key is absent, built-in
   Rainmeter Registry measures read `HKLM\SOFTWARE\WOW6432Node\Rainmeter` or
-  `HKLM\SOFTWARE\Rainmeter`, selected by the Rainmeter process architecture.
-  The Lua bootstrap waits for its selected measure before resolving. A present
+  `HKLM\SOFTWARE\Rainmeter`, selected by the Rainmeter process architecture;
+  if that view has no value, it tries the alternate view. The Lua bootstrap
+  waits for both Registry measures before resolving. A present
   malformed or unsupported INI value resolves to English without registry
   fallback. The automatically selected locale
   refreshes active panels only after writing the locale state, with no refresh

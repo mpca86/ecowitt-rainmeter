@@ -21,7 +21,7 @@ local original_getenv = os.getenv
 os.getenv = function(key) return architecture[key] end
 local function measure(value)
     if value == "not-ready" then return {GetValue=function() return nil end} end
-    if value == nil then return nil end
+    if value == nil then value = 0 end -- Registry measure returned an empty/missing key.
     return {GetValue=function() return value end}
 end
 SKIN = {
@@ -95,6 +95,7 @@ Update()
 assert(current_bytes()==nil, "bootstrap resolved before Registry measure was ready")
 assert(#bangs==0, "bootstrap refreshed panels before Registry measure was ready")
 values.MeasureRainmeterLanguageWow6432=1051
+values.MeasureRainmeterLanguageNative=0
 Update()
 assert(current_bytes()==expected_bytes("sk"), "bootstrap did not retry after Registry measure became ready")
 assert(#bangs==5, "expected panel refresh after deferred resolution")
@@ -130,7 +131,26 @@ values.MeasureRainmeterLanguageNative=1045
 values.MeasureRainmeterLanguageWow6432=1051
 Update()
 assert(current_bytes()==expected_bytes("pl"), "32-bit Windows did not select native Registry view")
-print("PASS: native, 32-bit-on-64-bit, and 32-bit Windows Registry view selection")
+
+-- If the preferred view has no value, use the alternate registry view.
+setup("auto",nil,nil,"AMD64",nil)
+values.MeasureRainmeterLanguageNative=0
+values.MeasureRainmeterLanguageWow6432=1051
+Update()
+assert(current_bytes()==expected_bytes("sk"), "missing native value did not fall back to WOW6432Node")
+setup("auto",nil,nil,"x86","AMD64")
+values.MeasureRainmeterLanguageWow6432=0
+values.MeasureRainmeterLanguageNative=1029
+Update()
+assert(current_bytes()==expected_bytes("cs"), "missing WOW6432Node value did not fall back to native")
+
+-- A nonzero unsupported value in the preferred view remains authoritative.
+setup("auto",nil,nil,"AMD64",nil)
+values.MeasureRainmeterLanguageNative=1031
+values.MeasureRainmeterLanguageWow6432=1051
+Update()
+assert(current_bytes()==expected_bytes("en"), "unsupported preferred registry value fell through to stale alternate")
+print("PASS: native, 32-bit-on-64-bit, 32-bit Windows, and empty-view fallback")
 
 os.getenv = original_getenv
 os.remove(rain)

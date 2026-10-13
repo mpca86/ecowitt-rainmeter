@@ -62,7 +62,9 @@ for lang in ("auto",)+langs:
 assert "LanguageState.inc" in (root/"@Resources"/"Scripts"/"language_bootstrap.lua").read_text("utf-8")
 bootstrap=(root/"@Resources"/"Scripts"/"language_bootstrap.lua").read_text("utf-8")
 assert (root/"@Resources"/"Scripts"/"language_bootstrap.lua").read_bytes().isascii()
-assert "GetMeasure(registry_measure_name())" in bootstrap
+assert "registry_measure_names()" in bootstrap
+assert "GetMeasure(name)" in bootstrap
+assert "alternateNumber and alternateNumber ~= 0 then return alternateValue" in bootstrap
 assert "if iniLanguage ~= nil then return locale_for_lcid(iniLanguage) or 'en' end" in bootstrap
 assert "PROCESSOR_ARCHITEW6432" in bootstrap
 assert "powershell" not in bootstrap.lower() and "os.execute" not in bootstrap.lower()

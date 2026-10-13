@@ -61,16 +61,38 @@ local function locale_for_lcid(value)
     return nil
 end
 
-local function registry_measure_name()
+local function registry_measure_names()
     -- Rainmeter's process bitness determines the registry view it uses:
     -- 32-bit builds use the redirected WOW6432Node key on 64-bit Windows;
     -- 64-bit builds use the native SOFTWARE\Rainmeter key.
     local arch = (os.getenv('PROCESSOR_ARCHITECTURE') or ''):lower()
     local wowArch = (os.getenv('PROCESSOR_ARCHITEW6432') or ''):lower()
     if (arch == 'x86' or arch == 'i386') and wowArch ~= '' then
-        return 'MeasureRainmeterLanguageWow6432'
+        return 'MeasureRainmeterLanguageWow6432', 'MeasureRainmeterLanguageNative'
     end
-    return 'MeasureRainmeterLanguageNative'
+    return 'MeasureRainmeterLanguageNative', 'MeasureRainmeterLanguageWow6432'
+end
+
+local function registry_measure_value(name)
+    local measure = SKIN:GetMeasure(name)
+    if not measure then return nil end
+    return measure:GetValue()
+end
+
+local function registry_lcid()
+    local preferred, alternate = registry_measure_names()
+    local preferredValue = registry_measure_value(preferred)
+    local alternateValue = registry_measure_value(alternate)
+    -- Do not treat an initial zero as a missing registry entry until both
+    -- measures have completed their first sample.
+    if preferredValue == nil or alternateValue == nil then return nil end
+    local preferredNumber = tonumber(preferredValue)
+    if preferredNumber and preferredNumber ~= 0 then return preferredValue end
+    if preferredNumber == nil and tostring(preferredValue):match('%S') then return preferredValue end
+    local alternateNumber = tonumber(alternateValue)
+    if alternateNumber and alternateNumber ~= 0 then return alternateValue end
+    if alternateNumber == nil and tostring(alternateValue):match('%S') then return alternateValue end
+    return preferredValue
 end
 
 local function resolve_language(preference, iniLanguage, registryLanguage)
@@ -116,11 +138,8 @@ function Update()
     local mode = tostring(SKIN:GetVariable('UiLanguage') or 'auto'):lower():match('^%s*(.-)%s*$')
     local registryLanguage = nil
     if iniLanguage == nil and mode ~= 'sk' and mode ~= 'en' and mode ~= 'cs' and mode ~= 'pl' then
-        local measure = SKIN:GetMeasure(registry_measure_name())
-        if measure then
-            registryLanguage = measure:GetValue()
-            if registryLanguage == nil then return 0 end
-        end
+        registryLanguage = registry_lcid()
+        if registryLanguage == nil then return 0 end
     end
     write_language(resolve_language(mode, iniLanguage, registryLanguage))
     return 0
