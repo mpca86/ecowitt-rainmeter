@@ -36,3 +36,27 @@ Graf má 577 vzoriek v päťminútových krokoch za 48 hodín. Denné extrémy s
 Názov stanice možno nastaviť cez `?station=Poprad%20-%20Veľká`; vstup sa zobrazuje ako text. Počiatočný scenár nastaví `&scenario=night` (day/rain/night). Bez parametrov zostávajú pôvodné hodnoty.
 
 Pri výpadku cez polnoc sa dnešné extrémy vyprázdnia, kým nepríde dnešné meranie. Graf počas výpadku zostáva poslednou zachovanou demo históriou. Prekrývajúce sa vzorky sa pri aktualizácii nemenia; teplotný cyklus zohľadňuje aj minúty. Browser QA a TV test zostávajú neoverené.
+
+## Rýchly test na Windows
+
+1. Stiahnite ZIP tejto vývojovej vetvy z GitHubu (Code → Download ZIP) a rozbaľte ho.
+2. V adresári `weather-display` spustite `start-display.cmd`. Potrebný je Python 3. Otvorí sa predvolený prehliadač; okno servera nechajte otvorené.
+3. Stlačte F alebo F11. Server je dostupný iba na tomto PC na `http://127.0.0.1:8080/`.
+4. Na ukončenie servera použite Ctrl+C v jeho okne. Pri obsadenom porte spustite z terminálu `python serve.py --port 8081`.
+
+Launcher nemení automatické spustenie Windows ani nastavenia prehliadača. Windows launcher zatiaľ nebol otestovaný na Windows; Python server bol overený lokálne.
+
+## Vizuálny test T01
+
+Na monitore alebo TV nastavte zoom 100 % a postupne skontrolujte:
+
+| Krok | Očakávaný výsledok |
+| --- | --- |
+| T01-A: fullscreen | Celý displej, žiadne posuvníky, viditeľná pätička a graf |
+| T01-B: hodnoty | Teplota, min/max a časy čitateľné; tlak a žiarenie sa neprekrývajú s popismi |
+| T01-C: ovládanie | Po 5 s bez pohybu sa skryje; pohyb myšou alebo C ho zobrazí |
+| T01-D: scenáre | Deň, dážď a noc aktualizujú hodnoty; označenie DEMO zostáva |
+| T01-E: výpadok | Po viac než 45 s neaktuálne dáta; po viac než 180 s výpadok; posledný čas merania zostáva |
+| T01-F: zotavenie | Obnoviť spojenie ihneď vráti aktuálny demo stav |
+
+Čitateľnosť na 32-palcovej TV overte z 2–3 metrov. Výsledok hláste napríklad `T01-A PASS, T01-B tlak príliš malý` spolu s rozlíšením a zoomom. Toto je plán manuálneho testu, nie záznam jeho vykonania.
