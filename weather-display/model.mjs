@@ -33,3 +33,10 @@ export function freshness(last, now) {
   const age = Math.max(0, now - last);
   return age > 180000 ? 'offline' : age > 45000 ? 'stale' : 'fresh';
 }
+
+// Illustrative scenario offsets only; not an Ecowitt or meteorological formula.
+export function demoFeelsLike(temperature, scenario = 'day') {
+  if (!Number.isFinite(temperature)) return null;
+  const offset = scenario === 'rain' ? -2.5 : scenario === 'night' ? -1.8 : -1.2;
+  return Math.round((temperature + offset) * 10) / 10;
+}

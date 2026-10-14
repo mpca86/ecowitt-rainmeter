@@ -60,3 +60,9 @@ Na monitore alebo TV nastavte zoom 100 % a postupne skontrolujte:
 | T01-F: zotavenie | Obnoviť spojenie ihneď vráti aktuálny demo stav |
 
 Čitateľnosť na 32-palcovej TV overte z 2–3 metrov. Výsledok hláste napríklad `T01-A PASS, T01-B tlak príliš malý` spolu s rozlíšením a zoomom. Toto je plán manuálneho testu, nie záznam jeho vykonania.
+
+## Pocitová teplota
+
+Hlavná teplotná karta zobrazuje aj pocitovú teplotu. V demo režime ide o ilustračný posun od vonkajšej teploty (deň −1,2 °C, dážď −2,5 °C, noc −1,8 °C), nie o meteorologický výpočet alebo hodnotu z Ecowittu. Pri výpadku sa zachová spolu s posledným meraním. Denné extrémy a graf stále patria vonkajšej teplote.
+
+Pri živom napojení treba overiť dostupnosť a význam Feels Like v danom API; zhodu s ecowitt.net zatiaľ negarantujeme. Na TV overte čitateľnosť novej hodnoty a prípadné prekrývanie s trendom (T01-B).
