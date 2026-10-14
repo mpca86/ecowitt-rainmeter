@@ -74,3 +74,20 @@ Spustite `configure-cloud.cmd`. Zadajte Application Key a API Key (pri písaní 
 Na Windows sa konfigurácia uloží do `%LOCALAPPDATA%\EcowittWeatherDisplay\cloud.json`, mimo adresára stránky a repozitára. Súbor obsahuje kľúče ako obyčajný text; chráni ho prístup k vášmu používateľskému účtu, nejde o šifrovaný trezor. Kontrolu vykoná `configure-cloud.cmd --check` bez zobrazenia kľúčov. Ak súbor existuje, nástroj si pred nahradením vyžiada potvrdenie.
 
 Predvolené pásmo je Europe/Bratislava a plánovaný interval čítania 60 s. Konfigurácia zatiaľ nevolá API ani neprepína displej na živé dáta. Ďalší krok je serverový cloud adaptér a overenie odpovede Ecowittu. Statický server teraz poskytuje len explicitne povolené UI súbory; konfiguračné súbory a Python skripty neposkytuje.
+
+## Živý cloudový režim — prvé overenie
+
+Po konfigurácii spustite `start-live.cmd` (alebo `python serve.py --live`). Otvorí `http://127.0.0.1:8080/?mode=live`. Predtým zastavte demo server na tom istom porte cez Ctrl+C. Živý režim čaká na prvú platnú odpoveď; nikdy nedopĺňa demo hodnoty. Cloud sa číta každých 60 s; prehliadač číta lokálnu službu každých 15 s.
+
+Adaptér číta `/api/v3/device/real_time`, overuje jednotky a používa čas vonkajšej teploty z API. Pocitová teplota sa číta z `outdoor.feels_like`; chýbajúca alebo nepodporovaná hodnota sa zobrazí ako —. Neaktuálne sekundárne polia sa vynechajú. Pri údajoch starších než 3 minúty alebo chybe spojenia sa zobrazí neaktuálny stav. Ide o čas cloudového merania, nie čas posledného načítania stránky; zdravie samotného rádiového senzora tým nie je zaručené.
+
+História sa ukladá do SQLite vedľa súkromnej konfigurácie, oddelene podľa MAC. Zber pokračuje aj so zatvoreným prehliadačom, pokiaľ beží server. Uchováva sa 7 dní, graf ukazuje posledných 48 h a medzery nad 3 minúty nepripája čiarou. Min/max a maximálny náraz sú iba z nazbieraných meraní aktuálneho dňa. Toto vydanie ešte nesťahuje historické údaje z cloudového history endpointu.
+
+**T02 — prvé živé meranie:**
+
+1. Do približne 90 s skontrolujte, že označenie DEMO zmizlo a displej ukazuje čas merania.
+2. Porovnajte teplotu, Feels Like, vlhkosť, vietor a tlak s ecowitt.net pri rovnakom čase a jednotkách.
+3. Počkajte aspoň 2–3 minúty a skontrolujte aktualizáciu času merania a pribúdanie bodov grafu.
+4. Zastavte server a znovu ho spustite: nazbieraná história má zostať.
+
+Automatické kontroly: 6 syntetických cloudových testov + 8 dátových testov PASS. Skutočná cloudová odpoveď, Windows launcher a vizuál živého režimu zatiaľ neoverené. Dokumentácia API na https://doc.ecowitt.net/web/#/apiv3en?page_id=17 sa počas implementácie nedala načítať; tento adaptér preto vyžaduje T02 pred prevádzkovým použitím. Chybové správy neobsahujú URL, kľúče ani raw odpoveď.
