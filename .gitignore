@@ -19,3 +19,9 @@ build/
 Thumbs.db
 .vscode/
 .idea/
+
+# Weather Display local runtime
+**/__pycache__/
+cloud.json
+cloud.tmp
+weather-display/data/

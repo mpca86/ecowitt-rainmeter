@@ -66,3 +66,11 @@ Na monitore alebo TV nastavte zoom 100 % a postupne skontrolujte:
 Hlavná teplotná karta zobrazuje aj pocitovú teplotu. V demo režime ide o ilustračný posun od vonkajšej teploty (deň −1,2 °C, dážď −2,5 °C, noc −1,8 °C), nie o meteorologický výpočet alebo hodnotu z Ecowittu. Pri výpadku sa zachová spolu s posledným meraním. Denné extrémy a graf stále patria vonkajšej teplote.
 
 Pri živom napojení treba overiť dostupnosť a význam Feels Like v danom API; zhodu s ecowitt.net zatiaľ negarantujeme. Na TV overte čitateľnosť novej hodnoty a prípadné prekrývanie s trendom (T01-B).
+
+## Konfigurácia Ecowitt Web API
+
+Spustite `configure-cloud.cmd`. Zadajte Application Key a API Key (pri písaní sa nezobrazujú), MAC gateway vo formáte `AA:BB:CC:DD:EE:FF` a názov stanice. Kľúče neposielajte do chatu.
+
+Na Windows sa konfigurácia uloží do `%LOCALAPPDATA%\EcowittWeatherDisplay\cloud.json`, mimo adresára stránky a repozitára. Súbor obsahuje kľúče ako obyčajný text; chráni ho prístup k vášmu používateľskému účtu, nejde o šifrovaný trezor. Kontrolu vykoná `configure-cloud.cmd --check` bez zobrazenia kľúčov. Ak súbor existuje, nástroj si pred nahradením vyžiada potvrdenie.
+
+Predvolené pásmo je Europe/Bratislava a plánovaný interval čítania 60 s. Konfigurácia zatiaľ nevolá API ani neprepína displej na živé dáta. Ďalší krok je serverový cloud adaptér a overenie odpovede Ecowittu. Statický server teraz poskytuje len explicitne povolené UI súbory; konfiguračné súbory a Python skripty neposkytuje.
